@@ -21,13 +21,13 @@
       <span class="logo-text">Build<span style="color: #2563eb;">Wise</span></span>
     </a>
     <ul class="nav-links">
-      <li><a href="/" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")">Home</a></li>
-      <li><a href="/Home/Features" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Features" ? "active" : "")">Features</a></li>
-      <li><a href="/Home/FAQ" class="@(ViewContext.RouteData.Values["Action"].ToString() == "FAQ" ? "active" : "")">FAQ</a></li>
-      <li><a href="/Home/Contact" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Contact" ? "active" : "")">Contact</a></li>
+      <li><a href="/" class="@((ViewContext.RouteData.Values["Action"]?.ToString() ?? "") == "Index" ? "active" : "")">Home</a></li>
+      <li><a href="/Home/Features" class="@((ViewContext.RouteData.Values["Action"]?.ToString() ?? "") == "Features" ? "active" : "")">Features</a></li>
+      <li><a href="/Home/FAQ" class="@((ViewContext.RouteData.Values["Action"]?.ToString() ?? "") == "FAQ" ? "active" : "")">FAQ</a></li>
+      <li><a href="/Home/Contact" class="@((ViewContext.RouteData.Values["Action"]?.ToString() ?? "") == "Contact" ? "active" : "")">Contact</a></li>
     </ul>
     <div class="nav-right">
-      @if (User.Identity.IsAuthenticated)
+      @if (User.Identity?.IsAuthenticated == true)
       {
         <a href="/Home/Dashboard" class="btn-nav" style="margin-right: 10px; background: #2563eb;">Dashboard</a>
         <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
@@ -48,8 +48,7 @@
     <a href="/Home/Features">Features</a>
     <a href="/Home/FAQ">FAQ</a>
     <a href="/Home/Contact">Contact</a>
-    <a href="/Home/Contact">Contact</a>
-    @if (User.Identity.IsAuthenticated)
+    @if (User.Identity?.IsAuthenticated == true)
     {
       <a href="/Home/Dashboard">Dashboard</a>
       <form asp-controller="Account" asp-action="Logout" method="post">

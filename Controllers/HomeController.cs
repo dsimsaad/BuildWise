@@ -47,7 +47,7 @@ public class HomeController : Controller
 
     public IActionResult Login()
     {
-        if (User.Identity.IsAuthenticated)
+        if (User.Identity?.IsAuthenticated == true)
         {
             return RedirectToAction("Dashboard");
         }
@@ -56,7 +56,7 @@ public class HomeController : Controller
 
     public IActionResult Signup()
     {
-        if (User.Identity.IsAuthenticated)
+        if (User.Identity?.IsAuthenticated == true)
         {
             return RedirectToAction("Dashboard");
         }

@@ -1,0 +1,127 @@
+@{
+    ViewData["Title"] = "Cost Advisor";
+    Layout = "_ModuleLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+    <style>
+        .advisor-container { max-width: 900px; margin: 0 auto; }
+        .critical-modal {
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white; margin: 15% auto; padding: 40px; border-radius: 20px;
+            width: 90%; max-width: 500px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: zoomIn 0.3s;
+        }
+        .modal-icon { font-size: 60px; margin-bottom: 20px; display: block; }
+        .btn-close-modal { 
+            margin-top: 25px; background: var(--text-main); color: white; border: none; 
+            padding: 12px 30px; border-radius: 10px; cursor: pointer; font-weight: 600;
+        }
+    </style>
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Cost Advisor</h1>
+        <p>Rule-based analysis of your project's financial health.</p>
+    </div>
+</div>
+
+<div class="advisor-container">
+    <div class="summary-grid" style="margin-bottom: 40px;">
+        <div class="sum-card">
+            <div class="sum-icon" id="icon-rules"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
+            <div class="sum-info">
+                <h3>Rules Checked</h3>
+                <p id="stat-rules">0</p>
+            </div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-icon" id="icon-warnings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+            <div class="sum-info">
+                <h3>Triggered</h3>
+                <p id="stat-triggered">0</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="advisor-results">
+        <!-- Results populated via JS -->
+        <div style="text-align:center; padding: 50px; color: var(--text-muted);">
+            <p>Analyzing project data...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Critical Warning Modal -->
+<div id="criticalModal" class="critical-modal">
+    <div class="modal-content">
+        <span class="modal-icon">🔴</span>
+        <h2 style="color:var(--danger)">Critical Budget Warning!</h2>
+        <p id="modal-message"></p>
+        <button class="btn-close-modal" onclick="closeModal()">I Understand</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function runAnalysis() {
+            const res = await fetch('/Advisor/GetAnalysis');
+            const data = await res.json();
+
+            document.getElementById('stat-rules').innerText = "12"; // 12 rules implemented in BLL
+            document.getElementById('stat-triggered').innerText = data.length;
+
+            const resultsDiv = document.getElementById('advisor-results');
+            
+            if (data.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="advisor-card success">
+                        <div class="sum-icon" style="background:#dcfce7; color:#166534;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        <div>
+                            <strong>All Clear!</strong>
+                            <p>No financial risks or warnings were detected in your current records.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            resultsDiv.innerHTML = data.map(rule => {
+                const typeClass = rule.severity.toLowerCase();
+                let icon = 'ℹ️';
+                if (typeClass === 'warning') icon = '🔴';
+                if (typeClass === 'alert') icon = '🟠';
+                if (typeClass === 'caution') icon = '🟡';
+                if (typeClass === 'info') icon = '🔵';
+
+                return `
+                    <div class="advisor-card ${typeClass}">
+                        <div style="font-size: 24px;">${icon}</div>
+                        <div>
+                            <strong style="display:block; margin-bottom:4px;">${rule.ruleName} [${rule.category}]</strong>
+                            <p>${rule.message}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Check for critical warning on page load
+            const critical = data.find(r => r.ruleName === "Budget Exceeded");
+            if (critical) {
+                document.getElementById('modal-message').innerText = critical.message;
+                document.getElementById('criticalModal').style.display = 'block';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('criticalModal').style.display = 'none';
+        }
+
+        runAnalysis();
+    </script>
+}

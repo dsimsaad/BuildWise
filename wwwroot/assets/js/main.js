@@ -89,6 +89,44 @@ faqItems.forEach(item => {
     }
 });
 
+// === FAQ FILTER BUTTONS ===
+const filterBtns = document.querySelectorAll(".filter-btn");
+const faqSearch = document.getElementById("faq-search");
+
+function applyFaqFilter(activeFilter, searchQuery = "") {
+    faqItems.forEach(item => {
+        const category = item.getAttribute("data-category") || "";
+        const text = item.textContent.toLowerCase();
+        const matchesFilter = activeFilter === "all" || category === activeFilter;
+        const matchesSearch = searchQuery === "" || text.includes(searchQuery.toLowerCase());
+        item.style.display = (matchesFilter && matchesSearch) ? "" : "none";
+    });
+}
+
+let currentFilter = "all";
+
+filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+        filterBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.getAttribute("data-filter") || "all";
+        applyFaqFilter(currentFilter, faqSearch ? faqSearch.value.trim() : "");
+    });
+});
+
+if (faqSearch) {
+    faqSearch.addEventListener("input", () => {
+        applyFaqFilter(currentFilter, faqSearch.value.trim());
+    });
+    // Keyboard shortcut: press "/" to focus search
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "/" && document.activeElement !== faqSearch) {
+            e.preventDefault();
+            faqSearch.focus();
+        }
+    });
+}
+
 // === LORDICON HOVER TRIGGER ===
 document.querySelectorAll('.feature-card, .feat-card').forEach(card => {
     const icon = card.querySelector('lord-icon');

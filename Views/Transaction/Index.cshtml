@@ -1,0 +1,161 @@
+@{
+    ViewData["Title"] = "Transaction Ledger";
+    Layout = "_ModuleLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+    <style>
+        .filter-bar {
+            background: var(--card-bg);
+            border: var(--card-border);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        .filter-group { flex: 1; min-width: 150px; }
+        .filter-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
+    </style>
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Automatic Ledger</h1>
+        <p>A historical record of every financial change in the system.</p>
+    </div>
+</div>
+
+<div class="summary-grid">
+    <div class="sum-card">
+        <div class="sum-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
+        <div class="sum-info">
+            <h3>Total Logs</h3>
+            <p id="stat-count">0</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#eff6ff; color:#2563eb;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg></div>
+        <div class="sum-info">
+            <h3>Total Value Recorded</h3>
+            <p id="stat-amount">PKR 0</p>
+        </div>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <div class="filter-group">
+        <label>Category</label>
+        <select id="filter-category" class="form-control" onchange="loadTransactions()">
+            <option value="">All Categories</option>
+            <option value="Cement">Cement</option>
+            <option value="Steel">Steel</option>
+            <option value="Bricks">Bricks</option>
+            <option value="Sand">Sand</option>
+            <option value="Labour">Labour</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Paint">Paint</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Miscellaneous">Miscellaneous</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Type</label>
+        <select id="filter-type" class="form-control" onchange="loadTransactions()">
+            <option value="">All Types</option>
+            <option value="Added">Added</option>
+            <option value="Updated">Updated</option>
+            <option value="Deleted">Deleted</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>From Date</label>
+        <input type="date" id="filter-from" class="form-control" onchange="loadTransactions()">
+    </div>
+    <div class="filter-group">
+        <label>To Date</label>
+        <input type="date" id="filter-to" class="form-control" onchange="loadTransactions()">
+    </div>
+    <button class="btn-primary" onclick="resetFilters()">Reset</button>
+</div>
+
+<div class="module-card">
+    <div class="card-header">
+        <h2>Historical Transaction Log</h2>
+        <span class="badge badge-info">Read Only</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Type</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Budget Effect</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="transaction-list">
+                    <!-- JS populated -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadTransactions() {
+            const category = document.getElementById('filter-category').value;
+            const type = document.getElementById('filter-type').value;
+            const from = document.getElementById('filter-from').value;
+            const to = document.getElementById('filter-to').value;
+
+            let url = `/Transaction/GetTransactions?category=${category}&type=${type}`;
+            if (from) url += `&fromDate=${from}`;
+            if (to) url += `&toDate=${to}`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+
+            document.getElementById('stat-count').innerText = data.totalCount;
+            document.getElementById('stat-amount').innerText = `PKR ${data.totalAmount.toLocaleString()}`;
+
+            const list = document.getElementById('transaction-list');
+            list.innerHTML = data.transactions.map(t => {
+                let badgeClass = 'badge-info';
+                if (t.transactionType === 'Added') badgeClass = 'badge-success';
+                if (t.transactionType === 'Deleted') badgeClass = 'badge-danger';
+                if (t.transactionType === 'Updated') badgeClass = 'badge-warning';
+
+                return `
+                    <tr>
+                        <td><small>${new Date(t.transactionDate).toLocaleString()}</small></td>
+                        <td><span class="badge ${badgeClass}">${t.transactionType}</span></td>
+                        <td><strong>${t.category}</strong></td>
+                        <td>PKR ${t.amount.toLocaleString()}</td>
+                        <td style="color:var(--text-muted)">${t.budgetEffect}% effect</td>
+                        <td><small>${t.description || '-'}</small></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-category').value = "";
+            document.getElementById('filter-type').value = "";
+            document.getElementById('filter-from').value = "";
+            document.getElementById('filter-to').value = "";
+            loadTransactions();
+        }
+
+        loadTransactions();
+    </script>
+}

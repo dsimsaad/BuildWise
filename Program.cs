@@ -8,7 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<BuildWiseDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("BuildWise")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("BuildWise"), 
+    sqlServerOptionsAction: sqlOptions => 
+    {
+        sqlOptions.EnableRetryOnFailure();
+    }));
 
 // Configure Cookie Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

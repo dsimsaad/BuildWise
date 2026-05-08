@@ -1,0 +1,290 @@
+@{
+    ViewData["Title"] = "Construction Progress";
+    Layout = "_ModuleLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+    <style>
+        .progress-header { 
+            background: white; padding: 40px; border-radius: 24px; box-shadow: var(--card-shadow);
+            text-align: center; margin-bottom: 40px;
+        }
+        .progress-circle {
+            width: 150px; height: 150px; border-radius: 50%; border: 12px solid #f1f5f9;
+            margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .progress-circle span { font-size: 2.5rem; font-weight: 800; color: var(--accent); }
+        
+        .phase-section { margin-bottom: 30px; }
+        .phase-header { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px;
+        }
+        .phase-name { font-size: 1.2rem; font-weight: 700; color: var(--text-main); }
+        .phase-weight { color: var(--text-muted); font-size: 0.9rem; }
+
+        .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .task-card { 
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px;
+            display: flex; flex-direction: column; gap: 10px; position: relative;
+        }
+        .task-status { position: absolute; top: 15px; right: 15px; }
+        
+        .gantt-timeline { margin-top: 50px; }
+        .gantt-row { display: grid; grid-template-columns: 200px 1fr; gap: 10px; margin-bottom: 15px; align-items: center; }
+        .gantt-bar-wrap { background: #f1f5f9; height: 30px; border-radius: 6px; position: relative; overflow: hidden; }
+        .gantt-bar { height: 100%; background: var(--accent); opacity: 0.8; border-radius: 6px; }
+        
+        .modal { 
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+        }
+        .modal-body { 
+            background: white; margin: 10% auto; padding: 30px; border-radius: 20px; width: 400px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+        }
+    </style>
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Construction Management</h1>
+        <p>Monitor project phases, tasks, and real-time progress.</p>
+    </div>
+</div>
+
+<!-- Overall Progress Card -->
+<div class="progress-header">
+    <div class="progress-circle">
+        <span id="overall-progress-text">0%</span>
+    </div>
+    <h2>Project Completion</h2>
+    <p>Overall progress calculated from phase and task completion weights.</p>
+    <div class="summary-grid" style="max-width: 800px; margin: 30px auto 0;">
+        <div class="sum-card">
+            <div class="sum-info"><h3>Total Phases</h3><p id="stat-phases">0</p></div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-info"><h3>Total Tasks</h3><p id="stat-tasks">0</p></div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-info"><h3>Completed</h3><p id="stat-completed" style="color:var(--success)">0</p></div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-info"><h3>Delayed</h3><p id="stat-delayed" style="color:var(--danger)">0</p></div>
+        </div>
+    </div>
+</div>
+
+<div id="phases-container">
+    <!-- Populated by JS -->
+</div>
+
+<!-- Gantt-style Timeline -->
+<div class="module-card gantt-timeline">
+    <div class="card-header">
+        <h2>Visual Project Timeline (Gantt)</h2>
+        <p style="margin:0; font-size:0.8rem; color:var(--text-muted)">Historical task schedule overview</p>
+    </div>
+    <div class="card-body" id="gantt-container">
+        <!-- Populated by JS -->
+    </div>
+</div>
+
+<!-- Add Task Modal -->
+<div id="taskModal" class="modal">
+    <div class="modal-body">
+        <h2 id="modal-title">Add Task</h2>
+        <form id="task-form">
+            <input type="hidden" id="task-id">
+            <input type="hidden" id="task-phase-id">
+            <div class="form-group">
+                <label>Task Name</label>
+                <input type="text" id="task-name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="task-status" class="form-control">
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Delayed">Delayed</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Weight (%)</label>
+                <input type="number" id="task-weight" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="task-start" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>End Date / Deadline</label>
+                <input type="date" id="task-end" class="form-control">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="submit" class="btn-primary" style="flex:1">Save Task</button>
+                <button type="button" class="btn-primary" style="flex:1; background:var(--text-muted);" onclick="closeModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadConstructionData() {
+            const res = await fetch('/Construction/GetProgressData');
+            const data = await res.json();
+
+            // Overall Stats
+            document.getElementById('overall-progress-text').innerText = `${data.overallProgress}%`;
+            document.getElementById('stat-phases').innerText = data.phases.length;
+            
+            let totalTasks = 0, completed = 0, delayed = 0;
+            data.phases.forEach(p => {
+                totalTasks += p.tasks.length;
+                p.tasks.forEach(t => {
+                    if (t.status === 'Completed') completed++;
+                    if (t.status === 'Delayed') delayed++;
+                });
+            });
+            document.getElementById('stat-tasks').innerText = totalTasks;
+            document.getElementById('stat-completed').innerText = completed;
+            document.getElementById('stat-delayed').innerText = delayed;
+
+            // Render Phases
+            const container = document.getElementById('phases-container');
+            container.innerHTML = data.phases.map(p => `
+                <div class="phase-section">
+                    <div class="phase-header">
+                        <div>
+                            <span class="phase-name">${p.phaseName}</span>
+                            <span class="phase-weight">(${p.weight}% of project)</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:20px;">
+                            <div style="width:200px">
+                                <div class="progress-container"><div class="progress-bar" style="width:${p.progress}%"></div></div>
+                                <span style="font-size:0.8rem; font-weight:700;">${p.progress}% Phase Completion</span>
+                            </div>
+                            <button class="btn-primary" style="padding:6px 12px; font-size:0.8rem" onclick="openAddTask(${p.phaseId})">+ Add Task</button>
+                        </div>
+                    </div>
+                    <div class="task-grid">
+                        ${p.tasks.map(t => `
+                            <div class="task-card">
+                                <div class="task-status">
+                                    <span class="badge ${getStatusBadge(t.status)}">${t.status}</span>
+                                </div>
+                                <strong style="font-size:1rem;">${t.taskName}</strong>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Weight: ${t.weight}%</p>
+                                <div style="display:flex; gap:10px; font-size:0.8rem; color:var(--text-muted);">
+                                    <span>Start: ${t.startDate ? new Date(t.startDate).toLocaleDateString() : '-'}</span>
+                                    <span>End: ${t.endDate ? new Date(t.endDate).toLocaleDateString() : '-'}</span>
+                                </div>
+                                <div style="display:flex; gap:10px; margin-top:10px; border-top:1px solid #f1f5f9; padding-top:10px;">
+                                    <button onclick="editTask(${JSON.stringify(t).replace(/"/g, '&quot;')})" style="border:none; background:none; color:var(--accent); cursor:pointer; font-size:0.8rem; font-weight:600;">Edit</button>
+                                    <button onclick="deleteTask(${t.taskId})" style="border:none; background:none; color:var(--danger); cursor:pointer; font-size:0.8rem; font-weight:600;">Delete</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            renderGantt(data.phases);
+        }
+
+        function getStatusBadge(status) {
+            switch(status) {
+                case 'Completed': return 'badge-success';
+                case 'In Progress': return 'badge-info';
+                case 'Delayed': return 'badge-danger';
+                default: return 'badge-warning';
+            }
+        }
+
+        function renderGantt(phases) {
+            const gantt = document.getElementById('gantt-container');
+            let tasks = [];
+            phases.forEach(p => p.tasks.forEach(t => tasks.push({ ...t, phase: p.phaseName })));
+
+            if (tasks.length === 0) {
+                gantt.innerHTML = '<p style="text-align:center; color:var(--text-muted)">Add tasks with dates to see the timeline.</p>';
+                return;
+            }
+
+            gantt.innerHTML = tasks.filter(t => t.startDate && t.endDate).map(t => {
+                const start = new Date(t.startDate);
+                const end = new Date(t.endDate);
+                const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24));
+                const left = (start.getDate() * 2); // Simple visualization logic
+
+                return `
+                    <div class="gantt-row">
+                        <div style="font-size:0.85rem;"><strong>${t.taskName}</strong><br><small>${t.phase}</small></div>
+                        <div class="gantt-bar-wrap">
+                            <div class="gantt-bar" style="width:${Math.min(100, duration*5)}%; margin-left:${Math.min(90, left)}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAddTask(phaseId) {
+            document.getElementById('task-form').reset();
+            document.getElementById('task-id').value = "0";
+            document.getElementById('task-phase-id').value = phaseId;
+            document.getElementById('modal-title').innerText = "Add New Task";
+            document.getElementById('taskModal').style.display = 'block';
+        }
+
+        function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
+
+        document.getElementById('task-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('task-id').value);
+            const task = {
+                taskId: id,
+                phaseId: parseInt(document.getElementById('task-phase-id').value),
+                taskName: document.getElementById('task-name').value,
+                status: document.getElementById('task-status').value,
+                weight: parseFloat(document.getElementById('task-weight').value),
+                startDate: document.getElementById('task-start').value,
+                endDate: document.getElementById('task-end').value
+            };
+
+            const url = id > 0 ? '/Construction/UpdateTask' : '/Construction/AddTask';
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(task)
+            });
+            closeModal();
+            loadConstructionData();
+        };
+
+        function editTask(t) {
+            document.getElementById('task-id').value = t.taskId;
+            document.getElementById('task-phase-id').value = t.phaseId;
+            document.getElementById('task-name').value = t.taskName;
+            document.getElementById('task-status').value = t.status;
+            document.getElementById('task-weight').value = t.weight;
+            if (t.startDate) document.getElementById('task-start').value = t.startDate.split('T')[0];
+            if (t.endDate) document.getElementById('task-end').value = t.endDate.split('T')[0];
+            document.getElementById('modal-title').innerText = "Edit Task";
+            document.getElementById('taskModal').style.display = 'block';
+        }
+
+        async function deleteTask(id) {
+            if (confirm('Delete this task?')) {
+                await fetch(`/Construction/DeleteTask?id=${id}`, { method: 'POST' });
+                loadConstructionData();
+            }
+        }
+
+        loadConstructionData();
+    </script>
+}

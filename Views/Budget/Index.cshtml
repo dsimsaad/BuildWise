@@ -1,0 +1,335 @@
+@{
+    ViewData["Title"] = "Budget & Expenses";
+    Layout = "_ModuleLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+    <style>
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { 
+            padding: 10px 20px; border-radius: 8px; border: none; background: #f1f5f9; 
+            color: #64748b; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .tab-btn.active { background: var(--accent); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Budget & Expenses</h1>
+        <p>Track your project finances and material costs.</p>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="summary-grid">
+    <div class="sum-card">
+        <div class="sum-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+        <div class="sum-info">
+            <h3>Total Budget</h3>
+            <p id="stat-total-budget">PKR 0</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#fef2f2; color:#ef4444;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg></div>
+        <div class="sum-info">
+            <h3>Total Spent</h3>
+            <p id="stat-total-spent">PKR 0</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#f0fdf4; color:#22c55e;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+        <div class="sum-info">
+            <h3>Remaining</h3>
+            <p id="stat-remaining">PKR 0</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#eff6ff; color:#2563eb;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg></div>
+        <div class="sum-info">
+            <h3>% Spent</h3>
+            <p id="stat-percent">0%</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="content-grid" style="margin-bottom: 30px;">
+    <div class="module-card">
+        <div class="card-header"><h2>Budget vs Actual</h2></div>
+        <div class="card-body">
+            <div class="chart-container"><canvas id="barChart"></canvas></div>
+        </div>
+    </div>
+    <div class="module-card">
+        <div class="card-header"><h2>Expense Breakdown</h2></div>
+        <div class="card-body">
+            <div class="chart-container"><canvas id="pieChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs for Adding/Viewing -->
+<div class="tab-buttons">
+    <button class="tab-btn active" onclick="showTab('tab-budgets')">Budgets</button>
+    <button class="tab-btn" onclick="showTab('tab-expenses')">Expenses</button>
+</div>
+
+<div id="tab-budgets" class="tab-content active">
+    <div class="content-grid">
+        <div class="module-card">
+            <div class="card-header"><h2>Add Category Budget</h2></div>
+            <div class="card-body">
+                <form id="budget-form">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="budget-category" class="form-control" onchange="checkCustom('budget-category', 'budget-custom')">
+                            <option value="Cement">Cement</option>
+                            <option value="Steel">Steel</option>
+                            <option value="Bricks">Bricks</option>
+                            <option value="Sand">Sand</option>
+                            <option value="Labour">Labour</option>
+                            <option value="Plumbing">Plumbing</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Paint">Paint</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Miscellaneous">Miscellaneous</option>
+                            <option value="custom">Other (Custom)</option>
+                        </select>
+                        <input type="text" id="budget-custom" class="form-control" style="display:none; margin-top:10px;" placeholder="Type custom category...">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (PKR)</label>
+                        <input type="number" id="budget-amount" class="form-control" placeholder="e.g. 500000">
+                    </div>
+                    <button type="submit" class="btn-primary">Set Budget</button>
+                </form>
+            </div>
+        </div>
+        <div class="module-card">
+            <div class="card-header"><h2>Active Budgets</h2></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr><th>Category</th><th>Amount</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="budget-list">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-expenses" class="tab-content">
+    <div class="content-grid">
+        <div class="module-card">
+            <div class="card-header"><h2>Add New Expense</h2></div>
+            <div class="card-body">
+                <form id="expense-form">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="expense-category" class="form-control" onchange="checkCustom('expense-category', 'expense-custom')">
+                            <option value="Cement">Cement</option>
+                            <option value="Steel">Steel</option>
+                            <option value="Bricks">Bricks</option>
+                            <option value="Sand">Sand</option>
+                            <option value="Labour">Labour</option>
+                            <option value="Plumbing">Plumbing</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Paint">Paint</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Miscellaneous">Miscellaneous</option>
+                            <option value="custom">Other (Custom)</option>
+                        </select>
+                        <input type="text" id="expense-custom" class="form-control" style="display:none; margin-top:10px;" placeholder="Type custom category...">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="expense-desc" class="form-control" placeholder="What was this for?">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (PKR)</label>
+                        <input type="number" id="expense-amount" class="form-control" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="expense-date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                    </div>
+                    <button type="submit" class="btn-primary">Add Expense</button>
+                </form>
+            </div>
+        </div>
+        <div class="module-card">
+            <div class="card-header"><h2>Expense Log</h2></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr><th>Category</th><th>Amount</th><th>Date</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="expense-list">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let barChart, pieChart;
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function checkCustom(selectId, inputId) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById(inputId);
+            input.style.display = select.value === 'custom' ? 'block' : 'none';
+        }
+
+        async function loadData() {
+            const res = await fetch('/Budget/GetData');
+            const data = await res.json();
+            
+            // Update Stats
+            document.getElementById('stat-total-budget').innerText = `PKR ${data.totalBudget.toLocaleString()}`;
+            document.getElementById('stat-total-spent').innerText = `PKR ${data.totalSpent.toLocaleString()}`;
+            const remaining = data.totalBudget - data.totalSpent;
+            document.getElementById('stat-remaining').innerText = `PKR ${remaining.toLocaleString()}`;
+            document.getElementById('stat-remaining').style.color = remaining < 0 ? 'var(--danger)' : 'var(--success)';
+            
+            const percent = data.totalBudget > 0 ? (data.totalSpent / data.totalBudget * 100).toFixed(1) : 0;
+            document.getElementById('stat-percent').innerText = `${percent}%`;
+
+            // Populating Budget Table
+            const budgetList = document.getElementById('budget-list');
+            budgetList.innerHTML = data.budgets.map(b => `
+                <tr>
+                    <td>${b.category}</td>
+                    <td>PKR ${b.amount.toLocaleString()}</td>
+                    <td class="action-btns">
+                        <button class="btn-icon btn-delete" onclick="deleteBudget(${b.budgetId})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Populating Expense Table
+            const expenseList = document.getElementById('expense-list');
+            expenseList.innerHTML = data.expenses.map(e => `
+                <tr>
+                    <td>${e.category}</td>
+                    <td>PKR ${e.amount.toLocaleString()}</td>
+                    <td>${new Date(e.expenseDate).toLocaleDateString()}</td>
+                    <td class="action-btns">
+                        <button class="btn-icon btn-delete" onclick="deleteExpense(${e.expenseId})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
+                    </td>
+                </tr>
+            `).join('');
+
+            updateCharts(data);
+        }
+
+        function updateCharts(data) {
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+
+            const labels = data.budgets.map(b => b.category);
+            const budgetData = data.budgets.map(b => b.amount);
+            const expenseData = labels.map(label => {
+                const ex = data.categoryExpenses.find(e => e.category === label);
+                return ex ? ex.amount : 0;
+            });
+
+            if (barChart) barChart.destroy();
+            barChart = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Budgeted', data: budgetData, backgroundColor: '#e2e8f0', borderRadius: 5 },
+                        { label: 'Actual Spent', data: expenseData, backgroundColor: '#2563eb', borderRadius: 5 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: data.categoryExpenses.map(e => e.category),
+                    datasets: [{
+                        data: data.categoryExpenses.map(e => e.amount),
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        document.getElementById('budget-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const categorySelect = document.getElementById('budget-category').value;
+            const category = categorySelect === 'custom' ? document.getElementById('budget-custom').value : categorySelect;
+            const amount = document.getElementById('budget-amount').value;
+
+            await fetch('/Budget/AddBudget', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category, amount: parseFloat(amount) })
+            });
+            loadData();
+            e.target.reset();
+        };
+
+        document.getElementById('expense-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const categorySelect = document.getElementById('expense-category').value;
+            const category = categorySelect === 'custom' ? document.getElementById('expense-custom').value : categorySelect;
+            
+            await fetch('/Budget/AddExpense', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category,
+                    description: document.getElementById('expense-desc').value,
+                    amount: parseFloat(document.getElementById('expense-amount').value),
+                    expenseDate: document.getElementById('expense-date').value
+                })
+            });
+            loadData();
+            e.target.reset();
+        };
+
+        async function deleteBudget(id) {
+            if (confirm('Delete this budget?')) {
+                await fetch(`/Budget/DeleteBudget?id=${id}`, { method: 'POST' });
+                loadData();
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (confirm('Delete this expense?')) {
+                await fetch(`/Budget/DeleteExpense?id=${id}`, { method: 'POST' });
+                loadData();
+            }
+        }
+
+        loadData();
+    </script>
+}
