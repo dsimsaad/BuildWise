@@ -1,0 +1,205 @@
+@{
+    ViewData["Title"] = "Home Page";
+    Layout = "_MarketingLayout";
+}
+
+<!-- ══════════════ HERO ══════════════ -->
+<section class="hero">
+  <!-- Background Decorative Elements -->
+  <div class="bg-shape shape-1"></div>
+  <div class="bg-shape shape-2"></div>
+  <div class="bg-shape shape-3"></div>
+  <div class="bg-shape shape-4"></div>
+  <div class="dot-pattern dots-1"></div>
+  <div class="dot-pattern dots-2"></div>
+  <div class="dot-pattern dots-3"></div>
+  <div class="dot-pattern dots-4"></div>
+
+  <div class="hero-inner reveal" id="hero-header">
+    <div class="hero-eyebrow-wrap">
+        <span class="hero-eyebrow">Construction Management Made Simple</span>
+    </div>
+    <h1>Track Your Construction Site.<br>Without the Chaos.</h1>
+    <p class="hero-sub">BuildWise helps you manage projects, track progress, organize teams, manage materials, and control budgets — all in one place.</p>
+    
+    <div class="hero-buttons">
+      <a href="/Home/Login" class="btn-primary">Start Tracking Now &nbsp;→</a>
+      <a href="#" class="btn-outline">
+        <div class="play-icon-simple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </div>
+        View Demo
+      </a>
+    </div>
+
+    <div class="hero-badges">
+      <span class="hero-badge">
+        <div class="check-icon-simple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        Easy to Use
+      </span>
+      <span class="hero-badge">
+        <div class="check-icon-simple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        Real-time Updates
+      </span>
+      <span class="hero-badge">
+        <div class="check-icon-simple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        Secure &amp; Reliable
+      </span>
+    </div>
+  </div>
+
+  <!-- Dashboard Mockup Removed to avoid confusion with the actual dashboard -->
+
+
+<!-- ══════════════ LOGOS BAR ══════════════ -->
+<section class="logos-section">
+  <div class="logos-inner reveal">
+    <p class="logos-label">Trusted by construction teams and contractors</p>
+    <div class="logos-grid">
+      <div class="logo-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg>
+        ConstructCo
+      </div>
+      <div class="logo-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
+        BuildTech
+      </div>
+      <div class="logo-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        UrbanBuild
+      </div>
+      <div class="logo-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+        InfraWorks
+      </div>
+      <div class="logo-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        StoneEdge
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FEATURES ══════════════ -->
+<section class="features-section">
+  <div class="features-inner">
+    <span class="section-eyebrow">Why BuildWise?</span>
+    <h2 class="section-title reveal">Everything You Need to Manage Construction Projects</h2>
+    <div class="features-grid">
+      <!-- Card 1 -->
+      <div class="feature-card reveal">
+        <div class="feature-icon-wrap">
+          <lord-icon
+              src="https://cdn.lordicon.com/kdduutaw.json"
+              trigger="hover"
+              stroke="bold"
+              colors="primary:#1e3a8a,secondary:#2563eb"
+              style="width:32px;height:32px">
+          </lord-icon>
+        </div>
+        <h3>Workforce Management</h3>
+        <p>Track attendance, manage shifts, and boost team productivity with real-time data.</p>
+        <div class="feature-bullets">
+          <span class="bullet-tag">Attendance Log</span>
+          <span class="bullet-tag">Shift Planning</span>
+          <span class="bullet-tag">Location Tracking</span>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="feature-card reveal">
+        <div class="feature-icon-wrap">
+          <lord-icon
+              src="https://cdn.lordicon.com/wjyqkiew.json"
+              trigger="hover"
+              stroke="bold"
+              colors="primary:#1e3a8a,secondary:#2563eb"
+              style="width:32px;height:32px">
+          </lord-icon>
+        </div>
+        <h3>Material Tracking</h3>
+        <p>Keep track of materials, inventory, and deliveries in real-time to avoid wastage.</p>
+        <div class="feature-bullets">
+          <span class="bullet-tag">Inventory Control</span>
+          <span class="bullet-tag">Waste Reduction</span>
+          <span class="bullet-tag">Supplier Portal</span>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="feature-card reveal">
+        <div class="feature-icon-wrap">
+          <lord-icon
+              src="https://cdn.lordicon.com/lvrxlmju.json"
+              trigger="hover"
+              stroke="bold"
+              colors="primary:#1e3a8a"
+              style="width:32px;height:32px">
+          </lord-icon>
+        </div>
+        <h3>Task Management</h3>
+        <p>Create tasks, set deadlines, assign teams, and track project progress effortlessly.</p>
+        <div class="feature-bullets">
+          <span class="bullet-tag">Deadline Alerts</span>
+          <span class="bullet-tag">Team Assignment</span>
+          <span class="bullet-tag">Progress Graphs</span>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="feature-card reveal">
+        <div class="feature-icon-wrap">
+          <lord-icon
+              src="https://cdn.lordicon.com/hmpomorl.json"
+              trigger="hover"
+              stroke="bold"
+              colors="primary:#1e3a8a,secondary:#2563eb"
+              style="width:32px;height:32px">
+          </lord-icon>
+        </div>
+        <h3>Reports &amp; Analytics</h3>
+        <p>Get detailed reports and financial insights to make data-driven site decisions.</p>
+        <div class="feature-bullets">
+          <span class="bullet-tag">Profit/Loss</span>
+          <span class="bullet-tag">Muster Reports</span>
+          <span class="bullet-tag">Tax-Ready Data</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CTA ══════════════ -->
+<section class="cta-section">
+  <div class="cta-inner reveal">
+    <svg class="cta-crane" viewBox="0 0 64 64" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="28" y="32" width="8" height="24" rx="1"/>
+      <line x1="32" y1="32" x2="32" y2="8"/>
+      <line x1="32" y1="8" x2="56" y2="8"/>
+      <line x1="32" y1="8" x2="14" y2="20"/>
+      <line x1="56" y1="8" x2="56" y2="20"/>
+      <line x1="48" y1="20" x2="56" y2="20"/>
+      <rect x="20" y="52" width="24" height="4" rx="1"/>
+    </svg>
+    <div class="cta-text">
+      <h2>Ready to take control of your construction site?</h2>
+      <p>Join BuildWise and build smarter, every day.</p>
+    </div>
+    <a href="/Home/Login" class="btn-cta">Get Started Now &nbsp;→</a>
+  </div>
+</section>
+

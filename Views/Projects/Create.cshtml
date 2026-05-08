@@ -1,0 +1,71 @@
+@model BuildWise.Models.Project
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Project</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="PropertyId" class="control-label"></label>
+                <select asp-for="PropertyId" class ="form-control" asp-items="ViewBag.PropertyId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="UserId" class="control-label"></label>
+                <select asp-for="UserId" class ="form-control" asp-items="ViewBag.UserId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="ProjectName" class="control-label"></label>
+                <input asp-for="ProjectName" class="form-control" />
+                <span asp-validation-for="ProjectName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Description" class="control-label"></label>
+                <input asp-for="Description" class="form-control" />
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="StartDate" class="control-label"></label>
+                <input asp-for="StartDate" class="form-control" />
+                <span asp-validation-for="StartDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ExpectedEndDate" class="control-label"></label>
+                <input asp-for="ExpectedEndDate" class="form-control" />
+                <span asp-validation-for="ExpectedEndDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ActualEndDate" class="control-label"></label>
+                <input asp-for="ActualEndDate" class="form-control" />
+                <span asp-validation-for="ActualEndDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TotalBudget" class="control-label"></label>
+                <input asp-for="TotalBudget" class="form-control" />
+                <span asp-validation-for="TotalBudget" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsCompleted" /> @Html.DisplayNameFor(model => model.IsCompleted)
+                </label>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

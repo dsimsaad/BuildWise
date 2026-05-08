@@ -1,0 +1,200 @@
+
+<style>
+#erd-wrap { padding: 8px 0; }
+#erd svg { width: 100%; }
+</style>
+<div id="erd-wrap"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '12px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#2a2a28' : '#f1efe8',
+    primaryBorderColor: dark ? '#5f5e5a' : '#b4b2a9',
+    primaryTextColor: dark ? '#c2c0b6' : '#3d3d3a',
+    edgeLabelBackground: dark ? '#1a1a18' : '#ffffff',
+  },
+});
+
+const diagram = `erDiagram
+  Users {
+    int UserID PK
+    nvarchar FullName
+    varchar Email
+    bit IsActive
+  }
+  Properties {
+    int PropertyID PK
+    int UserID FK
+    tinyint TypeID FK
+    tinyint StatusID FK
+    tinyint AreaUnitID FK
+    nvarchar Location
+    decimal AreaSize
+  }
+  Projects {
+    int ProjectID PK
+    int PropertyID FK
+    int UserID FK
+    decimal TotalBudget
+    bit IsCompleted
+  }
+  Phases {
+    int PhaseID PK
+    int ProjectID FK
+    tinyint PhaseTypeID FK
+    tinyint Sequence
+    bit IsCompleted
+  }
+  Tasks {
+    int TaskID PK
+    int PhaseID FK
+    int ContractorID FK
+    tinyint StatusID FK
+    decimal EstimatedCost
+  }
+  TaskWorkers {
+    int TaskWorkerID PK
+    int TaskID FK
+    int WorkerID FK
+  }
+  Contractors {
+    int ContractorID PK
+    nvarchar FullName
+    varchar Phone
+    decimal ContractCost
+  }
+  Workers {
+    int WorkerID PK
+    int ContractorID FK
+    nvarchar FullName
+    char CNIC
+    decimal DailyWage
+    nvarchar SkillType
+  }
+  Attendance {
+    int AttendanceID PK
+    int WorkerID FK
+    int ProjectID FK
+    date AttendanceDate
+    tinyint StatusID FK
+    decimal WageForDay
+  }
+  WagePayments {
+    int WagePaymentID PK
+    int WorkerID FK
+    int ProjectID FK
+    decimal AmountPaid
+    date PaymentDate
+  }
+  Materials {
+    int MaterialID PK
+    nvarchar MaterialName
+    tinyint DefaultUnitID FK
+  }
+  MaterialPurchases {
+    int PurchaseID PK
+    int ProjectID FK
+    int MaterialID FK
+    int SupplierID FK
+    decimal Quantity
+    decimal TotalCost
+  }
+  MaterialUsages {
+    int UsageID PK
+    int PurchaseID FK
+    int PhaseID FK
+    decimal QuantityUsed
+  }
+  Suppliers {
+    int SupplierID PK
+    nvarchar SupplierName
+    varchar Phone
+  }
+  Expenses {
+    int ExpenseID PK
+    int ProjectID FK
+    int PhaseID FK
+    tinyint CategoryID FK
+    decimal Amount
+    date ExpenseDate
+  }
+  Budgets {
+    int BudgetID PK
+    int ProjectID FK
+    decimal TotalBudget
+    decimal LaborBudget
+    decimal MaterialBudget
+  }
+  ClientPayments {
+    int PaymentID PK
+    int ProjectID FK
+    decimal Amount
+    date PaymentDate
+  }
+  ProjectAlerts {
+    int AlertID PK
+    int ProjectID FK
+    varchar AlertType
+    bit IsRead
+  }
+
+  Users ||--o{ Properties : owns
+  Users ||--o{ Projects : manages
+  Properties ||--o{ Projects : "has"
+  Projects ||--o{ Phases : contains
+  Projects ||--|| Budgets : "has"
+  Projects ||--o{ Expenses : tracks
+  Projects ||--o{ MaterialPurchases : buys
+  Projects ||--o{ Attendance : logs
+  Projects ||--o{ WagePayments : pays
+  Projects ||--o{ ClientPayments : receives
+  Projects ||--o{ ProjectAlerts : triggers
+  Phases ||--o{ Tasks : contains
+  Phases ||--o{ MaterialUsages : consumes
+  Tasks ||--o{ TaskWorkers : assigned
+  Workers ||--o{ TaskWorkers : works
+  Workers ||--o{ Attendance : marks
+  Workers ||--o{ WagePayments : receives
+  Contractors ||--o{ Tasks : handles
+  Contractors ||--o{ Workers : employs
+  Materials ||--o{ MaterialPurchases : purchased
+  MaterialPurchases ||--o{ MaterialUsages : used
+  Suppliers ||--o{ MaterialPurchases : supplies
+`;
+
+const { svg } = await mermaid.render('erd-svg', diagram);
+document.getElementById('erd-wrap').innerHTML = svg;
+
+document.querySelectorAll('#erd-wrap svg .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0],nums[2],nums[4],nums[6]];
+  const ys = [nums[1],nums[3],nums[5],nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs)-x, h = Math.max(...ys)-y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  rect.setAttribute('x',x); rect.setAttribute('y',y);
+  rect.setAttribute('width',w); rect.setAttribute('height',h);
+  rect.setAttribute('rx','8');
+  for(const a of ['fill','stroke','stroke-width','class','style']){
+    if(firstPath.hasAttribute(a)) rect.setAttribute(a,firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+document.querySelectorAll('#erd-wrap svg .row-rect-odd path, #erd-wrap svg .row-rect-even path').forEach(p=>{
+  p.setAttribute('stroke','none');
+});
+</script>

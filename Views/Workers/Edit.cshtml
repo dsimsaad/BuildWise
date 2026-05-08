@@ -1,0 +1,69 @@
+@model BuildWise.Models.Worker
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Worker</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="WorkerId" />
+            <div class="form-group">
+                <label asp-for="ContractorId" class="control-label"></label>
+                <select asp-for="ContractorId" class="form-control" asp-items="ViewBag.ContractorId"></select>
+                <span asp-validation-for="ContractorId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FullName" class="control-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Phone" class="control-label"></label>
+                <input asp-for="Phone" class="form-control" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Cnic" class="control-label"></label>
+                <input asp-for="Cnic" class="form-control" />
+                <span asp-validation-for="Cnic" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DailyWage" class="control-label"></label>
+                <input asp-for="DailyWage" class="form-control" />
+                <span asp-validation-for="DailyWage" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SkillType" class="control-label"></label>
+                <input asp-for="SkillType" class="form-control" />
+                <span asp-validation-for="SkillType" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CreatedAt" class="control-label"></label>
+                <input asp-for="CreatedAt" class="form-control" />
+                <span asp-validation-for="CreatedAt" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
+                </label>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
