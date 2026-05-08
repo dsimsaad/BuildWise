@@ -7,44 +7,47 @@
     <link rel="stylesheet" href="~/assets/css/modules.css">
     <style>
         .progress-header { 
-            background: white; padding: 40px; border-radius: 24px; box-shadow: var(--card-shadow);
-            text-align: center; margin-bottom: 40px;
+            background: white; padding: 32px; border-radius: 12px; border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-align: center; margin-bottom: 28px;
         }
         .progress-circle {
-            width: 150px; height: 150px; border-radius: 50%; border: 12px solid #f1f5f9;
-            margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;
+            width: 130px; height: 130px; border-radius: 50%; border: 10px solid #F1F5F9;
+            margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;
             position: relative;
         }
-        .progress-circle span { font-size: 2.5rem; font-weight: 800; color: var(--accent); }
+        .progress-circle span { font-size: 2rem; font-weight: 700; color: #1D4ED8; }
         
-        .phase-section { margin-bottom: 30px; }
+        .phase-section { margin-bottom: 24px; }
         .phase-header { 
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px;
+            padding: 12px 0; border-bottom: 1px solid #E2E8F0; margin-bottom: 16px;
         }
-        .phase-name { font-size: 1.2rem; font-weight: 700; color: var(--text-main); }
-        .phase-weight { color: var(--text-muted); font-size: 0.9rem; }
+        .phase-name { font-size: 1.1rem; font-weight: 700; color: #0F172A; }
+        .phase-weight { color: #64748B; font-size: 0.8125rem; }
 
-        .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
         .task-card { 
-            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px;
-            display: flex; flex-direction: column; gap: 10px; position: relative;
+            background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px;
+            display: flex; flex-direction: column; gap: 8px; position: relative;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: box-shadow 0.2s;
         }
-        .task-status { position: absolute; top: 15px; right: 15px; }
+        .task-card:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); }
+        .task-status { position: absolute; top: 14px; right: 14px; }
         
-        .gantt-timeline { margin-top: 50px; }
-        .gantt-row { display: grid; grid-template-columns: 200px 1fr; gap: 10px; margin-bottom: 15px; align-items: center; }
-        .gantt-bar-wrap { background: #f1f5f9; height: 30px; border-radius: 6px; position: relative; overflow: hidden; }
-        .gantt-bar { height: 100%; background: var(--accent); opacity: 0.8; border-radius: 6px; }
+        .gantt-timeline { margin-top: 28px; }
+        .gantt-row { display: grid; grid-template-columns: 200px 1fr; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .gantt-bar-wrap { background: #F1F5F9; height: 28px; border-radius: 6px; position: relative; overflow: hidden; }
+        .gantt-bar { height: 100%; background: #1D4ED8; opacity: 0.85; border-radius: 6px; }
         
         .modal { 
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            background: rgba(15,23,42,0.4); backdrop-filter: blur(4px);
         }
         .modal-body { 
-            background: white; margin: 10% auto; padding: 30px; border-radius: 20px; width: 400px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+            background: white; margin: 8% auto; padding: 28px; border-radius: 16px; width: 420px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); border: 1px solid #E2E8F0;
         }
+        .modal-body h2 { font-size: 1.25rem; font-weight: 700; color: #0F172A; margin: 0 0 20px 0; }
     </style>
 }
 

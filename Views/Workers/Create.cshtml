@@ -1,55 +1,58 @@
 @model BuildWise.Models.Worker
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Add Worker";
+    Layout = "_ModuleLayout";
 }
 
-<h1>Create</h1>
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
 
-<h4>Worker</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="ContractorId" class="control-label"></label>
-                <select asp-for="ContractorId" class ="form-control" asp-items="ViewBag.ContractorId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="FullName" class="control-label"></label>
-                <input asp-for="FullName" class="form-control" />
-                <span asp-validation-for="FullName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Phone" class="control-label"></label>
-                <input asp-for="Phone" class="form-control" />
-                <span asp-validation-for="Phone" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Cnic" class="control-label"></label>
-                <input asp-for="Cnic" class="form-control" />
-                <span asp-validation-for="Cnic" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DailyWage" class="control-label"></label>
-                <input asp-for="DailyWage" class="form-control" />
-                <span asp-validation-for="DailyWage" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="SkillType" class="control-label"></label>
-                <input asp-for="SkillType" class="form-control" />
-                <span asp-validation-for="SkillType" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+<div class="module-header">
+    <div class="module-title">
+        <h1>Add New Worker</h1>
+        <p>Fill in the details below to register a new worker.</p>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
+<div class="scaffold-form-card">
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
+        <div class="form-group">
+            <label asp-for="ContractorId">Contractor</label>
+            <select asp-for="ContractorId" class="form-control" asp-items="ViewBag.ContractorId"></select>
+        </div>
+        <div class="form-group">
+            <label asp-for="FullName">Full Name</label>
+            <input asp-for="FullName" class="form-control" placeholder="Worker's full name" />
+            <span asp-validation-for="FullName" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Phone">Phone</label>
+            <input asp-for="Phone" class="form-control" placeholder="Phone number" />
+            <span asp-validation-for="Phone" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Cnic">CNIC</label>
+            <input asp-for="Cnic" class="form-control" placeholder="CNIC number" />
+            <span asp-validation-for="Cnic" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="DailyWage">Daily Wage (PKR)</label>
+            <input asp-for="DailyWage" class="form-control" placeholder="0.00" />
+            <span asp-validation-for="DailyWage" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="SkillType">Skill Type</label>
+            <input asp-for="SkillType" class="form-control" placeholder="e.g. Electrician, Mason, Plumber" />
+            <span asp-validation-for="SkillType" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn-primary">Add Worker</button>
+            <a asp-action="Index" class="back-link">← Back to List</a>
+        </div>
+    </form>
 </div>
 
 @section Scripts {

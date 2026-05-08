@@ -1,66 +1,56 @@
 @model BuildWise.Models.Worker
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Worker Details";
+    Layout = "_ModuleLayout";
 }
 
-<h1>Details</h1>
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
 
-<div>
-    <h4>Worker</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FullName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FullName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Phone)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Phone)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Cnic)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Cnic)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DailyWage)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DailyWage)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.SkillType)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.SkillType)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsActive)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsActive)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Contractor)
-        </dt>
-        <dd class = "col-sm-10">
-            @(Model.Contractor?.FullName ?? "Independent Worker")
-        </dd>
-    </dl>
+<div class="module-header">
+    <div class="module-title">
+        <h1>Worker Details</h1>
+        <p>View complete information about this worker.</p>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.WorkerId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+<div class="scaffold-detail-card">
+    <dl>
+        <dt>Full Name</dt>
+        <dd><strong>@Html.DisplayFor(model => model.FullName)</strong></dd>
+
+        <dt>Phone</dt>
+        <dd>@Html.DisplayFor(model => model.Phone)</dd>
+
+        <dt>CNIC</dt>
+        <dd>@Html.DisplayFor(model => model.Cnic)</dd>
+
+        <dt>Daily Wage</dt>
+        <dd>PKR @Html.DisplayFor(model => model.DailyWage)</dd>
+
+        <dt>Skill Type</dt>
+        <dd><span class="badge badge-info">@Html.DisplayFor(model => model.SkillType)</span></dd>
+
+        <dt>Created At</dt>
+        <dd>@(Model.CreatedAt.ToString("MMM dd, yyyy"))</dd>
+
+        <dt>Status</dt>
+        <dd>
+            @if (Model.IsActive) {
+                <span class="badge badge-success">Active</span>
+            } else {
+                <span class="badge badge-danger">Inactive</span>
+            }
+        </dd>
+
+        <dt>Contractor</dt>
+        <dd>@(Model.Contractor?.FullName ?? "Independent Worker")</dd>
+    </dl>
+
+    <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #F1F5F9;">
+        <a asp-action="Edit" asp-route-id="@Model?.WorkerId" class="btn-primary" style="text-decoration: none;">Edit</a>
+        <a asp-action="Index" class="back-link">← Back to List</a>
+    </div>
 </div>

@@ -18,7 +18,7 @@
   <div class="nav-inner">
     <a href="/" class="nav-logo">
       <img src="~/logo.png" alt="BuildWise Logo" style="width:36px;height:36px;object-fit:contain;" />
-      <span class="logo-text">Build<span style="color: #2563eb;">Wise</span></span>
+      <span class="logo-text">Build<span style="color: #1D4ED8;">Wise</span></span>
     </a>
     <ul class="nav-links">
       <li><a href="/" class="@((ViewContext.RouteData.Values["Action"]?.ToString() ?? "") == "Index" ? "active" : "")">Home</a></li>
@@ -29,7 +29,7 @@
     <div class="nav-right">
       @if (User.Identity?.IsAuthenticated == true)
       {
-        <a href="/Home/Dashboard" class="btn-nav" style="margin-right: 10px; background: #2563eb;">Dashboard</a>
+        <a href="/Home/Dashboard" class="btn-nav" style="margin-right: 10px; background: #1D4ED8;">Dashboard</a>
         <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
           <button type="submit" class="btn-nav" style="background: #f87171;">Logout</button>
         </form>
@@ -71,7 +71,7 @@
       <div class="footer-brand">
         <a href="/" class="nav-logo">
           <img src="~/logo.png" alt="BuildWise Logo" style="width:36px;height:36px;object-fit:contain;" />
-          <span class="logo-text">Build<span style="color: #2563eb;">Wise</span></span>
+          <span class="logo-text">Build<span style="color: #1D4ED8;">Wise</span></span>
         </a>
       </div>
       <div class="footer-col">

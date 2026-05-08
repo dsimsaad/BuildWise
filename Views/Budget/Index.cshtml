@@ -6,117 +6,179 @@
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/modules.css">
     <style>
-        .chart-container { position: relative; height: 300px; width: 100%; }
-        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { 
-            padding: 10px 20px; border-radius: 8px; border: none; background: #f1f5f9; 
-            color: #64748b; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 24px;
         }
-        .tab-btn.active { background: var(--accent); color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+
+        .segmented-control {
+            display: flex;
+            background: #F1F5F9;
+            padding: 4px;
+            border-radius: 10px;
+            gap: 4px;
+        }
+
+        .seg-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: #64748B;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .seg-btn.active {
+            background: #FFFFFF;
+            color: #0F172A;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tab-section { display: none; animation: fadeIn 0.3s ease; }
+        .tab-section.active { display: block; }
+        @@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .split-grid {
+            display: grid;
+            grid-template-columns: 1fr 2.5fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 280px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 }
 
-<div class="module-header">
-    <div class="module-title">
+<div class="budget-header">
+    <div class="module-title" style="margin: 0;">
         <h1>Budget & Expenses</h1>
-        <p>Track your project finances and material costs.</p>
+        <p>Track your project finances, monitor costs, and prevent overspending.</p>
+    </div>
+    
+    <div class="segmented-control">
+        <button class="seg-btn active" onclick="switchTab('overview')">Overview</button>
+        <button class="seg-btn" onclick="switchTab('budgets')">Manage Budgets</button>
+        <button class="seg-btn" onclick="switchTab('expenses')">Manage Expenses</button>
     </div>
 </div>
 
 <!-- Summary Cards -->
-<div class="summary-grid">
-    <div class="sum-card">
-        <div class="sum-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+<div class="summary-grid" style="margin-bottom: 32px;">
+    <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
+        <div class="sum-icon" style="background: #EFF6FF; color: #1D4ED8;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+        </div>
         <div class="sum-info">
-            <h3>Total Budget</h3>
-            <p id="stat-total-budget">PKR 0</p>
+            <h3 style="color: #64748B; font-weight: 500; font-size: 0.8125rem;">Total Budget</h3>
+            <p id="stat-total-budget" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">PKR 0</p>
         </div>
     </div>
-    <div class="sum-card">
-        <div class="sum-icon" style="background:#fef2f2; color:#ef4444;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg></div>
+    <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
+        <div class="sum-icon" style="background: #FFFBEB; color: #F59E0B;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        </div>
         <div class="sum-info">
-            <h3>Total Spent</h3>
-            <p id="stat-total-spent">PKR 0</p>
+            <h3 style="color: #64748B; font-weight: 500; font-size: 0.8125rem;">Total Spent</h3>
+            <p id="stat-total-spent" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">PKR 0</p>
         </div>
     </div>
-    <div class="sum-card">
-        <div class="sum-icon" style="background:#f0fdf4; color:#22c55e;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+    <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
+        <div class="sum-icon" style="background: #ECFDF5; color: #10B981;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        </div>
         <div class="sum-info">
-            <h3>Remaining</h3>
-            <p id="stat-remaining">PKR 0</p>
+            <h3 style="color: #64748B; font-weight: 500; font-size: 0.8125rem;">Remaining</h3>
+            <p id="stat-remaining" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">PKR 0</p>
         </div>
     </div>
-    <div class="sum-card">
-        <div class="sum-icon" style="background:#eff6ff; color:#2563eb;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg></div>
+    <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
+        <div class="sum-icon" style="background: #F8FAFC; color: #475569;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+        </div>
         <div class="sum-info">
-            <h3>% Spent</h3>
-            <p id="stat-percent">0%</p>
+            <h3 style="color: #64748B; font-weight: 500; font-size: 0.8125rem;">Utilization</h3>
+            <p id="stat-percent" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">0%</p>
         </div>
     </div>
 </div>
 
-<!-- Charts Section -->
-<div class="content-grid" style="margin-bottom: 30px;">
-    <div class="module-card">
-        <div class="card-header"><h2>Budget vs Actual</h2></div>
-        <div class="card-body">
-            <div class="chart-container"><canvas id="barChart"></canvas></div>
-        </div>
-    </div>
-    <div class="module-card">
-        <div class="card-header"><h2>Expense Breakdown</h2></div>
-        <div class="card-body">
-            <div class="chart-container"><canvas id="pieChart"></canvas></div>
-        </div>
-    </div>
-</div>
-
-<!-- Tabs for Adding/Viewing -->
-<div class="tab-buttons">
-    <button class="tab-btn active" onclick="showTab('tab-budgets')">Budgets</button>
-    <button class="tab-btn" onclick="showTab('tab-expenses')">Expenses</button>
-</div>
-
-<div id="tab-budgets" class="tab-content active">
-    <div class="content-grid">
-        <div class="module-card">
-            <div class="card-header"><h2>Add Category Budget</h2></div>
-            <div class="card-body">
-                <form id="budget-form">
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select id="budget-category" class="form-control" onchange="checkCustom('budget-category', 'budget-custom')">
-                            <option value="Cement">Cement</option>
-                            <option value="Steel">Steel</option>
-                            <option value="Bricks">Bricks</option>
-                            <option value="Sand">Sand</option>
-                            <option value="Labour">Labour</option>
-                            <option value="Plumbing">Plumbing</option>
-                            <option value="Electrical">Electrical</option>
-                            <option value="Paint">Paint</option>
-                            <option value="Equipment">Equipment</option>
-                            <option value="Miscellaneous">Miscellaneous</option>
-                            <option value="custom">Other (Custom)</option>
-                        </select>
-                        <input type="text" id="budget-custom" class="form-control" style="display:none; margin-top:10px;" placeholder="Type custom category...">
-                    </div>
-                    <div class="form-group">
-                        <label>Amount (PKR)</label>
-                        <input type="number" id="budget-amount" class="form-control" placeholder="e.g. 500000">
-                    </div>
-                    <button type="submit" class="btn-primary">Set Budget</button>
-                </form>
+<!-- Overview Tab -->
+<div id="tab-overview" class="tab-section active">
+    <div class="content-grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
+            <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
+                <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A;">Budget vs Actual</h2>
+            </div>
+            <div class="card-body" style="padding: 24px;">
+                <div class="chart-wrapper"><canvas id="barChart"></canvas></div>
             </div>
         </div>
-        <div class="module-card">
-            <div class="card-header"><h2>Active Budgets</h2></div>
-            <div class="card-body">
+        <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
+            <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
+                <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A;">Expense Distribution</h2>
+            </div>
+            <div class="card-body" style="padding: 24px;">
+                <div class="chart-wrapper"><canvas id="pieChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budgets Tab -->
+<div id="tab-budgets" class="tab-section">
+    <div class="split-grid">
+        <div class="scaffold-form-card" style="margin: 0; position: sticky; top: 24px;">
+            <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A; margin-bottom: 20px;">Allocate Budget</h2>
+            <form id="budget-form">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="budget-category" class="form-control" onchange="checkCustom('budget-category', 'budget-custom')">
+                        <option value="Cement">Cement</option>
+                        <option value="Steel">Steel</option>
+                        <option value="Bricks">Bricks</option>
+                        <option value="Sand">Sand</option>
+                        <option value="Labour">Labour</option>
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Paint">Paint</option>
+                        <option value="Equipment">Equipment</option>
+                        <option value="Miscellaneous">Miscellaneous</option>
+                        <option value="custom">Other (Custom)</option>
+                    </select>
+                    <input type="text" id="budget-custom" class="form-control" style="display:none; margin-top:10px;" placeholder="Type custom category...">
+                </div>
+                <div class="form-group">
+                    <label>Amount (PKR)</label>
+                    <input type="number" id="budget-amount" class="form-control" placeholder="e.g. 500000" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 12px;">Save Allocation</button>
+            </form>
+        </div>
+        <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
+            <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
+                <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A;">Allocated Categories</h2>
+            </div>
+            <div class="card-body" style="padding: 0;">
                 <div class="table-responsive">
                     <table class="modern-table">
                         <thead>
-                            <tr><th>Category</th><th>Amount</th><th>Actions</th></tr>
+                            <tr>
+                                <th>Category</th>
+                                <th>Allocated Amount</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
                         </thead>
                         <tbody id="budget-list">
                             <!-- JS populated -->
@@ -128,52 +190,59 @@
     </div>
 </div>
 
-<div id="tab-expenses" class="tab-content">
-    <div class="content-grid">
-        <div class="module-card">
-            <div class="card-header"><h2>Add New Expense</h2></div>
-            <div class="card-body">
-                <form id="expense-form">
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select id="expense-category" class="form-control" onchange="checkCustom('expense-category', 'expense-custom')">
-                            <option value="Cement">Cement</option>
-                            <option value="Steel">Steel</option>
-                            <option value="Bricks">Bricks</option>
-                            <option value="Sand">Sand</option>
-                            <option value="Labour">Labour</option>
-                            <option value="Plumbing">Plumbing</option>
-                            <option value="Electrical">Electrical</option>
-                            <option value="Paint">Paint</option>
-                            <option value="Equipment">Equipment</option>
-                            <option value="Miscellaneous">Miscellaneous</option>
-                            <option value="custom">Other (Custom)</option>
-                        </select>
-                        <input type="text" id="expense-custom" class="form-control" style="display:none; margin-top:10px;" placeholder="Type custom category...">
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <input type="text" id="expense-desc" class="form-control" placeholder="What was this for?">
-                    </div>
-                    <div class="form-group">
-                        <label>Amount (PKR)</label>
-                        <input type="number" id="expense-amount" class="form-control" placeholder="0.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" id="expense-date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")">
-                    </div>
-                    <button type="submit" class="btn-primary">Add Expense</button>
-                </form>
-            </div>
+<!-- Expenses Tab -->
+<div id="tab-expenses" class="tab-section">
+    <div class="split-grid">
+        <div class="scaffold-form-card" style="margin: 0; position: sticky; top: 24px;">
+            <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A; margin-bottom: 20px;">Log New Expense</h2>
+            <form id="expense-form">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="expense-category" class="form-control" onchange="checkCustom('expense-category', 'expense-custom')">
+                        <option value="Cement">Cement</option>
+                        <option value="Steel">Steel</option>
+                        <option value="Bricks">Bricks</option>
+                        <option value="Sand">Sand</option>
+                        <option value="Labour">Labour</option>
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Paint">Paint</option>
+                        <option value="Equipment">Equipment</option>
+                        <option value="Miscellaneous">Miscellaneous</option>
+                        <option value="custom">Other (Custom)</option>
+                    </select>
+                    <input type="text" id="expense-custom" class="form-control" style="display:none; margin-top:10px;" placeholder="Type custom category...">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="expense-desc" class="form-control" placeholder="Brief details about the expense" required>
+                </div>
+                <div class="form-group">
+                    <label>Amount (PKR)</label>
+                    <input type="number" id="expense-amount" class="form-control" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="expense-date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 12px;">Record Expense</button>
+            </form>
         </div>
-        <div class="module-card">
-            <div class="card-header"><h2>Expense Log</h2></div>
-            <div class="card-body">
+        <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
+            <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
+                <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A;">Recent Transactions</h2>
+            </div>
+            <div class="card-body" style="padding: 0;">
                 <div class="table-responsive">
                     <table class="modern-table">
                         <thead>
-                            <tr><th>Category</th><th>Amount</th><th>Date</th><th>Actions</th></tr>
+                            <tr>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
                         </thead>
                         <tbody id="expense-list">
                             <!-- JS populated -->
@@ -189,10 +258,11 @@
     <script>
         let barChart, pieChart;
 
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-section').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
             event.target.classList.add('active');
         }
 
@@ -200,6 +270,7 @@
             const select = document.getElementById(selectId);
             const input = document.getElementById(inputId);
             input.style.display = select.value === 'custom' ? 'block' : 'none';
+            if (select.value === 'custom') input.focus();
         }
 
         async function loadData() {
@@ -211,35 +282,48 @@
             document.getElementById('stat-total-spent').innerText = `PKR ${data.totalSpent.toLocaleString()}`;
             const remaining = data.totalBudget - data.totalSpent;
             document.getElementById('stat-remaining').innerText = `PKR ${remaining.toLocaleString()}`;
-            document.getElementById('stat-remaining').style.color = remaining < 0 ? 'var(--danger)' : 'var(--success)';
+            document.getElementById('stat-remaining').style.color = remaining < 0 ? '#EF4444' : '#10B981';
             
             const percent = data.totalBudget > 0 ? (data.totalSpent / data.totalBudget * 100).toFixed(1) : 0;
             document.getElementById('stat-percent').innerText = `${percent}%`;
 
             // Populating Budget Table
             const budgetList = document.getElementById('budget-list');
-            budgetList.innerHTML = data.budgets.map(b => `
-                <tr>
-                    <td>${b.category}</td>
-                    <td>PKR ${b.amount.toLocaleString()}</td>
-                    <td class="action-btns">
-                        <button class="btn-icon btn-delete" onclick="deleteBudget(${b.budgetId})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
-                    </td>
-                </tr>
-            `).join('');
+            if (data.budgets.length === 0) {
+                budgetList.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #94A3B8; padding: 32px;">No budgets allocated yet.</td></tr>';
+            } else {
+                budgetList.innerHTML = data.budgets.map(b => `
+                    <tr>
+                        <td><span style="font-weight: 500; color: #0F172A;">${b.category}</span></td>
+                        <td>PKR ${b.amount.toLocaleString()}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-icon btn-delete" onclick="deleteBudget(${b.budgetId})" title="Delete Budget" style="margin-left: auto;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
 
             // Populating Expense Table
             const expenseList = document.getElementById('expense-list');
-            expenseList.innerHTML = data.expenses.map(e => `
-                <tr>
-                    <td>${e.category}</td>
-                    <td>PKR ${e.amount.toLocaleString()}</td>
-                    <td>${new Date(e.expenseDate).toLocaleDateString()}</td>
-                    <td class="action-btns">
-                        <button class="btn-icon btn-delete" onclick="deleteExpense(${e.expenseId})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
-                    </td>
-                </tr>
-            `).join('');
+            if (data.expenses.length === 0) {
+                expenseList.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94A3B8; padding: 32px;">No expenses recorded yet.</td></tr>';
+            } else {
+                expenseList.innerHTML = data.expenses.map(e => `
+                    <tr>
+                        <td><span class="badge badge-info">${e.category}</span></td>
+                        <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #475569;">${e.description || '—'}</td>
+                        <td style="font-weight: 500; color: #0F172A;">PKR ${e.amount.toLocaleString()}</td>
+                        <td style="color: #64748B;">${new Date(e.expenseDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-icon btn-delete" onclick="deleteExpense(${e.expenseId})" title="Delete Expense" style="margin-left: auto;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
 
             updateCharts(data);
         }
@@ -261,11 +345,21 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Budgeted', data: budgetData, backgroundColor: '#e2e8f0', borderRadius: 5 },
-                        { label: 'Actual Spent', data: expenseData, backgroundColor: '#2563eb', borderRadius: 5 }
+                        { label: 'Budgeted', data: budgetData, backgroundColor: '#E2E8F0', borderRadius: 4, barPercentage: 0.6 },
+                        { label: 'Actual Spent', data: expenseData, backgroundColor: '#1D4ED8', borderRadius: 4, barPercentage: 0.6 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: '#F1F5F9' }, border: { dash: [4, 4] } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } }
+                    }
+                }
             });
 
             if (pieChart) pieChart.destroy();
@@ -275,10 +369,19 @@
                     labels: data.categoryExpenses.map(e => e.category),
                     datasets: [{
                         data: data.categoryExpenses.map(e => e.amount),
-                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4']
+                        backgroundColor: ['#1D4ED8', '#60A5FA', '#10B981', '#F59E0B', '#A78BFA', '#F472B6', '#38BDF8'],
+                        borderWidth: 0,
+                        hoverOffset: 4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    cutout: '70%',
+                    plugins: { 
+                        legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, padding: 20 } } 
+                    } 
+                }
             });
         }
 
@@ -288,13 +391,22 @@
             const category = categorySelect === 'custom' ? document.getElementById('budget-custom').value : categorySelect;
             const amount = document.getElementById('budget-amount').value;
 
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerText = 'Saving...';
+            btn.disabled = true;
+
             await fetch('/Budget/AddBudget', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ category, amount: parseFloat(amount) })
             });
-            loadData();
+            
+            await loadData();
             e.target.reset();
+            document.getElementById('budget-custom').style.display = 'none';
+            btn.innerText = originalText;
+            btn.disabled = false;
         };
 
         document.getElementById('expense-form').onsubmit = async (e) => {
@@ -302,6 +414,11 @@
             const categorySelect = document.getElementById('expense-category').value;
             const category = categorySelect === 'custom' ? document.getElementById('expense-custom').value : categorySelect;
             
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerText = 'Recording...';
+            btn.disabled = true;
+
             await fetch('/Budget/AddExpense', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -312,19 +429,24 @@
                     expenseDate: document.getElementById('expense-date').value
                 })
             });
-            loadData();
+            
+            await loadData();
             e.target.reset();
+            document.getElementById('expense-custom').style.display = 'none';
+            document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+            btn.innerText = originalText;
+            btn.disabled = false;
         };
 
         async function deleteBudget(id) {
-            if (confirm('Delete this budget?')) {
+            if (confirm('Delete this budget allocation?')) {
                 await fetch(`/Budget/DeleteBudget?id=${id}`, { method: 'POST' });
                 loadData();
             }
         }
 
         async function deleteExpense(id) {
-            if (confirm('Delete this expense?')) {
+            if (confirm('Delete this expense record?')) {
                 await fetch(`/Budget/DeleteExpense?id=${id}`, { method: 'POST' });
                 loadData();
             }
