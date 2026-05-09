@@ -33,6 +33,17 @@ body {
 .reveal:nth-child(3) { transition-delay: 0.16s; }
 .reveal:nth-child(4) { transition-delay: 0.24s; }
 
+/* Dashboard Mockup Float */
+@keyframes float-mockup {
+  0% { transform: translateY(0); box-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.15); }
+  50% { transform: translateY(-12px); box-shadow: 0 32px 72px -12px rgba(15, 23, 42, 0.25); }
+  100% { transform: translateY(0); box-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.15); }
+}
+
+.hero-dashboard-mockup.active {
+  /* animation removed as requested */
+}
+
 /* Global Nav */
 nav {
   position: sticky;
@@ -72,7 +83,7 @@ nav {
 .logo-text {
   font-size: 23px;
   font-weight: 800;
-  color: var(--primary);
+  color: #0F172A;
   letter-spacing: -0.4px;
 }
 .nav-links {

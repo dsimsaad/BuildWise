@@ -77,8 +77,7 @@ Or use `.` which means "this computer":
 Open a terminal (Command Prompt or PowerShell) in the project folder:
 
 ```bash
-dotnet restore
-dotnet run --urls "http://localhost:5200"
+dd
 ```
 
 Then open your browser and go to: **http://localhost:5200**

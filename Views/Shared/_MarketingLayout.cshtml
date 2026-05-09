@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.lordicon.com/lordicon.js"></script>
+  <link rel="icon" type="image/png" href="~/logo.png" />
   <link rel="stylesheet" href="~/assets/css/style.css">
 </head>
 <body>
@@ -27,17 +28,7 @@
       <li><a href="/Home/Contact" class="@((ViewContext.RouteData.Values["Action"]?.ToString() ?? "") == "Contact" ? "active" : "")">Contact</a></li>
     </ul>
     <div class="nav-right">
-      @if (User.Identity?.IsAuthenticated == true)
-      {
-        <a href="/Home/Dashboard" class="btn-nav" style="margin-right: 10px; background: #1D4ED8;">Dashboard</a>
-        <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
-          <button type="submit" class="btn-nav" style="background: #f87171;">Logout</button>
-        </form>
-      }
-      else
-      {
         <a href="/Home/Login" class="btn-nav">Get Started</a>
-      }
     </div>
     <button class="mobile-menu-btn" id="mobile-toggle">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
@@ -48,17 +39,7 @@
     <a href="/Home/Features">Features</a>
     <a href="/Home/FAQ">FAQ</a>
     <a href="/Home/Contact">Contact</a>
-    @if (User.Identity?.IsAuthenticated == true)
-    {
-      <a href="/Home/Dashboard">Dashboard</a>
-      <form asp-controller="Account" asp-action="Logout" method="post">
-        <button type="submit" class="btn-nav" style="width: 100%; margin-top: 10px; background: #f87171;">Logout</button>
-      </form>
-    }
-    else
-    {
       <a href="/Home/Login" class="btn-nav">Get Started</a>
-    }
   </div>
 </nav>
 
