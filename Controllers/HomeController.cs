@@ -1,18 +1,22 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using BuildWise.Models;
+using BuildWise.BusinessLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace BuildWise.Controllers;
 
 public class HomeController : Controller
 {
     private readonly BuildWiseDbContext _context;
+    private readonly IConfiguration _configuration;
 
-    public HomeController(BuildWiseDbContext context)
+    public HomeController(BuildWiseDbContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
 
     public IActionResult Index()
@@ -40,7 +44,12 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult FAQ()
+    public IActionResult Pricing()
+    {
+        return View();
+    }
+
+    public IActionResult About()
     {
         return View();
     }
@@ -71,108 +80,107 @@ public class HomeController : Controller
     [Authorize]
     public async Task<IActionResult> Dashboard()
     {
-        // Get active project from session
+        // 1. Get current User ID from claims
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+        if (userIdClaim == null) return RedirectToAction("Index", "Account");
+        int userId = int.Parse(userIdClaim.Value);
+
+        // 2. Fetch Selected Project and Verify Ownership
         int? selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
-
-        // Base queries
-        var projectQuery = _context.Projects.AsQueryable();
-        var taskQuery    = _context.Tasks.AsQueryable();
-        var expenseQuery = _context.Expenses.AsQueryable();
-        var budgetQuery  = _context.Budgets.AsQueryable();
-        var vwDashQuery  = _context.VwProjectDashboards.AsQueryable();
-        var vwExpQuery   = _context.VwExpenseHistories.AsQueryable();
-
-        // Apply filters if a project is selected
         if (selectedProjectId.HasValue)
         {
-            projectQuery = projectQuery.Where(p => p.ProjectId == selectedProjectId);
-            taskQuery    = taskQuery.Where(t => t.Phase.ProjectId == selectedProjectId); // Linking through Phase
-            expenseQuery = expenseQuery.Where(e => e.ProjectId == selectedProjectId);
-            budgetQuery  = budgetQuery.Where(b => b.ProjectId == selectedProjectId);
-            vwDashQuery  = vwDashQuery.Where(v => v.ProjectId == selectedProjectId);
-            vwExpQuery   = vwExpQuery.Where(v => v.ProjectId == selectedProjectId);
+            bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == selectedProjectId && p.UserId == userId);
+            if (!ownsProject)
+            {
+                HttpContext.Session.Remove("SelectedProjectId");
+                selectedProjectId = null;
+            }
+        }
+        ViewBag.SelectedProjectId = selectedProjectId;
+
+        // 3. Base Queries Filtered by User
+        var projectQuery = _context.Projects.Where(p => p.UserId == userId);
+        var taskQuery    = _context.Tasks.Where(t => t.Phase.Project.UserId == userId);
+        var vwDashQuery  = from v in _context.VwProjectDashboards
+                          join p in _context.Projects on v.ProjectId equals p.ProjectId
+                          where p.UserId == userId
+                          select v;
+        var vwExpQuery   = from v in _context.VwExpenseHistories
+                          join p in _context.Projects on v.ProjectId equals p.ProjectId
+                          where p.UserId == userId
+                          select v;
+
+        var budgetBll = new BudgetBLL(_configuration.GetConnectionString("BuildWise") ?? "");
+        var expenseBll = new ExpenseBLL(_configuration.GetConnectionString("BuildWise") ?? "");
+
+        // 4. Populate Stats
+        if (selectedProjectId.HasValue)
+        {
+            var activeStats = await vwDashQuery.FirstOrDefaultAsync(v => v.ProjectId == selectedProjectId);
             
-            ViewBag.ActiveProjectName = await _context.Projects
-                .Where(p => p.ProjectId == selectedProjectId)
-                .Select(p => p.ProjectName)
-                .FirstOrDefaultAsync();
-        }
+            ViewBag.TotalProjects   = 1;
+            ViewBag.ActiveProjects  = (activeStats?.IsCompleted == false) ? 1 : 0;
+            ViewBag.TotalBudget     = budgetBll.GetTotalBudget(selectedProjectId);
+            ViewBag.TotalExpenses   = expenseBll.GetTotalSpent(selectedProjectId);
+            ViewBag.ActiveProjectName = activeStats?.ProjectName;
 
-        // 1. Top Stats
-        ViewBag.TotalProjects   = await projectQuery.CountAsync();
-        ViewBag.ActiveProjects  = await projectQuery.CountAsync(p => !p.IsCompleted);
-        
-        // Workers count (tricky if project filtered, we look for workers assigned to tasks in this project)
-        if (selectedProjectId.HasValue) {
-            ViewBag.TotalWorkers = await _context.TaskWorkers
-                .Where(tw => tw.Task.Phase.ProjectId == selectedProjectId)
-                .Select(tw => tw.WorkerId)
-                .Distinct()
+            ViewBag.TotalWorkers = await _context.Attendances
+                .Where(a => a.ProjectId == selectedProjectId && a.Project.UserId == userId)
+                .Select(a => a.WorkerId).Distinct().CountAsync();
+
+            ViewBag.WorkersOnSite = await _context.Attendances
+                .Where(a => a.ProjectId == selectedProjectId && a.Project.UserId == userId && a.AttendanceDate == DateOnly.FromDateTime(DateTime.Today) && a.StatusId == 1)
                 .CountAsync();
-        } else {
-            ViewBag.TotalWorkers = await _context.Workers.CountAsync();
+
+            ViewBag.TotalTasks      = activeStats?.TotalTasks ?? 0;
+            ViewBag.TasksToDo       = await taskQuery.CountAsync(t => t.Phase.ProjectId == selectedProjectId && t.StatusId == 1);
+            ViewBag.TasksInProgress = await taskQuery.CountAsync(t => t.Phase.ProjectId == selectedProjectId && t.StatusId == 2);
+            ViewBag.TasksCompleted  = activeStats?.CompletedTasks ?? 0;
+            ViewBag.TasksOverdue    = await taskQuery.CountAsync(t => t.Phase.ProjectId == selectedProjectId && t.StatusId == 1 && t.CreatedAt < DateTime.Now.AddDays(-7));
+            
+            ViewBag.Phases = await _context.Phases
+                .Include(p => p.PhaseType).Include(p => p.Tasks)
+                .Where(p => p.ProjectId == selectedProjectId)
+                .OrderBy(p => p.Sequence).ToListAsync();
+        }
+        else
+        {
+            var allStats = await vwDashQuery.ToListAsync();
+            ViewBag.TotalProjects   = allStats.Count;
+            ViewBag.ActiveProjects  = allStats.Count(s => !s.IsCompleted);
+            ViewBag.TotalWorkers    = await _context.Workers.CountAsync(w => w.UserId == userId);
+            ViewBag.WorkersOnSite   = await _context.Attendances
+                .Where(a => a.Project.UserId == userId && a.AttendanceDate == DateOnly.FromDateTime(DateTime.Today) && a.StatusId == 1)
+                .CountAsync();
+            
+            ViewBag.TotalBudget     = budgetBll.GetTotalBudgetForUser(userId);
+            ViewBag.TotalExpenses   = expenseBll.GetTotalSpentForUser(userId);
+
+            ViewBag.TotalTasks      = await taskQuery.CountAsync();
+            ViewBag.TasksToDo       = await taskQuery.CountAsync(t => t.StatusId == 1);
+            ViewBag.TasksInProgress = await taskQuery.CountAsync(t => t.StatusId == 2);
+            ViewBag.TasksCompleted  = await taskQuery.CountAsync(t => t.StatusId == 3);
+            ViewBag.TasksOverdue    = await taskQuery.CountAsync(t => t.StatusId == 1 && t.CreatedAt < DateTime.Now.AddDays(-7));
+            
+            ViewBag.ProjectsNotStarted = allStats.Count(s => (s.PhaseProgressPct ?? 0) == 0);
+            ViewBag.ProjectsInProgress = allStats.Count(s => (s.PhaseProgressPct ?? 0) > 0 && !s.IsCompleted);
+            ViewBag.ProjectsCompleted  = allStats.Count(s => s.IsCompleted);
+            
+            ViewBag.Projects = allStats;
         }
 
-        ViewBag.TotalTasks      = await taskQuery.CountAsync();
-        ViewBag.PendingTasks    = await taskQuery.CountAsync(t => t.StatusId == 1);
+        // 5. Common Data
+        ViewBag.RecentExpensesList = await vwExpQuery
+            .OrderByDescending(e => e.ExpenseDate).Take(5).ToListAsync();
 
-        ViewBag.TotalBudget     = await budgetQuery.SumAsync(b => b.TotalBudget);
-        ViewBag.TotalExpenses   = await expenseQuery.SumAsync(e => e.Amount);
-
-        // 2. Project Status Breakdown
-        ViewBag.ProjectsNotStarted = await projectQuery.CountAsync(p => !p.Phases.Any());
-        ViewBag.ProjectsInProgress = await projectQuery.CountAsync(p => !p.IsCompleted && p.Phases.Any());
-        ViewBag.ProjectsCompleted  = await projectQuery.CountAsync(p => p.IsCompleted);
-        ViewBag.ProjectsOnHold     = 0;
-
-        // 3. Monthly Data
-        var sixMonthsAgo = DateOnly.FromDateTime(DateTime.Today.AddMonths(-6));
-        ViewBag.MonthlyExpenses = await expenseQuery
-            .Where(e => e.ExpenseDate >= sixMonthsAgo)
-            .GroupBy(e => new { e.ExpenseDate.Year, e.ExpenseDate.Month })
-            .Select(g => new { Year = g.Key.Year, Month = g.Key.Month, Total = g.Sum(e => e.Amount) })
-            .OrderBy(g => g.Year).ThenBy(g => g.Month)
-            .ToListAsync();
-
-        // 4. Expenses by Category
         ViewBag.CategoryExpenses = await vwExpQuery
             .GroupBy(e => e.CategoryName)
             .Select(g => new { Category = g.Key, Total = g.Sum(e => e.Amount) })
             .ToListAsync();
-
-        // 5. Recent Projects
-        ViewBag.Projects = await vwDashQuery
-            .OrderByDescending(p => p.ProjectId)
-            .Take(5)
-            .ToListAsync();
-
-        // 6. Recent Expenses
-        ViewBag.RecentExpensesList = await vwExpQuery
-            .OrderByDescending(e => e.ExpenseDate)
-            .Take(5)
-            .ToListAsync();
-
-        // 7. Tasks Summary
-        ViewBag.TasksToDo       = await taskQuery.CountAsync(t => t.StatusId == 1);
-        ViewBag.TasksInProgress = await taskQuery.CountAsync(t => t.StatusId == 2);
-        ViewBag.TasksCompleted  = await taskQuery.CountAsync(t => t.StatusId == 3);
-        ViewBag.TasksOverdue    = await taskQuery.CountAsync(t => t.StatusId == 1 && t.CreatedAt < DateTime.Now.AddDays(-7));
-
-        // 8. Active Workers Summary
-        if (selectedProjectId.HasValue) {
-            ViewBag.WorkersOnSite = await _context.TaskWorkers
-                .Where(tw => tw.Task.Phase.ProjectId == selectedProjectId)
-                .Select(tw => tw.WorkerId)
-                .Distinct()
-                .CountAsync();
-        } else {
-            ViewBag.WorkersOnSite = await _context.Workers.CountAsync(w => w.IsActive == true);
-        }
-        
+            
         ViewBag.WorkersOffSite  = 0;
         ViewBag.WorkersOnLeave  = 0;
 
         return View();
     }
-
 }

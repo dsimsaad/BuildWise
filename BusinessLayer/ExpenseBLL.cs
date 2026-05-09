@@ -19,9 +19,9 @@ namespace BuildWise.BusinessLayer
             budgetDal = new BudgetDAL(connectionString);
         }
 
-        public List<ExpenseItem> GetAllExpenses()
+        public List<ExpenseItem> GetAllExpenses(int? projectId = null, int? userId = null)
         {
-            return expenseDal.GetAll();
+            return expenseDal.GetAll(projectId, userId);
         }
 
         public ExpenseItem GetExpenseById(int id)
@@ -76,19 +76,24 @@ namespace BuildWise.BusinessLayer
             return success;
         }
 
-        public decimal GetTotalSpent()
+        public decimal GetTotalSpent(int? projectId = null)
         {
-            return expenseDal.GetTotalExpenses();
+            return expenseDal.GetTotalExpenses(projectId);
         }
 
-        public List<BudgetItem> GetExpensesByCategory()
+        public decimal GetTotalSpentForUser(int userId)
         {
-            return expenseDal.GetExpensesByCategory();
+            return expenseDal.GetTotalSpentForUser(userId);
+        }
+
+        public List<BudgetItem> GetExpensesByCategory(int? projectId = null)
+        {
+            return expenseDal.GetExpensesByCategory(projectId);
         }
 
         private void LogTransaction(string type, ExpenseItem item)
         {
-            decimal totalBudget = budgetDal.GetTotalBudget();
+            decimal totalBudget = budgetDal.GetTotalBudget(item.ProjectId);
             decimal effect = 0;
             if (totalBudget > 0)
             {
@@ -97,6 +102,7 @@ namespace BuildWise.BusinessLayer
 
             TransactionLog log = new TransactionLog
             {
+                ProjectId = item.ProjectId,
                 TransactionType = type,
                 Category = item.Category,
                 Description = item.Description,

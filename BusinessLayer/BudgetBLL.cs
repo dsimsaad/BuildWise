@@ -15,9 +15,9 @@ namespace BuildWise.BusinessLayer
             dal = new BudgetDAL(connectionString);
         }
 
-        public List<BudgetItem> GetAllBudgets()
+        public List<BudgetItem> GetAllBudgets(int? projectId = null, int? userId = null)
         {
-            return dal.GetAll();
+            return dal.GetAll(projectId, userId);
         }
 
         public BudgetItem GetBudgetById(int id)
@@ -50,9 +50,14 @@ namespace BuildWise.BusinessLayer
             return dal.Delete(id);
         }
 
-        public decimal GetTotalBudget()
+        public decimal GetTotalBudget(int? projectId = null)
         {
-            return dal.GetTotalBudget();
+            return dal.GetTotalBudget(projectId);
+        }
+
+        public decimal GetTotalBudgetForUser(int userId)
+        {
+            return dal.GetTotalBudgetForUser(userId);
         }
     }
 }

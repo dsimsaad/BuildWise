@@ -20,12 +20,21 @@ namespace BuildWise.Controllers
             return View();
         }
 
+        private int? GetSelectedProjectId()
+        {
+            return HttpContext.Session.GetInt32("SelectedProjectId");
+        }
+
         [HttpGet]
         public IActionResult GetTransactions(string category, string type, DateTime? fromDate, DateTime? toDate)
         {
-            var list = _bll.GetFilteredTransactions(category, type, fromDate, toDate);
-            var totalCount = _bll.GetTotalTransactionsCount();
-            var totalAmount = _bll.GetTotalTransactionAmount();
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+
+            var selectedProjectId = GetSelectedProjectId();
+            var list = _bll.GetFilteredTransactions(category, type, fromDate, toDate, selectedProjectId, userId);
+            var totalCount = _bll.GetTotalTransactionsCount(selectedProjectId, userId);
+            var totalAmount = _bll.GetTotalTransactionAmount(selectedProjectId, userId);
 
             return Json(new { 
                 transactions = list,

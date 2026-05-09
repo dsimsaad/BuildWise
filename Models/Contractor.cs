@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace BuildWise.Models;
@@ -6,6 +6,8 @@ namespace BuildWise.Models;
 public partial class Contractor
 {
     public int ContractorId { get; set; }
+
+    public int? UserId { get; set; }
 
     public string FullName { get; set; } = null!;
 

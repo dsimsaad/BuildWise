@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BuildWise.Models;
 using System.Security.Claims;
-
 using Microsoft.AspNetCore.Authorization;
 
 namespace BuildWise.Controllers
@@ -18,10 +17,18 @@ namespace BuildWise.Controllers
             _context = context;
         }
 
+        private int GetUserId()
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+        }
+
         // GET: Projects
         public async Task<IActionResult> Index()
         {
+            int userId = GetUserId();
             var projects = await _context.Projects
+                .Where(p => p.UserId == userId)
                 .ToListAsync();
             return View(projects);
         }
@@ -30,11 +37,12 @@ namespace BuildWise.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
+            int userId = GetUserId();
 
             var project = await _context.Projects
                 .Include(p => p.Property)
                 .Include(p => p.User)
-                .FirstOrDefaultAsync(m => m.ProjectId == id);
+                .FirstOrDefaultAsync(m => m.ProjectId == id && m.UserId == userId);
 
             if (project == null) return NotFound();
             return View(project);
@@ -43,19 +51,15 @@ namespace BuildWise.Controllers
         // GET: Projects/Create
         public IActionResult Create()
         {
-            return View();
+            return View(new ProjectCreateViewModel());
         }
 
         // POST: Projects/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProjectName,Description")] Project project)
+        public async Task<IActionResult> Create(ProjectCreateViewModel model)
         {
-            var userIdClaim = User.FindFirstValue("UserId");
-            if (!int.TryParse(userIdClaim, out var currentUserId))
-            {
-                ModelState.AddModelError("", "Unable to identify current user.");
-            }
+            int currentUserId = GetUserId();
 
             if (ModelState.IsValid)
             {
@@ -84,7 +88,7 @@ namespace BuildWise.Controllers
                     if (!defaultTypeId.HasValue || !defaultStatusId.HasValue || !defaultAreaUnitId.HasValue)
                     {
                         ModelState.AddModelError("", "Unable to initialize required default property metadata.");
-                        return View(project);
+                        return View(model);
                     }
 
                     var bootstrapProperty = new Property
@@ -107,28 +111,35 @@ namespace BuildWise.Controllers
                     propertyId = bootstrapProperty.PropertyId;
                 }
 
-                project.PropertyId = propertyId.Value;
-                project.UserId = currentUserId;
-                project.StartDate = DateOnly.FromDateTime(DateTime.Now);
-                project.ExpectedEndDate = null;
-                project.ActualEndDate = null;
-                project.TotalBudget = 0;
-                project.IsCompleted = false;
-                project.CreatedAt = DateTime.Now;
-                project.UpdatedAt = DateTime.Now;
+                var project = new Project
+                {
+                    ProjectName = model.ProjectName.Trim(),
+                    Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
+                    PropertyId = propertyId.Value,
+                    UserId = currentUserId,
+                    StartDate = DateOnly.FromDateTime(DateTime.Now),
+                    ExpectedEndDate = null,
+                    ActualEndDate = null,
+                    TotalBudget = 0,
+                    IsCompleted = false,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+
                 _context.Add(project);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(project);
+            return View(model);
         }
 
         // GET: Projects/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
+            int userId = GetUserId();
 
-            var project = await _context.Projects.FindAsync(id);
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == id && p.UserId == userId);
             if (project == null) return NotFound();
 
             return View(project);
@@ -140,13 +151,14 @@ namespace BuildWise.Controllers
         public async Task<IActionResult> Edit(int id, [Bind("ProjectId,ProjectName,Description,IsCompleted,CreatedAt")] Project project)
         {
             if (id != project.ProjectId) return NotFound();
+            int userId = GetUserId();
 
             if (ModelState.IsValid)
             {
                 try
                 {
                     var existingProject = await _context.Projects.AsNoTracking()
-                        .FirstOrDefaultAsync(p => p.ProjectId == id);
+                        .FirstOrDefaultAsync(p => p.ProjectId == id && p.UserId == userId);
                     if (existingProject == null) return NotFound();
 
                     project.PropertyId = existingProject.PropertyId;
@@ -173,11 +185,12 @@ namespace BuildWise.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
+            int userId = GetUserId();
 
             var project = await _context.Projects
                 .Include(p => p.Property)
                 .Include(p => p.User)
-                .FirstOrDefaultAsync(m => m.ProjectId == id);
+                .FirstOrDefaultAsync(m => m.ProjectId == id && m.UserId == userId);
 
             if (project == null) return NotFound();
             return View(project);
@@ -188,7 +201,8 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var project = await _context.Projects.FindAsync(id);
+            int userId = GetUserId();
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == id && p.UserId == userId);
             if (project != null)
                 _context.Projects.Remove(project);
 
@@ -197,6 +211,6 @@ namespace BuildWise.Controllers
         }
 
         private bool ProjectExists(int id) =>
-            _context.Projects.Any(e => e.ProjectId == id);
+            _context.Projects.Any(e => e.ProjectId == id && e.UserId == GetUserId());
     }
 }

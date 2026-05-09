@@ -20,10 +20,18 @@ namespace BuildWise.Controllers
             return View();
         }
 
+        private int? GetSelectedProjectId()
+        {
+            return HttpContext.Session.GetInt32("SelectedProjectId");
+        }
+
         [HttpGet]
         public IActionResult GetAnalysis()
         {
-            var results = _bll.GetAnalysis();
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+
+            var results = _bll.GetAnalysis(GetSelectedProjectId(), userId);
             return Json(results);
         }
     }

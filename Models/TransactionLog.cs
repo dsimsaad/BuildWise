@@ -6,6 +6,7 @@ namespace BuildWise.Models
     public class TransactionLog
     {
         public int TransactionId { get; set; }
+        public int? ProjectId { get; set; }
         public DateTime TransactionDate { get; set; }
         public string TransactionType { get; set; }  // Added, Updated, Deleted
         public string Category { get; set; }

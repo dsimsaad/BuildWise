@@ -6,6 +6,7 @@ namespace BuildWise.Models
     public class ExpenseItem
     {
         public int ExpenseId { get; set; }
+        public int? ProjectId { get; set; }
         public string Category { get; set; }
         public string Description { get; set; }
         public decimal Amount { get; set; }

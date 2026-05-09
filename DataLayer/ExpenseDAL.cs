@@ -13,23 +13,46 @@ namespace BuildWise.DataLayer
         public ExpenseDAL(string connectionString)
         {
             this.connectionString = connectionString;
+            EnsureProjectColumn();
         }
 
-        public List<ExpenseItem> GetAll()
+        private void EnsureProjectColumn()
+        {
+            using SqlConnection conn = new SqlConnection(connectionString);
+            conn.Open();
+            string query = @"
+IF COL_LENGTH('ExpenseItems', 'ProjectId') IS NULL
+BEGIN
+    ALTER TABLE ExpenseItems ADD ProjectId INT NULL;
+END";
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<ExpenseItem> GetAll(int? projectId = null, int? userId = null)
         {
             List<ExpenseItem> list = new List<ExpenseItem>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT ExpenseId, Category, Description, Amount, ExpenseDate, CreatedAt, UpdatedAt FROM ExpenseItems ORDER BY ExpenseDate DESC";
+                string query = @"
+SELECT e.ExpenseId, e.ProjectId, e.Category, e.Description, e.Amount, e.ExpenseDate, e.CreatedAt, e.UpdatedAt
+FROM ExpenseItems e
+INNER JOIN Projects p ON e.ProjectId = p.ProjectId
+WHERE (@ProjectId IS NULL OR e.ProjectId = @ProjectId)
+  AND (@UserId IS NULL OR p.UserId = @UserId)
+ORDER BY e.ExpenseDate DESC";
                 SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ProjectId", (object?)projectId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())
                 {
                     ExpenseItem item = new ExpenseItem();
                     item.ExpenseId = Convert.ToInt32(reader["ExpenseId"]);
+                    item.ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null;
                     item.Category = reader["Category"].ToString();
                     item.Description = reader["Description"] != DBNull.Value ? reader["Description"].ToString() : "";
                     item.Amount = Convert.ToDecimal(reader["Amount"]);
@@ -50,7 +73,7 @@ namespace BuildWise.DataLayer
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT ExpenseId, Category, Description, Amount, ExpenseDate, CreatedAt, UpdatedAt FROM ExpenseItems WHERE ExpenseId = @Id";
+                string query = "SELECT ExpenseId, ProjectId, Category, Description, Amount, ExpenseDate, CreatedAt, UpdatedAt FROM ExpenseItems WHERE ExpenseId = @Id";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@Id", id);
                 SqlDataReader reader = cmd.ExecuteReader();
@@ -59,6 +82,7 @@ namespace BuildWise.DataLayer
                 {
                     item = new ExpenseItem();
                     item.ExpenseId = Convert.ToInt32(reader["ExpenseId"]);
+                    item.ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null;
                     item.Category = reader["Category"].ToString();
                     item.Description = reader["Description"] != DBNull.Value ? reader["Description"].ToString() : "";
                     item.Amount = Convert.ToDecimal(reader["Amount"]);
@@ -76,8 +100,9 @@ namespace BuildWise.DataLayer
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "INSERT INTO ExpenseItems (Category, Description, Amount, ExpenseDate) VALUES (@Category, @Description, @Amount, @ExpenseDate)";
+                string query = "INSERT INTO ExpenseItems (ProjectId, Category, Description, Amount, ExpenseDate) VALUES (@ProjectId, @Category, @Description, @Amount, @ExpenseDate)";
                 SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ProjectId", (object?)item.ProjectId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Category", item.Category);
                 cmd.Parameters.AddWithValue("@Description", (object)item.Description ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Amount", item.Amount);
@@ -114,13 +139,31 @@ namespace BuildWise.DataLayer
             }
         }
 
-        public decimal GetTotalExpenses()
+        public decimal GetTotalExpenses(int? projectId = null)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT ISNULL(SUM(Amount), 0) FROM ExpenseItems";
+                string query = "SELECT ISNULL(SUM(Amount), 0) FROM ExpenseItems WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)";
                 SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ProjectId", (object?)projectId ?? DBNull.Value);
+                object result = cmd.ExecuteScalar();
+                return Convert.ToDecimal(result);
+            }
+        }
+
+        public decimal GetTotalSpentForUser(int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = @"
+                    SELECT ISNULL(SUM(e.Amount), 0) 
+                    FROM ExpenseItems e
+                    INNER JOIN Projects p ON e.ProjectId = p.ProjectId
+                    WHERE p.UserId = @UserId";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@UserId", userId);
                 object result = cmd.ExecuteScalar();
                 return Convert.ToDecimal(result);
             }
@@ -129,15 +172,21 @@ namespace BuildWise.DataLayer
         /// <summary>
         /// Returns total expenses grouped by category
         /// </summary>
-        public List<BudgetItem> GetExpensesByCategory()
+        public List<BudgetItem> GetExpensesByCategory(int? projectId = null)
         {
             List<BudgetItem> list = new List<BudgetItem>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT Category, SUM(Amount) AS Amount FROM ExpenseItems GROUP BY Category ORDER BY Category";
+                string query = @"
+SELECT Category, SUM(Amount) AS Amount
+FROM ExpenseItems
+WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)
+GROUP BY Category
+ORDER BY Category";
                 SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ProjectId", (object?)projectId ?? DBNull.Value);
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())

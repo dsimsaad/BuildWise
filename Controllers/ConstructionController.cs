@@ -21,11 +21,20 @@ namespace BuildWise.Controllers
             return View();
         }
 
+        private int? GetSelectedProjectId()
+        {
+            return HttpContext.Session.GetInt32("SelectedProjectId");
+        }
+
         [HttpGet]
         public IActionResult GetProgressData()
         {
-            var structure = _bll.GetFullProjectStructure();
-            var overallProgress = _bll.CalculateOverallProgress();
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+
+            var selectedProjectId = GetSelectedProjectId();
+            var structure = _bll.GetFullProjectStructure(selectedProjectId, userId);
+            var overallProgress = _bll.CalculateOverallProgress(selectedProjectId, userId);
             
             return Json(new { 
                 phases = structure,
@@ -36,6 +45,7 @@ namespace BuildWise.Controllers
         [HttpPost]
         public IActionResult AddPhase([FromBody] ConstructionPhase phase)
         {
+            phase.ProjectId = GetSelectedProjectId();
             if (_bll.AddPhase(phase)) return Json(new { success = true });
             return Json(new { success = false });
         }

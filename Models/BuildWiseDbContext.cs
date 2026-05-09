@@ -213,6 +213,7 @@ public partial class BuildWiseDbContext : DbContext
             entity.HasKey(e => e.ContractorId).HasName("PK__Contract__E964EB5D1EDCB5FF");
 
             entity.Property(e => e.ContractorId).HasColumnName("ContractorID");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.ContractCost).HasColumnType("decimal(12, 2)");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.Email)
@@ -909,6 +910,7 @@ public partial class BuildWiseDbContext : DbContext
             entity.Property(e => e.WorkerId)
                 .HasComment("Auto-increment PK")
                 .HasColumnName("WorkerID");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.Cnic)
                 .HasMaxLength(15)
                 .IsUnicode(false)

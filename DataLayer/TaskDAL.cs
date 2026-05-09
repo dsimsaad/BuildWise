@@ -45,15 +45,22 @@ namespace BuildWise.DataLayer
             return list;
         }
 
-        public List<PhaseTask> GetAll()
+        public List<PhaseTask> GetAll(int? userId = null)
         {
             List<PhaseTask> list = new List<PhaseTask>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT TaskId, PhaseId, TaskName, Status, StartDate, EndDate, Weight, CreatedAt FROM PhaseTasks ORDER BY PhaseId, CreatedAt";
+                string query = @"
+SELECT t.TaskId, t.PhaseId, t.TaskName, t.Status, t.StartDate, t.EndDate, t.Weight, t.CreatedAt 
+FROM PhaseTasks t
+INNER JOIN ConstructionPhases cp ON t.PhaseId = cp.PhaseId
+INNER JOIN Projects p ON cp.ProjectId = p.ProjectId
+WHERE (@UserId IS NULL OR p.UserId = @UserId)
+ORDER BY t.PhaseId, t.CreatedAt";
                 SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())

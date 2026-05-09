@@ -13,23 +13,46 @@ namespace BuildWise.DataLayer
         public PhaseDAL(string connectionString)
         {
             this.connectionString = connectionString;
+            EnsureProjectColumn();
         }
 
-        public List<ConstructionPhase> GetAll()
+        private void EnsureProjectColumn()
+        {
+            using SqlConnection conn = new SqlConnection(connectionString);
+            conn.Open();
+            string query = @"
+IF COL_LENGTH('ConstructionPhases', 'ProjectId') IS NULL
+BEGIN
+    ALTER TABLE ConstructionPhases ADD ProjectId INT NULL;
+END";
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<ConstructionPhase> GetAll(int? projectId = null, int? userId = null)
         {
             List<ConstructionPhase> list = new List<ConstructionPhase>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT PhaseId, PhaseName, Weight, SortOrder, CreatedAt FROM ConstructionPhases ORDER BY SortOrder";
+                string query = @"
+SELECT cp.PhaseId, cp.ProjectId, cp.PhaseName, cp.Weight, cp.SortOrder, cp.CreatedAt
+FROM ConstructionPhases cp
+INNER JOIN Projects p ON cp.ProjectId = p.ProjectId
+WHERE (@ProjectId IS NULL OR cp.ProjectId = @ProjectId)
+  AND (@UserId IS NULL OR p.UserId = @UserId)
+ORDER BY cp.SortOrder";
                 SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ProjectId", (object?)projectId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())
                 {
                     ConstructionPhase item = new ConstructionPhase();
                     item.PhaseId = Convert.ToInt32(reader["PhaseId"]);
+                    item.ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null;
                     item.PhaseName = reader["PhaseName"].ToString();
                     item.Weight = Convert.ToDecimal(reader["Weight"]);
                     item.SortOrder = Convert.ToInt32(reader["SortOrder"]);
@@ -46,8 +69,9 @@ namespace BuildWise.DataLayer
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "INSERT INTO ConstructionPhases (PhaseName, Weight, SortOrder) VALUES (@PhaseName, @Weight, @SortOrder)";
+                string query = "INSERT INTO ConstructionPhases (ProjectId, PhaseName, Weight, SortOrder) VALUES (@ProjectId, @PhaseName, @Weight, @SortOrder)";
                 SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ProjectId", (object?)item.ProjectId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@PhaseName", item.PhaseName);
                 cmd.Parameters.AddWithValue("@Weight", item.Weight);
                 cmd.Parameters.AddWithValue("@SortOrder", item.SortOrder);

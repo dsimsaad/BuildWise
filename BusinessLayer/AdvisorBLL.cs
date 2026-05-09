@@ -17,14 +17,20 @@ namespace BuildWise.BusinessLayer
             expenseDal = new ExpenseDAL(connectionString);
         }
 
-        public List<AdvisorResult> GetAnalysis()
+        public List<AdvisorResult> GetAnalysis(int? projectId = null, int? userId = null)
         {
             List<AdvisorResult> results = new List<AdvisorResult>();
             
-            decimal totalBudget = budgetDal.GetTotalBudget();
-            decimal totalSpent = expenseDal.GetTotalExpenses();
-            List<BudgetItem> budgetItems = budgetDal.GetAll();
-            List<BudgetItem> expenseItems = expenseDal.GetExpensesByCategory();
+            decimal totalBudget = (projectId.HasValue) 
+                ? budgetDal.GetTotalBudget(projectId) 
+                : (userId.HasValue ? budgetDal.GetTotalBudgetForUser(userId.Value) : 0);
+                
+            decimal totalSpent = (projectId.HasValue) 
+                ? expenseDal.GetTotalExpenses(projectId) 
+                : (userId.HasValue ? expenseDal.GetTotalSpentForUser(userId.Value) : 0);
+                
+            List<BudgetItem> budgetItems = budgetDal.GetAll(projectId, userId);
+            List<BudgetItem> expenseItems = expenseDal.GetExpensesByCategory(projectId);
 
             // 1. Total Budget vs Total Spent Rules
             if (totalBudget == 0)

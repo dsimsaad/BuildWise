@@ -6,6 +6,7 @@ namespace BuildWise.Models
     public class ConstructionPhase
     {
         public int PhaseId { get; set; }
+        public int? ProjectId { get; set; }
         public string PhaseName { get; set; }
         public decimal Weight { get; set; }      // importance percentage
         public int SortOrder { get; set; }

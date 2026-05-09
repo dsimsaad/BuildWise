@@ -15,24 +15,24 @@ namespace BuildWise.BusinessLayer
             dal = new TransactionDAL(connectionString);
         }
 
-        public List<TransactionLog> GetAllTransactions()
+        public List<TransactionLog> GetAllTransactions(int? projectId = null)
         {
-            return dal.GetAll();
+            return dal.GetAll(projectId);
         }
 
-        public List<TransactionLog> GetFilteredTransactions(string category, string type, DateTime? fromDate, DateTime? toDate)
+        public List<TransactionLog> GetFilteredTransactions(string category, string type, DateTime? fromDate, DateTime? toDate, int? projectId = null, int? userId = null)
         {
-            return dal.GetFiltered(category, type, fromDate, toDate);
+            return dal.GetFiltered(category, type, fromDate, toDate, projectId, userId);
         }
 
-        public int GetTotalTransactionsCount()
+        public int GetTotalTransactionsCount(int? projectId = null, int? userId = null)
         {
-            return dal.GetTotalCount();
+            return dal.GetTotalCount(projectId, userId);
         }
 
-        public decimal GetTotalTransactionAmount()
+        public decimal GetTotalTransactionAmount(int? projectId = null, int? userId = null)
         {
-            return dal.GetTotalAmount();
+            return dal.GetTotalAmount(projectId, userId);
         }
     }
 }

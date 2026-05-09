@@ -17,9 +17,9 @@ namespace BuildWise.BusinessLayer
             taskDal = new TaskDAL(connectionString);
         }
 
-        public List<ConstructionPhase> GetFullProjectStructure()
+        public List<ConstructionPhase> GetFullProjectStructure(int? projectId = null, int? userId = null)
         {
-            List<ConstructionPhase> phases = phaseDal.GetAll();
+            List<ConstructionPhase> phases = phaseDal.GetAll(projectId, userId);
             foreach (var phase in phases)
             {
                 phase.Tasks = taskDal.GetByPhaseId(phase.PhaseId);
@@ -28,9 +28,9 @@ namespace BuildWise.BusinessLayer
             return phases;
         }
 
-        public decimal CalculateOverallProgress()
+        public decimal CalculateOverallProgress(int? projectId = null, int? userId = null)
         {
-            List<ConstructionPhase> phases = GetFullProjectStructure();
+            List<ConstructionPhase> phases = GetFullProjectStructure(projectId, userId);
             decimal overall = 0;
             decimal totalWeight = 0;
 

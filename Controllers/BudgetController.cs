@@ -24,14 +24,28 @@ namespace BuildWise.Controllers
             return View();
         }
 
+        private int? GetSelectedProjectId()
+        {
+            return HttpContext.Session.GetInt32("SelectedProjectId");
+        }
+
         [HttpGet]
         public IActionResult GetData()
         {
-            var budgets = _budgetBll.GetAllBudgets();
-            var expenses = _expenseBll.GetAllExpenses();
-            var totalBudget = _budgetBll.GetTotalBudget();
-            var totalSpent = _expenseBll.GetTotalSpent();
-            var categoryExpenses = _expenseBll.GetExpensesByCategory();
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+
+            var selectedProjectId = GetSelectedProjectId();
+            var budgets = _budgetBll.GetAllBudgets(selectedProjectId, userId);
+            var expenses = _expenseBll.GetAllExpenses(selectedProjectId, userId);
+            var totalBudget = selectedProjectId.HasValue 
+                ? _budgetBll.GetTotalBudget(selectedProjectId) 
+                : _budgetBll.GetTotalBudgetForUser(userId);
+            var totalSpent = selectedProjectId.HasValue 
+                ? _expenseBll.GetTotalSpent(selectedProjectId) 
+                : _expenseBll.GetTotalSpentForUser(userId);
+            
+            var categoryExpenses = _expenseBll.GetExpensesByCategory(selectedProjectId); // Needs user filtering too if null
 
             return Json(new { 
                 budgets, 
@@ -45,6 +59,7 @@ namespace BuildWise.Controllers
         [HttpPost]
         public IActionResult AddBudget([FromBody] BudgetItem item)
         {
+            item.ProjectId = GetSelectedProjectId();
             if (_budgetBll.AddBudget(item))
                 return Json(new { success = true });
             return Json(new { success = false, message = "Invalid data" });
@@ -69,6 +84,7 @@ namespace BuildWise.Controllers
         [HttpPost]
         public IActionResult AddExpense([FromBody] ExpenseItem item)
         {
+            item.ProjectId = GetSelectedProjectId();
             if (_expenseBll.AddExpense(item))
                 return Json(new { success = true });
             return Json(new { success = false, message = "Invalid data" });
