@@ -175,9 +175,4 @@ public class HomeController : Controller
         return View();
     }
 
-    public async Task<IActionResult> CheckUsers()
-    {
-        var users = await _context.Users.ToListAsync();
-        return Json(users);
-    }
 }

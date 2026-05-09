@@ -20,14 +20,6 @@
     <form asp-action="Create">
         <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
         <div class="form-group">
-            <label asp-for="PropertyId">Property</label>
-            <select asp-for="PropertyId" class="form-control" asp-items="ViewBag.PropertyId"></select>
-        </div>
-        <div class="form-group">
-            <label asp-for="UserId">User</label>
-            <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId"></select>
-        </div>
-        <div class="form-group">
             <label asp-for="ProjectName">Project Name</label>
             <input asp-for="ProjectName" class="form-control" placeholder="Enter project name" />
             <span asp-validation-for="ProjectName" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
@@ -37,30 +29,9 @@
             <input asp-for="Description" class="form-control" placeholder="Brief description" />
             <span asp-validation-for="Description" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
         </div>
-        <div class="form-group">
-            <label asp-for="StartDate">Start Date</label>
-            <input asp-for="StartDate" class="form-control" type="date" />
-            <span asp-validation-for="StartDate" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
-        </div>
-        <div class="form-group">
-            <label asp-for="ExpectedEndDate">Expected End Date</label>
-            <input asp-for="ExpectedEndDate" class="form-control" type="date" />
-            <span asp-validation-for="ExpectedEndDate" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
-        </div>
-        <div class="form-group">
-            <label asp-for="ActualEndDate">Actual End Date</label>
-            <input asp-for="ActualEndDate" class="form-control" type="date" />
-            <span asp-validation-for="ActualEndDate" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
-        </div>
-        <div class="form-group">
-            <label asp-for="TotalBudget">Total Budget (PKR)</label>
-            <input asp-for="TotalBudget" class="form-control" placeholder="0.00" />
-            <span asp-validation-for="TotalBudget" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
-        </div>
-        <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
-            <input class="form-check-input" asp-for="IsCompleted" style="width: 16px; height: 16px; accent-color: #1D4ED8;" />
-            <label asp-for="IsCompleted" style="margin: 0; font-size: 0.875rem;">Mark as Completed</label>
-        </div>
+        <p style="margin-top: 4px; font-size: 0.8125rem; color: #64748B;">
+            Start date is automatically recorded when you create the project.
+        </p>
         <div style="display: flex; gap: 12px; margin-top: 24px;">
             <button type="submit" class="btn-primary">Create Project</button>
             <a asp-action="Index" class="back-link">← Back to List</a>

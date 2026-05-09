@@ -21,6 +21,7 @@ public class ProjectSelectorViewComponent : ViewComponent
 
         var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
         ViewBag.SelectedProjectId = selectedProjectId;
+        ViewBag.ActiveProjectTag = selectedProjectId.HasValue ? "Standard" : "Default";
 
         return View(projects);
     }

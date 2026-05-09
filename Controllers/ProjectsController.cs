@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BuildWise.Models;
+using System.Security.Claims;
 
 using Microsoft.AspNetCore.Authorization;
 
@@ -21,8 +22,6 @@ namespace BuildWise.Controllers
         public async Task<IActionResult> Index()
         {
             var projects = await _context.Projects
-                .Include(p => p.Property)
-                .Include(p => p.User)
                 .ToListAsync();
             return View(projects);
         }
@@ -44,26 +43,83 @@ namespace BuildWise.Controllers
         // GET: Projects/Create
         public IActionResult Create()
         {
-            ViewData["PropertyId"] = new SelectList(_context.Properties, "PropertyId", "PropertyName");
-            ViewData["UserId"] = new SelectList(_context.Users, "UserId", "FullName");
             return View();
         }
 
         // POST: Projects/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProjectId,PropertyId,UserId,ProjectName,Description,StartDate,ExpectedEndDate,TotalBudget,IsCompleted")] Project project)
+        public async Task<IActionResult> Create([Bind("ProjectName,Description")] Project project)
         {
+            var userIdClaim = User.FindFirstValue("UserId");
+            if (!int.TryParse(userIdClaim, out var currentUserId))
+            {
+                ModelState.AddModelError("", "Unable to identify current user.");
+            }
+
             if (ModelState.IsValid)
             {
+                // Reuse a user's existing property if available, otherwise create a minimal default one.
+                var propertyId = await _context.Properties
+                    .Where(p => p.UserId == currentUserId)
+                    .OrderByDescending(p => p.PropertyId)
+                    .Select(p => (int?)p.PropertyId)
+                    .FirstOrDefaultAsync();
+
+                if (!propertyId.HasValue)
+                {
+                    var defaultTypeId = await _context.PropertyTypes
+                        .OrderBy(t => t.TypeId)
+                        .Select(t => (byte?)t.TypeId)
+                        .FirstOrDefaultAsync();
+                    var defaultStatusId = await _context.PropertyStatuses
+                        .OrderBy(s => s.StatusId)
+                        .Select(s => (byte?)s.StatusId)
+                        .FirstOrDefaultAsync();
+                    var defaultAreaUnitId = await _context.AreaUnits
+                        .OrderBy(a => a.UnitId)
+                        .Select(a => (byte?)a.UnitId)
+                        .FirstOrDefaultAsync();
+
+                    if (!defaultTypeId.HasValue || !defaultStatusId.HasValue || !defaultAreaUnitId.HasValue)
+                    {
+                        ModelState.AddModelError("", "Unable to initialize required default property metadata.");
+                        return View(project);
+                    }
+
+                    var bootstrapProperty = new Property
+                    {
+                        UserId = currentUserId,
+                        PropertyName = "Default Property",
+                        TypeId = defaultTypeId.Value,
+                        StatusId = defaultStatusId.Value,
+                        AreaUnitId = defaultAreaUnitId.Value,
+                        AreaSize = 0,
+                        Location = "Not specified",
+                        City = null,
+                        Notes = "Auto-created for quick project setup.",
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
+                    };
+
+                    _context.Properties.Add(bootstrapProperty);
+                    await _context.SaveChangesAsync();
+                    propertyId = bootstrapProperty.PropertyId;
+                }
+
+                project.PropertyId = propertyId.Value;
+                project.UserId = currentUserId;
+                project.StartDate = DateOnly.FromDateTime(DateTime.Now);
+                project.ExpectedEndDate = null;
+                project.ActualEndDate = null;
+                project.TotalBudget = 0;
+                project.IsCompleted = false;
                 project.CreatedAt = DateTime.Now;
                 project.UpdatedAt = DateTime.Now;
                 _context.Add(project);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["PropertyId"] = new SelectList(_context.Properties, "PropertyId", "PropertyName", project.PropertyId);
-            ViewData["UserId"] = new SelectList(_context.Users, "UserId", "FullName", project.UserId);
             return View(project);
         }
 
@@ -75,15 +131,13 @@ namespace BuildWise.Controllers
             var project = await _context.Projects.FindAsync(id);
             if (project == null) return NotFound();
 
-            ViewData["PropertyId"] = new SelectList(_context.Properties, "PropertyId", "PropertyName", project.PropertyId);
-            ViewData["UserId"] = new SelectList(_context.Users, "UserId", "FullName", project.UserId);
             return View(project);
         }
 
         // POST: Projects/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProjectId,PropertyId,UserId,ProjectName,Description,StartDate,ExpectedEndDate,ActualEndDate,TotalBudget,IsCompleted,CreatedAt")] Project project)
+        public async Task<IActionResult> Edit(int id, [Bind("ProjectId,ProjectName,Description,IsCompleted,CreatedAt")] Project project)
         {
             if (id != project.ProjectId) return NotFound();
 
@@ -91,6 +145,16 @@ namespace BuildWise.Controllers
             {
                 try
                 {
+                    var existingProject = await _context.Projects.AsNoTracking()
+                        .FirstOrDefaultAsync(p => p.ProjectId == id);
+                    if (existingProject == null) return NotFound();
+
+                    project.PropertyId = existingProject.PropertyId;
+                    project.UserId = existingProject.UserId;
+                    project.StartDate = existingProject.StartDate;
+                    project.ExpectedEndDate = existingProject.ExpectedEndDate;
+                    project.ActualEndDate = existingProject.ActualEndDate;
+                    project.TotalBudget = existingProject.TotalBudget;
                     project.UpdatedAt = DateTime.Now;
                     _context.Update(project);
                     await _context.SaveChangesAsync();
@@ -102,8 +166,6 @@ namespace BuildWise.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["PropertyId"] = new SelectList(_context.Properties, "PropertyId", "PropertyName", project.PropertyId);
-            ViewData["UserId"] = new SelectList(_context.Users, "UserId", "FullName", project.UserId);
             return View(project);
         }
 

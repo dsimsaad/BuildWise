@@ -138,6 +138,21 @@ body.dashboard-body {
     flex-shrink: 0;
 }
 
+.sidebar-brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    min-width: 0;
+}
+
+.sidebar-brand-link img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
 .sidebar-logo {
     width: 42px;
     height: 42px;
@@ -146,6 +161,13 @@ body.dashboard-body {
 
 .sidebar-brand {
     font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--dash-navy);
+    letter-spacing: -0.3px;
+}
+
+.logo-text {
+    font-size: 1.1rem;
     font-weight: 800;
     color: var(--dash-navy);
     letter-spacing: -0.3px;
@@ -197,6 +219,20 @@ body.dashboard-body {
     width: 22px;
     height: 22px;
     flex-shrink: 0;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    opacity: 0.9;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.sidebar-link:hover svg,
+.sidebar-link.active svg {
+    opacity: 1;
+}
+
+.sidebar-link:hover svg {
+    transform: translateY(-0.5px);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -977,5 +1013,6 @@ body.dashboard-body {
     .grid-2 { grid-template-columns: 1fr; }
 }
 
- 
+
+ 
  

@@ -2,16 +2,14 @@
 @{
     int? selectedId = ViewBag.SelectedProjectId;
     var activeProject = Model.FirstOrDefault(p => p.ProjectId == selectedId);
+    var activeTag = (string?)ViewBag.ActiveProjectTag ?? "Default";
 }
 
 <div class="project-selector-wrapper">
     <div class="project-selector-trigger" onclick="toggleProjectDropdown()">
-        <div class="project-icon">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-        </div>
         <div class="project-selector-info">
-            <span class="label">Active Project</span>
             <span class="value">@(activeProject?.ProjectName ?? "All Projects")</span>
+            <span class="project-tag">@activeTag</span>
         </div>
         <svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
     </div>
@@ -20,11 +18,9 @@
         <form asp-controller="ProjectContext" asp-action="ClearProject" method="post">
             <button type="submit" class="dropdown-item @(selectedId == null ? "active" : "")">
                 <span class="dot" style="background: #94A3B8;"></span>
-                All Projects (Overview)
+                All Projects
             </button>
         </form>
-        
-        <div class="dropdown-divider">Specific Projects</div>
 
         @foreach (var proj in Model)
         {
@@ -63,20 +59,22 @@
 <style>
     .project-selector-wrapper {
         position: relative;
-        margin-right: 12px;
+        margin-right: 10px;
     }
 
     .project-selector-trigger {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 6px 14px;
-        background: #F8FAFC;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        background: #FFFFFF;
         border: 1px solid var(--dash-border);
         border-radius: 10px;
         cursor: pointer;
         transition: all 0.2s;
-        min-width: 200px;
+        min-width: 220px;
+        max-width: 240px;
     }
 
     .project-selector-trigger:hover {
@@ -84,39 +82,35 @@
         border-color: var(--dash-primary);
     }
 
-    .project-icon {
-        width: 32px;
-        height: 32px;
-        background: #EFF6FF;
-        color: var(--dash-primary);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
     .project-selector-info {
         display: flex;
         flex-direction: column;
         flex: 1;
-    }
-
-    .project-selector-info .label {
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--dash-text-muted);
-        font-weight: 600;
+        min-width: 0;
     }
 
     .project-selector-info .value {
-        font-size: 0.875rem;
+        font-size: 0.84rem;
         font-weight: 600;
         color: var(--dash-navy);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 140px;
+    }
+
+    .project-tag {
+        margin-top: 2px;
+        font-size: 0.64rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #1E40AF;
+        background: #EFF6FF;
+        border: 1px solid #DBEAFE;
+        border-radius: 999px;
+        display: inline-flex;
+        width: fit-content;
+        padding: 2px 8px;
     }
 
     .project-dropdown {
@@ -124,7 +118,9 @@
         position: absolute;
         top: calc(100% + 8px);
         left: 0;
-        width: 100%;
+        width: 280px;
+        max-height: 320px;
+        overflow-y: auto;
         background: white;
         border: 1px solid var(--dash-border);
         border-radius: 12px;
@@ -168,15 +164,6 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-    }
-
-    .dropdown-divider {
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        color: var(--dash-text-muted);
-        font-weight: 700;
-        padding: 12px 12px 6px;
-        letter-spacing: 0.5px;
     }
 
     .dropdown-footer {

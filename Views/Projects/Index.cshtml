@@ -63,8 +63,6 @@
                         <th>Project Name</th>
                         <th>Description</th>
                         <th>Start Date</th>
-                        <th>Expected End</th>
-                        <th>Budget</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -75,8 +73,6 @@
                         <td><strong>@Html.DisplayFor(modelItem => item.ProjectName)</strong></td>
                         <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@Html.DisplayFor(modelItem => item.Description)</td>
                         <td>@(item.StartDate.ToString("MMM dd, yyyy"))</td>
-                        <td>@(item.ExpectedEndDate.HasValue ? item.ExpectedEndDate.Value.ToString("MMM dd, yyyy") : "—")</td>
-                        <td>@(item.TotalBudget > 0 ? "PKR " + item.TotalBudget.ToString("N0") : "—")</td>
                         <td>
                             @if (item.IsCompleted) {
                                 <span class="badge badge-success">Completed</span>
