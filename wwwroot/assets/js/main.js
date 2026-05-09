@@ -74,16 +74,16 @@ faqItems.forEach(item => {
     const question = item.querySelector(".faq-question");
     if (question) {
         question.addEventListener("click", () => {
-            const isActive = item.classList.contains("active");
+            const isActive = item.classList.contains("open");
             
             // Close all other items
             faqItems.forEach(otherItem => {
-                otherItem.classList.remove("active");
+                otherItem.classList.remove("open");
             });
 
             // Toggle current item
             if (!isActive) {
-                item.classList.add("active");
+                item.classList.add("open");
             }
         });
     }

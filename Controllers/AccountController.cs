@@ -87,7 +87,7 @@ namespace BuildWise.Controllers
                     new AuthenticationProperties
                     {
                         IsPersistent = true,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
                     });
 
                 return Ok(new { success = true, redirectUrl = "/Home/Dashboard" });

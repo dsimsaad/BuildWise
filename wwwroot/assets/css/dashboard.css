@@ -32,7 +32,7 @@
     box-shadow: var(--dash-shadow-lg);
     z-index: 1000;
     padding: 8px;
-    margin-top: 8px;
+    margin-top: 0px;
     animation: slideUp 0.2s ease;
 }
 
@@ -779,7 +779,7 @@ body.dashboard-body {
   box-shadow: var(--dash-shadow-md);
   border-radius: var(--dash-radius);
   position: absolute;
-  top: calc(100% + 8px);
+  top: 100%;
   right: 0;
   z-index: 1000;
   padding: 8px;

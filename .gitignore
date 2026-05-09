@@ -53,6 +53,8 @@ Thumbs.db
 desktop.ini
 
 ## Secrets — NEVER commit these
+appsettings.json
+appsettings.Development.json
 appsettings.Production.json
 secrets.json
 *.pfx

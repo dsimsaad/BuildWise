@@ -1,6 +1,6 @@
 @{
     ViewData["Title"] = "Contact";
-    Layout = "_MarketingLayout";
+    Layout = User.Identity?.IsAuthenticated == true ? "_ModuleLayout" : "_MarketingLayout";
 }
 
 
