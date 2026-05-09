@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BuildWise.Models;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace BuildWise.Controllers
 {
+    [Authorize]
     public class ProjectsController : Controller
     {
         private readonly BuildWiseDbContext _context;

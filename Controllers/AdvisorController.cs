@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using BuildWise.BusinessLayer;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BuildWise.Controllers
 {
+    [Authorize]
     public class AdvisorController : Controller
     {
         private readonly AdvisorBLL _bll;
