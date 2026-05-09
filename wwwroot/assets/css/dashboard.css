@@ -4,6 +4,75 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 /* ─── Design Tokens ─── */
+/* User Profile & Menu */
+.user-profile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.user-profile:hover {
+    background: #F8FAFC;
+}
+
+.profile-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 200px;
+    background: white;
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    box-shadow: var(--dash-shadow-lg);
+    z-index: 1000;
+    padding: 8px;
+    margin-top: 8px;
+    animation: slideUp 0.2s ease;
+}
+
+.user-profile:hover .profile-menu {
+    display: block;
+}
+
+.profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    width: 100%;
+    border: none;
+    background: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dash-text-main);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.profile-menu-item:hover {
+    background: #F1F5F9;
+    color: var(--dash-primary);
+}
+
+.profile-menu-item svg {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 :root {
     --dash-sidebar-width: 250px;
     --dash-topbar-height: 64px;

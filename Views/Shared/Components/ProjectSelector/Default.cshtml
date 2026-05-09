@@ -1,0 +1,213 @@
+@model IEnumerable<BuildWise.Models.Project>
+@{
+    int? selectedId = ViewBag.SelectedProjectId;
+    var activeProject = Model.FirstOrDefault(p => p.ProjectId == selectedId);
+}
+
+<div class="project-selector-wrapper">
+    <div class="project-selector-trigger" onclick="toggleProjectDropdown()">
+        <div class="project-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </div>
+        <div class="project-selector-info">
+            <span class="label">Active Project</span>
+            <span class="value">@(activeProject?.ProjectName ?? "All Projects")</span>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+
+    <div id="projectDropdown" class="project-dropdown">
+        <form asp-controller="ProjectContext" asp-action="ClearProject" method="post">
+            <button type="submit" class="dropdown-item @(selectedId == null ? "active" : "")">
+                <span class="dot" style="background: #94A3B8;"></span>
+                All Projects (Overview)
+            </button>
+        </form>
+        
+        <div class="dropdown-divider">Specific Projects</div>
+
+        @foreach (var proj in Model)
+        {
+            <form asp-controller="ProjectContext" asp-action="SetActiveProject" method="post">
+                <input type="hidden" name="projectId" value="@proj.ProjectId" />
+                <button type="submit" class="dropdown-item @(selectedId == proj.ProjectId ? "active" : "")">
+                    <span class="dot" style="background: @(proj.IsCompleted ? "#10B981" : "#1D4ED8");"></span>
+                    @proj.ProjectName
+                </button>
+            </form>
+        }
+
+        <div class="dropdown-footer">
+            <a href="/Projects/Create" class="add-project-btn">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add New Project
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleProjectDropdown() {
+        const dd = document.getElementById('projectDropdown');
+        dd.classList.toggle('show');
+    }
+
+    // Close when clicking outside
+    window.addEventListener('click', function(e) {
+        if (!document.querySelector('.project-selector-wrapper').contains(e.target)) {
+            document.getElementById('projectDropdown').classList.remove('show');
+        }
+    });
+</script>
+
+<style>
+    .project-selector-wrapper {
+        position: relative;
+        margin-right: 12px;
+    }
+
+    .project-selector-trigger {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 14px;
+        background: #F8FAFC;
+        border: 1px solid var(--dash-border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 200px;
+    }
+
+    .project-selector-trigger:hover {
+        background: #F1F5F9;
+        border-color: var(--dash-primary);
+    }
+
+    .project-icon {
+        width: 32px;
+        height: 32px;
+        background: #EFF6FF;
+        color: var(--dash-primary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .project-selector-info {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .project-selector-info .label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--dash-text-muted);
+        font-weight: 600;
+    }
+
+    .project-selector-info .value {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--dash-navy);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+    }
+
+    .project-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 100%;
+        background: white;
+        border: 1px solid var(--dash-border);
+        border-radius: 12px;
+        box-shadow: var(--dash-shadow-md);
+        z-index: 1100;
+        padding: 8px;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .project-dropdown.show { display: block; }
+
+    .dropdown-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--dash-text-main);
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.2s;
+    }
+
+    .dropdown-item:hover {
+        background: #F1F5F9;
+        color: var(--dash-primary);
+    }
+
+    .dropdown-item.active {
+        background: #EFF6FF;
+        color: var(--dash-primary);
+        font-weight: 600;
+    }
+
+    .dropdown-item .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .dropdown-divider {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        color: var(--dash-text-muted);
+        font-weight: 700;
+        padding: 12px 12px 6px;
+        letter-spacing: 0.5px;
+    }
+
+    .dropdown-footer {
+        margin-top: 8px;
+        padding: 8px 4px 4px;
+        border-top: 1px solid var(--dash-border);
+    }
+
+    .add-project-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 10px;
+        background: var(--dash-primary);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        transition: opacity 0.2s;
+    }
+
+    .add-project-btn:hover {
+        opacity: 0.9;
+        color: white;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>

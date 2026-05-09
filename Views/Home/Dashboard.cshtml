@@ -43,8 +43,8 @@
 
 <div class="content-header">
     <div>
-        <h1>Dashboard</h1>
-        <p class="text-muted" style="margin-top: 4px; font-size: 0.9rem;">Overview of your projects and business performance</p>
+        <h1>@(ViewBag.ActiveProjectName ?? "Global Dashboard")</h1>
+        <p class="text-muted" style="margin-top: 4px; font-size: 0.9rem;">Overview of @(ViewBag.ActiveProjectName ?? "your projects and business performance")</p>
     </div>
     <div class="date-selector" onclick="document.getElementById('dashDate').showPicker()" style="position: relative;">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -381,22 +381,24 @@
     });
 
     // 2. Budget vs Spent Line Chart
+    const monthlyData = @Html.Raw(Json.Serialize(ViewBag.MonthlyExpenses));
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    const labels = monthlyData.length > 0 
+        ? monthlyData.map(m => monthNames[m.month - 1]) 
+        : ['No Data'];
+    const spentData = monthlyData.length > 0 
+        ? monthlyData.map(m => m.total / 10000000) // Convert to Crore for scale
+        : [0];
+
     new Chart(document.getElementById('budgetSpentChart'), {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: labels,
             datasets: [
                 {
-                    label: 'Budget',
-                    data: [1, 1.2, 1.5, 1.8, 2.2, 2.45], // Mock historical growth
-                    borderColor: '#1D4ED8',
-                    backgroundColor: 'rgba(29, 78, 216, 0.05)',
-                    fill: true,
-                    tension: 0.4
-                },
-                {
-                    label: 'Spent',
-                    data: [0.8, 0.9, 1.1, 1.2, 1.4, 1.62],
+                    label: 'Spent (Cr)',
+                    data: spentData,
                     borderColor: '#10B981',
                     backgroundColor: 'rgba(16, 185, 129, 0.05)',
                     fill: true,
@@ -409,6 +411,7 @@
             maintainAspectRatio: false,
             scales: {
                 y: {
+                    beginAtZero: true,
                     ticks: { callback: value => '₹' + value + 'Cr' }
                 }
             }
@@ -416,12 +419,17 @@
     });
 
     // 3. Category Expenses Doughnut
+    const catData = @Html.Raw(Json.Serialize(ViewBag.CategoryExpenses));
+    const catLabels = catData.map(c => c.category);
+    const catValues = catData.map(c => c.total);
+
     new Chart(document.getElementById('categoryExpenseChart'), {
         type: 'doughnut',
         data: {
+            labels: catLabels,
             datasets: [{
-                data: [45, 32, 18, 5], // Mock values for demo
-                backgroundColor: ['#1D4ED8', '#10B981', '#F59E0B', '#EF4444'],
+                data: catValues.length > 0 ? catValues : [1],
+                backgroundColor: ['#1D4ED8', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
                 borderWidth: 0,
                 cutout: '80%'
             }]
