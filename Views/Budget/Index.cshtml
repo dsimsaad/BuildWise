@@ -74,6 +74,10 @@
     </div>
 </div>
 
+<div id="no-project-warning" style="display: none; background: #FEF2F2; color: #991B1B; padding: 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #FCA5A5;">
+    <strong>No Project Selected!</strong> Please select a project from the top navigation dropdown to manage budgets and expenses.
+</div>
+
 <!-- Summary Cards -->
 <div class="summary-grid" style="margin-bottom: 32px;">
     <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
@@ -116,6 +120,19 @@
 
 <!-- Overview Tab -->
 <div id="tab-overview" class="tab-section active">
+    
+    <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px; margin-bottom: 24px; padding: 24px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A; margin: 0 0 4px 0;">Total Project Budget</h2>
+            <p style="color: #64748B; font-size: 0.875rem; margin: 0;">Set the overall budget limit for this project.</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <span style="font-weight: 600; color: #0F172A;">PKR</span>
+            <input type="number" id="input-total-project-budget" class="form-control" style="width: 200px; font-weight: 600; margin: 0;" placeholder="0">
+            <button class="btn-primary" onclick="saveTotalProjectBudget()" style="padding: 8px 16px;">Update</button>
+        </div>
+    </div>
+
     <div class="content-grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
         <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
             <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
@@ -277,14 +294,25 @@
             const res = await fetch('/Budget/GetData');
             const data = await res.json();
             
+            if (!data.selectedProjectId) {
+                document.getElementById('no-project-warning').style.display = 'block';
+                document.querySelectorAll('button[type="submit"], .btn-primary').forEach(b => b.disabled = true);
+            } else {
+                document.getElementById('no-project-warning').style.display = 'none';
+                document.querySelectorAll('button[type="submit"], .btn-primary').forEach(b => b.disabled = false);
+            }
+
             // Update Stats
-            document.getElementById('stat-total-budget').innerText = `PKR ${data.totalBudget.toLocaleString()}`;
+            const displayTotalBudget = data.projectTotalBudget > 0 ? data.projectTotalBudget : data.totalBudget;
+            
+            document.getElementById('input-total-project-budget').value = data.projectTotalBudget;
+            document.getElementById('stat-total-budget').innerText = `PKR ${displayTotalBudget.toLocaleString()}`;
             document.getElementById('stat-total-spent').innerText = `PKR ${data.totalSpent.toLocaleString()}`;
-            const remaining = data.totalBudget - data.totalSpent;
+            const remaining = displayTotalBudget - data.totalSpent;
             document.getElementById('stat-remaining').innerText = `PKR ${remaining.toLocaleString()}`;
             document.getElementById('stat-remaining').style.color = remaining < 0 ? '#EF4444' : '#10B981';
             
-            const percent = data.totalBudget > 0 ? (data.totalSpent / data.totalBudget * 100).toFixed(1) : 0;
+            const percent = displayTotalBudget > 0 ? (data.totalSpent / displayTotalBudget * 100).toFixed(1) : 0;
             document.getElementById('stat-percent').innerText = `${percent}%`;
 
             // Populating Budget Table
@@ -396,11 +424,16 @@
             btn.innerText = 'Saving...';
             btn.disabled = true;
 
-            await fetch('/Budget/AddBudget', {
+            const req = await fetch('/Budget/AddBudget', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ category, amount: parseFloat(amount) })
             });
+            const result = await req.json();
+            
+            if (!result.success) {
+                alert(result.message || 'Failed to add budget.');
+            }
             
             await loadData();
             e.target.reset();
@@ -419,7 +452,7 @@
             btn.innerText = 'Recording...';
             btn.disabled = true;
 
-            await fetch('/Budget/AddExpense', {
+            const req = await fetch('/Budget/AddExpense', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -429,6 +462,11 @@
                     expenseDate: document.getElementById('expense-date').value
                 })
             });
+            const result = await req.json();
+            
+            if (!result.success) {
+                alert(result.message || 'Failed to add expense.');
+            }
             
             await loadData();
             e.target.reset();
@@ -450,6 +488,32 @@
                 await fetch(`/Budget/DeleteExpense?id=${id}`, { method: 'POST' });
                 loadData();
             }
+        }
+
+        async function saveTotalProjectBudget() {
+            const amount = parseFloat(document.getElementById('input-total-project-budget').value);
+            if (isNaN(amount)) return;
+            
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = 'Updating...';
+            btn.disabled = true;
+
+            const req = await fetch('/Budget/UpdateTotalProjectBudget', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(amount)
+            });
+            const result = await req.json();
+            
+            if (!result.success) {
+                alert(result.message || 'Failed to update total budget.');
+            } else {
+                await loadData();
+            }
+            
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
 
         loadData();

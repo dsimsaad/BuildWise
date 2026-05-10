@@ -69,6 +69,38 @@ namespace BuildWise.Controllers
                     };
                     _context.Users.Add(user);
                     await _context.SaveChangesAsync();
+
+                    // Create default property and project
+                    var defaultProperty = new Property
+                    {
+                        PropertyName = "Default Property",
+                        UserId = user.UserId,
+                        TypeId = 1,
+                        StatusId = 1,
+                        Location = "Not Specified",
+                        AreaSize = 0,
+                        AreaUnitId = 1,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _context.Properties.Add(defaultProperty);
+                    await _context.SaveChangesAsync();
+
+                    var defaultProject = new Project
+                    {
+                        ProjectName = "Main",
+                        PropertyId = defaultProperty.PropertyId,
+                        UserId = user.UserId,
+                        StartDate = DateOnly.FromDateTime(DateTime.Now),
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        TotalBudget = 0,
+                        IsCompleted = false
+                    };
+                    _context.Projects.Add(defaultProject);
+                    await _context.SaveChangesAsync();
+                    
+                    HttpContext.Session.SetInt32("SelectedProjectId", defaultProject.ProjectId);
                 }
 
                 // 3. Create Local Cookie Session

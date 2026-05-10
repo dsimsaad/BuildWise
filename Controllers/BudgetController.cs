@@ -11,12 +11,14 @@ namespace BuildWise.Controllers
         private readonly string _connectionString;
         private readonly BudgetBLL _budgetBll;
         private readonly ExpenseBLL _expenseBll;
+        private readonly BuildWiseDbContext _context;
 
-        public BudgetController(IConfiguration configuration)
+        public BudgetController(IConfiguration configuration, BuildWiseDbContext context)
         {
             _connectionString = configuration.GetConnectionString("BuildWise") ?? "";
             _budgetBll = new BudgetBLL(_connectionString);
             _expenseBll = new ExpenseBLL(_connectionString);
+            _context = context;
         }
 
         public IActionResult Index()
@@ -47,22 +49,56 @@ namespace BuildWise.Controllers
             
             var categoryExpenses = _expenseBll.GetExpensesByCategory(selectedProjectId); // Needs user filtering too if null
 
+            var project = selectedProjectId.HasValue ? _context.Projects.Find(selectedProjectId.Value) : null;
+            var projectTotalBudget = project?.TotalBudget ?? 0;
+
             return Json(new { 
                 budgets, 
                 expenses, 
                 totalBudget, 
                 totalSpent,
-                categoryExpenses
+                categoryExpenses,
+                projectTotalBudget,
+                selectedProjectId
             });
         }
 
         [HttpPost]
         public IActionResult AddBudget([FromBody] BudgetItem item)
         {
-            item.ProjectId = GetSelectedProjectId();
+            var projectId = GetSelectedProjectId();
+            if (projectId == null)
+                return Json(new { success = false, message = "Please select a project first." });
+
+            var project = _context.Projects.Find(projectId.Value);
+            var currentAllocated = _budgetBll.GetTotalBudget(projectId.Value);
+            
+            if (project != null && project.TotalBudget > 0 && (currentAllocated + item.Amount) > project.TotalBudget)
+            {
+                return Json(new { success = false, message = $"Category budget exceeds the Total Project Budget (PKR {project.TotalBudget}). Please increase the Total Budget first." });
+            }
+
+            item.ProjectId = projectId;
             if (_budgetBll.AddBudget(item))
                 return Json(new { success = true });
             return Json(new { success = false, message = "Invalid data" });
+        }
+
+        [HttpPost]
+        public IActionResult UpdateTotalProjectBudget([FromBody] decimal amount)
+        {
+            var projectId = GetSelectedProjectId();
+            if (projectId == null)
+                return Json(new { success = false, message = "Please select a project first." });
+
+            var project = _context.Projects.Find(projectId.Value);
+            if (project != null)
+            {
+                project.TotalBudget = amount;
+                _context.SaveChanges();
+                return Json(new { success = true });
+            }
+            return Json(new { success = false, message = "Project not found" });
         }
 
         [HttpPost]
@@ -84,7 +120,11 @@ namespace BuildWise.Controllers
         [HttpPost]
         public IActionResult AddExpense([FromBody] ExpenseItem item)
         {
-            item.ProjectId = GetSelectedProjectId();
+            var projectId = GetSelectedProjectId();
+            if (projectId == null)
+                return Json(new { success = false, message = "Please select a project first." });
+
+            item.ProjectId = projectId;
             if (_expenseBll.AddExpense(item))
                 return Json(new { success = true });
             return Json(new { success = false, message = "Invalid data" });
