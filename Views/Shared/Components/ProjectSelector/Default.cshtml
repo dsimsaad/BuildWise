@@ -8,20 +8,13 @@
 <div class="project-selector-wrapper">
     <div class="project-selector-trigger" onclick="toggleProjectDropdown()">
         <div class="project-selector-info">
-            <span class="value">@(activeProject?.ProjectName ?? "All Projects")</span>
+            <span class="value">@(activeProject?.ProjectName ?? "No Project")</span>
             <span class="project-tag">@activeTag</span>
         </div>
         <svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
     </div>
 
     <div id="projectDropdown" class="project-dropdown">
-        <form asp-controller="ProjectContext" asp-action="ClearProject" method="post">
-            <button type="submit" class="dropdown-item @(selectedId == null ? "active" : "")">
-                <span class="dot" style="background: #94A3B8;"></span>
-                All Projects
-            </button>
-        </form>
-
         @foreach (var proj in Model)
         {
             <div style="display: flex; align-items: center;">

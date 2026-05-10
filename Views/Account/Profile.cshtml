@@ -1,0 +1,96 @@
+@model BuildWise.Models.ProfileViewModel
+
+@{
+    ViewData["Title"] = "Profile";
+    Layout = "_ModuleLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Profile</h1>
+        <p>Manage your account details and contact information.</p>
+    </div>
+</div>
+
+<div class="content-grid" style="grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);">
+    <div class="scaffold-form-card">
+        @if (TempData["ProfileSaved"] != null)
+        {
+            <div class="badge badge-success" style="margin-bottom: 16px;">@TempData["ProfileSaved"]</div>
+        }
+
+        <form asp-action="Profile" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
+            <input type="hidden" asp-for="UserId" />
+
+            <div class="form-group">
+                <label asp-for="FullName">Name</label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email">Email</label>
+                <input asp-for="Email" class="form-control" disabled />
+            </div>
+
+            <div class="form-group">
+                <label asp-for="PhoneNumber">Phone Number</label>
+                <input asp-for="PhoneNumber" class="form-control" placeholder="Add phone number" />
+                <span asp-validation-for="PhoneNumber" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="City">City</label>
+                <input asp-for="City" class="form-control" placeholder="Add city" />
+                <span asp-validation-for="City" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Profession">Profession</label>
+                <input asp-for="Profession" class="form-control" placeholder="Project manager, contractor, owner" />
+                <span asp-validation-for="Profession" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button type="submit" class="btn-primary">Save Profile</button>
+                <a asp-controller="Home" asp-action="Dashboard" class="back-link">Back to Dashboard</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="card-header">
+            <h2>Account Summary</h2>
+        </div>
+        <div class="card-body">
+            <dl class="scaffold-detail-card" style="box-shadow:none; border:none; padding:0; margin:0;">
+                <dt>Email</dt>
+                <dd>@Model.Email</dd>
+
+                <dt>Projects</dt>
+                <dd>@Model.ProjectCount</dd>
+
+                <dt>Member Since</dt>
+                <dd>@Model.CreatedAt.ToString("MMM dd, yyyy")</dd>
+
+                <dt>Phone</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "Not added" : Model.PhoneNumber)</dd>
+
+                <dt>City</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.City) ? "Not added" : Model.City)</dd>
+
+                <dt>Profession</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.Profession) ? "Not added" : Model.Profession)</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -33,9 +33,9 @@
 
     string FormatCrore(decimal val)
     {
-        if (val >= 10_000_000) return $"₹ {val / 10_000_000:0.##} Cr";
-        if (val >= 100_000) return $"₹ {val / 100_000:0.##} L";
-        return $"₹ {val:N0}";
+        if (val >= 10_000_000) return $"RS. {val / 10_000_000:0.##} Cr";
+        if (val >= 100_000) return $"RS. {val / 100_000:0.##} L";
+        return $"RS. {val:N0}";
     }
 
     double budgetUsedPct = totalBudget > 0 ? (double)(totalExpenses / totalBudget * 100) : 0;
@@ -55,44 +55,7 @@
 </div>
 
 <!-- Stats Grid -->
-<div class="stats-grid grid-4">
-    @if (ViewBag.SelectedProjectId == null)
-    {
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon-box" style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1D4ED8" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                </div>
-                <div class="stat-info">
-                    <span class="stat-label">Total Projects</span>
-                    <div style="display:flex; align-items:baseline; gap:8px;">
-                        <h2 class="stat-value">@totalProjects</h2>
-                        <span class="stat-trend trend-up">@(projInProgress) Active</span>
-                    </div>
-                </div>
-            </div>
-            <div class="progress-mini"><div class="progress-mini-bar" style="width: @(totalProjects > 0 ? (projCompleted * 100 / totalProjects) : 0)%; background: #1D4ED8;"></div></div>
-        </div>
-    }
-    else
-    {
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon-box" style="background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#10B981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                </div>
-                <div class="stat-info">
-                    <span class="stat-label">Project Status</span>
-                    <div style="display:flex; align-items:baseline; gap:8px;">
-                        <h2 class="stat-value">@(projCompleted > 0 ? "Done" : "Active")</h2>
-                        <span class="stat-trend trend-up">@((totalTasks > 0 ? (tasksCompleted * 100 / totalTasks) : 0))% Progress</span>
-                    </div>
-                </div>
-            </div>
-            <div class="progress-mini"><div class="progress-mini-bar" style="width: @((totalTasks > 0 ? (tasksCompleted * 100 / totalTasks) : 0))%; background: #10B981;"></div></div>
-        </div>
-    }
-
+<div class="stats-grid grid-3">
     <div class="stat-card">
         <div class="stat-header">
             <div class="stat-icon-box" style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);">
@@ -146,7 +109,7 @@
     <!-- Project/Phase Status Chart -->
     <div class="dash-card">
         <div class="card-header">
-            <h3>@(ViewBag.SelectedProjectId != null ? "Phase Completion" : "Project Status")</h3>
+            <h3>Phase Completion</h3>
             <div class="card-actions">
                 <span class="dot-menu">•••</span>
             </div>
@@ -154,23 +117,14 @@
         <div class="chart-container-relative">
             <canvas id="statusChart"></canvas>
             <div class="chart-center-text">
-                <span class="center-value">@(ViewBag.SelectedProjectId != null ? ViewBag.TotalTasks : totalProjects)</span>
-                <span class="center-label">@(ViewBag.SelectedProjectId != null ? "Tasks" : "Projects")</span>
+                <span class="center-value">@ViewBag.TotalTasks</span>
+                <span class="center-label">Tasks</span>
             </div>
         </div>
         <div class="chart-legend-modern">
-            @if (ViewBag.SelectedProjectId != null)
-            {
-                <div class="leg-item"><span class="dot" style="background: #94A3B8;"></span> <span>To Do (@tasksToDo)</span></div>
-                <div class="leg-item"><span class="dot" style="background: #1D4ED8;"></span> <span>Active (@tasksInProgress)</span></div>
-                <div class="leg-item"><span class="dot" style="background: #10B981;"></span> <span>Done (@tasksCompleted)</span></div>
-            }
-            else
-            {
-                <div class="leg-item"><span class="dot" style="background: #94A3B8;"></span> <span>New (@projNotStarted)</span></div>
-                <div class="leg-item"><span class="dot" style="background: #1D4ED8;"></span> <span>Active (@projInProgress)</span></div>
-                <div class="leg-item"><span class="dot" style="background: #10B981;"></span> <span>Done (@projCompleted)</span></div>
-            }
+            <div class="leg-item"><span class="dot" style="background: #94A3B8;"></span> <span>To Do (@tasksToDo)</span></div>
+            <div class="leg-item"><span class="dot" style="background: #1D4ED8;"></span> <span>Active (@tasksInProgress)</span></div>
+            <div class="leg-item"><span class="dot" style="background: #10B981;"></span> <span>Done (@tasksCompleted)</span></div>
         </div>
     </div>
 
@@ -314,7 +268,7 @@
             datasets: [{
                 data: @(ViewBag.SelectedProjectId != null 
                     ? $"[{tasksToDo}, {tasksInProgress}, {tasksCompleted}]" 
-                    : $"[{projNotStarted}, {projInProgress}, {projCompleted}]"),
+                    : "[0, 0, 0]"),
                 backgroundColor: [colors.muted, colors.primary, colors.success],
                 borderWidth: 0,
                 hoverOffset: 10,
@@ -365,7 +319,7 @@
                 y: { 
                     beginAtZero: true, 
                     grid: { display: true, color: '#f1f5f9' },
-                    ticks: { callback: v => '₹' + (v >= 100000 ? (v/100000).toFixed(1) + 'L' : v) }
+                    ticks: { callback: v => 'RS. ' + (v >= 100000 ? (v/100000).toFixed(1) + 'L' : v) }
                 },
                 x: { grid: { display: false } }
             }

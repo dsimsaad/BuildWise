@@ -128,6 +128,7 @@ namespace BuildWise.Controllers
 
                 _context.Add(project);
                 await _context.SaveChangesAsync();
+                HttpContext.Session.SetInt32("SelectedProjectId", project.ProjectId);
                 return RedirectToAction(nameof(Index));
             }
             return View(model);
@@ -148,27 +149,40 @@ namespace BuildWise.Controllers
         // POST: Projects/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProjectId,ProjectName,Description,IsCompleted,CreatedAt")] Project project)
+        public async Task<IActionResult> Edit(int id, [Bind("ProjectId,ProjectName,Description,IsCompleted")] Project project)
         {
             if (id != project.ProjectId) return NotFound();
             int userId = GetUserId();
+
+            if (string.IsNullOrWhiteSpace(project.ProjectName))
+            {
+                ModelState.AddModelError(nameof(Project.ProjectName), "Project name is required.");
+            }
+
+            ModelState.Remove(nameof(Project.Property));
+            ModelState.Remove(nameof(Project.User));
+            ModelState.Remove(nameof(Project.PropertyId));
+            ModelState.Remove(nameof(Project.UserId));
+            ModelState.Remove(nameof(Project.StartDate));
+            ModelState.Remove(nameof(Project.CreatedAt));
+            ModelState.Remove(nameof(Project.UpdatedAt));
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    var existingProject = await _context.Projects.AsNoTracking()
+                    var existingProject = await _context.Projects
                         .FirstOrDefaultAsync(p => p.ProjectId == id && p.UserId == userId);
                     if (existingProject == null) return NotFound();
 
-                    project.PropertyId = existingProject.PropertyId;
-                    project.UserId = existingProject.UserId;
-                    project.StartDate = existingProject.StartDate;
-                    project.ExpectedEndDate = existingProject.ExpectedEndDate;
-                    project.ActualEndDate = existingProject.ActualEndDate;
-                    project.TotalBudget = existingProject.TotalBudget;
-                    project.UpdatedAt = DateTime.Now;
-                    _context.Update(project);
+                    existingProject.ProjectName = project.ProjectName.Trim();
+                    existingProject.Description = string.IsNullOrWhiteSpace(project.Description) ? null : project.Description.Trim();
+                    existingProject.IsCompleted = project.IsCompleted;
+                    existingProject.ActualEndDate = project.IsCompleted && existingProject.ActualEndDate == null
+                        ? DateOnly.FromDateTime(DateTime.Today)
+                        : project.IsCompleted ? existingProject.ActualEndDate : null;
+                    existingProject.UpdatedAt = DateTime.Now;
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -204,9 +218,28 @@ namespace BuildWise.Controllers
             int userId = GetUserId();
             var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == id && p.UserId == userId);
             if (project != null)
+            {
                 _context.Projects.Remove(project);
+            }
 
             await _context.SaveChangesAsync();
+            if (HttpContext.Session.GetInt32("SelectedProjectId") == id)
+            {
+                var nextProjectId = await _context.Projects
+                    .Where(p => p.UserId == userId)
+                    .OrderBy(p => p.ProjectId)
+                    .Select(p => (int?)p.ProjectId)
+                    .FirstOrDefaultAsync();
+
+                if (nextProjectId.HasValue)
+                {
+                    HttpContext.Session.SetInt32("SelectedProjectId", nextProjectId.Value);
+                }
+                else
+                {
+                    HttpContext.Session.Remove("SelectedProjectId");
+                }
+            }
             return RedirectToAction(nameof(Index));
         }
 

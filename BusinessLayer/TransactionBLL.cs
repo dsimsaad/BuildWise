@@ -34,5 +34,15 @@ namespace BuildWise.BusinessLayer
         {
             return dal.GetTotalAmount(projectId, userId);
         }
+
+        public bool AddTransaction(TransactionLog item)
+        {
+            if (item.ProjectId == null || string.IsNullOrWhiteSpace(item.TransactionType) || string.IsNullOrWhiteSpace(item.Category))
+            {
+                return false;
+            }
+
+            return dal.Add(item);
+        }
     }
 }

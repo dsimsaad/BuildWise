@@ -26,6 +26,7 @@ CREATE TABLE ExpenseItems (
 -- Module 2: Transaction Log (auto-generated ledger)
 CREATE TABLE TransactionLogs (
     TransactionId INT IDENTITY(1,1) PRIMARY KEY,
+    ProjectId INT NULL,
     TransactionDate DATETIME NOT NULL DEFAULT GETDATE(),
     TransactionType NVARCHAR(50) NOT NULL,
     Category NVARCHAR(100) NOT NULL,

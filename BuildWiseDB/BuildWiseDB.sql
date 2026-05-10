@@ -220,6 +220,8 @@ CREATE TABLE [dbo].[Users](
 	[Email] [varchar](150) NOT NULL,
 	[PasswordHash] [varchar](256) NOT NULL,
 	[PhoneNumber] [varchar](20) NULL,
+	[City] [nvarchar](100) NULL,
+	[Profession] [nvarchar](100) NULL,
 	[ProfileImageURL] [nvarchar](500) NULL,
 	[CreatedAt] [datetime2](7) NOT NULL,
 	[UpdatedAt] [datetime2](7) NOT NULL,
@@ -1958,5 +1960,4 @@ ALTER DATABASE [BuildWiseDB] SET  READ_WRITE
 GO
 USE BuildWiseDB;
 GO
-
 

@@ -86,7 +86,7 @@
         </div>
         <div class="sum-info">
             <h3 style="color: #64748B; font-weight: 500; font-size: 0.8125rem;">Total Budget</h3>
-            <p id="stat-total-budget" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">PKR 0</p>
+            <p id="stat-total-budget" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">RS. 0</p>
         </div>
     </div>
     <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
@@ -95,7 +95,7 @@
         </div>
         <div class="sum-info">
             <h3 style="color: #64748B; font-weight: 500; font-size: 0.8125rem;">Total Spent</h3>
-            <p id="stat-total-spent" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">PKR 0</p>
+            <p id="stat-total-spent" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">RS. 0</p>
         </div>
     </div>
     <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
@@ -104,7 +104,7 @@
         </div>
         <div class="sum-info">
             <h3 style="color: #64748B; font-weight: 500; font-size: 0.8125rem;">Remaining</h3>
-            <p id="stat-remaining" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">PKR 0</p>
+            <p id="stat-remaining" style="font-size: 1.5rem; font-weight: 700; color: #0F172A;">RS. 0</p>
         </div>
     </div>
     <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
@@ -127,7 +127,7 @@
             <p style="color: #64748B; font-size: 0.875rem; margin: 0;">Set the overall budget limit for this project.</p>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
-            <span style="font-weight: 600; color: #0F172A;">PKR</span>
+            <span style="font-weight: 600; color: #0F172A;">RS.</span>
             <input type="number" id="input-total-project-budget" class="form-control" style="width: 200px; font-weight: 600; margin: 0;" placeholder="0">
             <button class="btn-primary" onclick="saveTotalProjectBudget()" style="padding: 8px 16px;">Update</button>
         </div>
@@ -177,7 +177,7 @@
                     <input type="text" id="budget-custom" class="form-control" style="display:none; margin-top:10px;" placeholder="Type custom category...">
                 </div>
                 <div class="form-group">
-                    <label>Amount (PKR)</label>
+                    <label>Amount (RS.)</label>
                     <input type="number" id="budget-amount" class="form-control" placeholder="e.g. 500000" required>
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%; margin-top: 12px;">Save Allocation</button>
@@ -235,7 +235,7 @@
                     <input type="text" id="expense-desc" class="form-control" placeholder="Brief details about the expense" required>
                 </div>
                 <div class="form-group">
-                    <label>Amount (PKR)</label>
+                    <label>Amount (RS.)</label>
                     <input type="number" id="expense-amount" class="form-control" placeholder="0.00" required>
                 </div>
                 <div class="form-group">
@@ -306,10 +306,10 @@
             const displayTotalBudget = data.projectTotalBudget > 0 ? data.projectTotalBudget : data.totalBudget;
             
             document.getElementById('input-total-project-budget').value = data.projectTotalBudget;
-            document.getElementById('stat-total-budget').innerText = `PKR ${displayTotalBudget.toLocaleString()}`;
-            document.getElementById('stat-total-spent').innerText = `PKR ${data.totalSpent.toLocaleString()}`;
+            document.getElementById('stat-total-budget').innerText = `RS. ${displayTotalBudget.toLocaleString()}`;
+            document.getElementById('stat-total-spent').innerText = `RS. ${data.totalSpent.toLocaleString()}`;
             const remaining = displayTotalBudget - data.totalSpent;
-            document.getElementById('stat-remaining').innerText = `PKR ${remaining.toLocaleString()}`;
+            document.getElementById('stat-remaining').innerText = `RS. ${remaining.toLocaleString()}`;
             document.getElementById('stat-remaining').style.color = remaining < 0 ? '#EF4444' : '#10B981';
             
             const percent = displayTotalBudget > 0 ? (data.totalSpent / displayTotalBudget * 100).toFixed(1) : 0;
@@ -323,7 +323,7 @@
                 budgetList.innerHTML = data.budgets.map(b => `
                     <tr>
                         <td><span style="font-weight: 500; color: #0F172A;">${b.category}</span></td>
-                        <td>PKR ${b.amount.toLocaleString()}</td>
+                        <td>RS. ${b.amount.toLocaleString()}</td>
                         <td style="text-align: right;">
                             <button class="btn-icon btn-delete" onclick="deleteBudget(${b.budgetId})" title="Delete Budget" style="margin-left: auto;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
@@ -342,7 +342,7 @@
                     <tr>
                         <td><span class="badge badge-info">${e.category}</span></td>
                         <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #475569;">${e.description || '—'}</td>
-                        <td style="font-weight: 500; color: #0F172A;">PKR ${e.amount.toLocaleString()}</td>
+                        <td style="font-weight: 500; color: #0F172A;">RS. ${e.amount.toLocaleString()}</td>
                         <td style="color: #64748B;">${new Date(e.expenseDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</td>
                         <td style="text-align: right;">
                             <button class="btn-icon btn-delete" onclick="deleteExpense(${e.expenseId})" title="Delete Expense" style="margin-left: auto;">

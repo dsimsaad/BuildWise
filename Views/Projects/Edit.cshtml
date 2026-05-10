@@ -34,8 +34,6 @@
             <input class="form-check-input" asp-for="IsCompleted" style="width: 16px; height: 16px; accent-color: #1D4ED8;" />
             <label asp-for="IsCompleted" style="margin: 0; font-size: 0.875rem;">Completed</label>
         </div>
-        <input type="hidden" asp-for="CreatedAt" />
-        <input type="hidden" asp-for="UpdatedAt" />
         <div style="display: flex; gap: 12px; margin-top: 24px;">
             <button type="submit" class="btn-primary">Save Changes</button>
             <a asp-action="Index" class="back-link">← Back to List</a>

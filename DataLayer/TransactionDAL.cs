@@ -10,6 +10,34 @@ namespace BuildWise.DataLayer
         public TransactionDAL(string connectionString)
         {
             this.connectionString = connectionString;
+            EnsureTransactionTable();
+        }
+
+        private void EnsureTransactionTable()
+        {
+            using SqlConnection conn = new SqlConnection(connectionString);
+            conn.Open();
+            string query = @"
+IF OBJECT_ID('TransactionLogs', 'U') IS NULL
+BEGIN
+    CREATE TABLE TransactionLogs (
+        TransactionId INT IDENTITY(1,1) PRIMARY KEY,
+        ProjectId INT NULL,
+        TransactionDate DATETIME NOT NULL DEFAULT GETDATE(),
+        TransactionType NVARCHAR(50) NOT NULL,
+        Category NVARCHAR(100) NOT NULL,
+        Description NVARCHAR(500) NULL,
+        Amount DECIMAL(18,2) NOT NULL,
+        BudgetEffect DECIMAL(5,2) NULL
+    );
+END;
+
+IF COL_LENGTH('TransactionLogs', 'ProjectId') IS NULL
+BEGIN
+    ALTER TABLE TransactionLogs ADD ProjectId INT NULL;
+END";
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.ExecuteNonQuery();
         }
 
         public List<TransactionLog> GetAll(int? projectId = null, int? userId = null)
