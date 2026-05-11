@@ -1,0 +1,82 @@
+@model BuildWise.Models.Property
+
+@{
+    ViewData["Title"] = "Edit Property";
+    Layout = "_ModuleLayout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Edit Property</h4>
+                <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to delete this property?');">
+                    <input type="hidden" name="id" value="@Model.PropertyId" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete Property</button>
+                </form>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="PropertyId" />
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label asp-for="PropertyName" class="form-label">Property Name / Title</label>
+                            <input asp-for="PropertyName" class="form-control" />
+                            <span asp-validation-for="PropertyName" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="TypeId" class="form-label">Property Type</label>
+                            <select asp-for="TypeId" class="form-select" asp-items="ViewBag.TypeId"></select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="StatusId" class="form-label">Current Status</label>
+                            <select asp-for="StatusId" class="form-select" asp-items="ViewBag.StatusId"></select>
+                        </div>
+
+                        <div class="col-md-8 mb-3">
+                            <label asp-for="Location" class="form-label">Location / Address</label>
+                            <input asp-for="Location" class="form-control" />
+                            <span asp-validation-for="Location" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="City" class="form-label">City</label>
+                            <input asp-for="City" class="form-control" />
+                            <span asp-validation-for="City" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AreaSize" class="form-label">Area Size</label>
+                            <input asp-for="AreaSize" class="form-control" type="number" step="0.01" />
+                            <span asp-validation-for="AreaSize" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AreaUnitId" class="form-label">Area Unit</label>
+                            <select asp-for="AreaUnitId" class="form-select" asp-items="ViewBag.AreaUnitId"></select>
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label asp-for="Notes" class="form-label">Additional Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

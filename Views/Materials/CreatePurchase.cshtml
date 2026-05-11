@@ -1,0 +1,76 @@
+@model BuildWise.Models.MaterialPurchase
+
+@{
+    ViewData["Title"] = "Log Material Purchase";
+    Layout = "_ModuleLayout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Log Material Purchase</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="CreatePurchase">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="MaterialId" class="form-label">Material</label>
+                            <select asp-for="MaterialId" class="form-select" asp-items="ViewBag.MaterialId">
+                                <option value="">-- Select Material --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="SupplierId" class="form-label">Supplier (Optional)</label>
+                            <select asp-for="SupplierId" class="form-select" asp-items="ViewBag.SupplierId">
+                                <option value="">-- Select Supplier --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Quantity" class="form-label">Quantity</label>
+                            <input asp-for="Quantity" class="form-control" type="number" step="0.01" />
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="UnitId" class="form-label">Unit</label>
+                            <select asp-for="UnitId" class="form-select" asp-items="ViewBag.UnitId"></select>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="UnitPrice" class="form-label">Unit Price ($)</label>
+                            <input asp-for="UnitPrice" class="form-control" type="number" step="0.01" />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PurchaseDate" class="form-label">Purchase Date</label>
+                            <input asp-for="PurchaseDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="InvoiceNumber" class="form-label">Invoice #</label>
+                            <input asp-for="InvoiceNumber" class="form-control" />
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Log Purchase</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

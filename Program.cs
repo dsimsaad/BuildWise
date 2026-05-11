@@ -14,6 +14,11 @@ builder.Services.AddDbContext<BuildWiseDbContext>(options =>
         sqlOptions.EnableRetryOnFailure();
     }));
 
+builder.Services.AddScoped<BuildWise.DataLayer.PropertyDAL>();
+builder.Services.AddScoped<BuildWise.BusinessLayer.PropertyBLL>();
+builder.Services.AddScoped<BuildWise.DataLayer.MaterialDAL>();
+builder.Services.AddScoped<BuildWise.BusinessLayer.MaterialBLL>();
+
 // Configure Cookie Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -53,6 +58,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 // app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 

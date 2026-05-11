@@ -1,0 +1,83 @@
+@model BuildWise.Models.Property
+
+@{
+    ViewData["Title"] = "Add Property";
+    Layout = "_ModuleLayout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Add New Property</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label asp-for="PropertyName" class="form-label">Property Name / Title</label>
+                            <input asp-for="PropertyName" class="form-control" placeholder="e.g. Phase 5 Plot" />
+                            <span asp-validation-for="PropertyName" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="TypeId" class="form-label">Property Type</label>
+                            <select asp-for="TypeId" class="form-select" asp-items="ViewBag.TypeId">
+                                <option value="">-- Select Type --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="StatusId" class="form-label">Current Status</label>
+                            <select asp-for="StatusId" class="form-select" asp-items="ViewBag.StatusId">
+                                <option value="">-- Select Status --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-8 mb-3">
+                            <label asp-for="Location" class="form-label">Location / Address</label>
+                            <input asp-for="Location" class="form-control" />
+                            <span asp-validation-for="Location" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="City" class="form-label">City</label>
+                            <input asp-for="City" class="form-control" />
+                            <span asp-validation-for="City" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AreaSize" class="form-label">Area Size</label>
+                            <input asp-for="AreaSize" class="form-control" type="number" step="0.01" />
+                            <span asp-validation-for="AreaSize" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AreaUnitId" class="form-label">Area Unit</label>
+                            <select asp-for="AreaUnitId" class="form-select" asp-items="ViewBag.AreaUnitId">
+                                <option value="">-- Select Unit --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label asp-for="Notes" class="form-label">Additional Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Property</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

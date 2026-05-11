@@ -301,6 +301,12 @@ public partial class BuildWiseDbContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(300);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.MaterialName).HasMaxLength(100);
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Materials)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Materials_Users");
 
             entity.HasOne(d => d.DefaultUnit).WithMany(p => p.Materials)
                 .HasForeignKey(d => d.DefaultUnitId)

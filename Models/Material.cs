@@ -15,7 +15,11 @@ public partial class Material
 
     public bool IsActive { get; set; }
 
+    public int UserId { get; set; }
+
     public virtual MaterialUnit DefaultUnit { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
 
     public virtual ICollection<MaterialPurchase> MaterialPurchases { get; set; } = new List<MaterialPurchase>();
 }

@@ -43,3 +43,9 @@ BEGIN
     ALTER TABLE Contractors ADD CONSTRAINT FK_Contractors_Users FOREIGN KEY (UserID) REFERENCES Users(UserID);
 END
 GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = 'UserID' AND Object_ID = Object_ID('Material'))
+BEGIN
+    ALTER TABLE Material ADD UserID int NOT NULL DEFAULT 1;
+    ALTER TABLE Material ADD CONSTRAINT FK_Materials_Users FOREIGN KEY (UserID) REFERENCES Users(UserID);
+END
+GO

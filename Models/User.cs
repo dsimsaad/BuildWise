@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace BuildWise.Models;
@@ -21,7 +21,7 @@ public partial class User
     public string Email { get; set; } = null!;
 
     /// <summary>
-    /// BCrypt hashed password � never store plain text
+    /// BCrypt hashed password — never store plain text
     /// </summary>
     public string PasswordHash { get; set; } = null!;
 
@@ -44,4 +44,7 @@ public partial class User
     public virtual ICollection<Project> Projects { get; set; } = new List<Project>();
 
     public virtual ICollection<Property> Properties { get; set; } = new List<Property>();
+
+    public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
 }
+
