@@ -25,8 +25,20 @@ public class ProjectSelectorViewComponent : ViewComponent
             .ToListAsync();
 
         var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
+        if (!selectedProjectId.HasValue && projects.Count > 0)
+        {
+            selectedProjectId = projects[0].ProjectId;
+            HttpContext.Session.SetInt32("SelectedProjectId", selectedProjectId.Value);
+        }
+
+        var activeProject = selectedProjectId.HasValue
+            ? projects.FirstOrDefault(p => p.ProjectId == selectedProjectId.Value)
+            : null;
+
         ViewBag.SelectedProjectId = selectedProjectId;
-        ViewBag.ActiveProjectTag = selectedProjectId.HasValue ? "Standard" : "Default";
+        ViewBag.ActiveProjectTag = activeProject == null
+            ? "No Project"
+            : activeProject.IsCompleted ? "Completed" : "Active";
 
         return View(projects);
     }

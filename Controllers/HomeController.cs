@@ -101,6 +101,20 @@ public class HomeController : Controller
                 selectedProjectId = null;
             }
         }
+
+        if (!selectedProjectId.HasValue)
+        {
+            selectedProjectId = await _context.Projects
+                .Where(p => p.UserId == userId)
+                .OrderBy(p => p.ProjectId)
+                .Select(p => (int?)p.ProjectId)
+                .FirstOrDefaultAsync();
+
+            if (selectedProjectId.HasValue)
+            {
+                HttpContext.Session.SetInt32("SelectedProjectId", selectedProjectId.Value);
+            }
+        }
         ViewBag.SelectedProjectId = selectedProjectId;
 
         // 3. Base Queries Filtered by User
@@ -114,6 +128,9 @@ public class HomeController : Controller
                           join p in _context.Projects on v.ProjectId equals p.ProjectId
                           where p.UserId == userId
                           select v;
+        var scopedExpQuery = selectedProjectId.HasValue
+            ? vwExpQuery.Where(v => v.ProjectId == selectedProjectId.Value)
+            : vwExpQuery;
 
         var budgetBll = new BudgetBLL(_configuration.GetConnectionString("BuildWise") ?? "");
         var expenseBll = new ExpenseBLL(_configuration.GetConnectionString("BuildWise") ?? "");
@@ -175,12 +192,19 @@ public class HomeController : Controller
         }
 
         // 5. Common Data
-        ViewBag.RecentExpensesList = await vwExpQuery
+        ViewBag.RecentExpensesList = await scopedExpQuery
             .OrderByDescending(e => e.ExpenseDate).Take(5).ToListAsync();
 
-        ViewBag.CategoryExpenses = await vwExpQuery
+        ViewBag.CategoryExpenses = await scopedExpQuery
             .GroupBy(e => e.CategoryName)
             .Select(g => new { Category = g.Key, Total = g.Sum(e => e.Amount) })
+            .ToListAsync();
+
+        ViewBag.MonthlyExpenses = await scopedExpQuery
+            .GroupBy(e => new { e.ExpenseDate.Year, e.ExpenseDate.Month })
+            .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+            .Select(g => new { Month = g.Key.Month, Total = g.Sum(e => e.Amount) })
+            .Take(12)
             .ToListAsync();
             
         ViewBag.WorkersOffSite  = 0;

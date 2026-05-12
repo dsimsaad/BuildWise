@@ -11,6 +11,7 @@ namespace BuildWise.Controllers
         private readonly string _connectionString;
         private readonly BudgetBLL _budgetBll;
         private readonly ExpenseBLL _expenseBll;
+        private readonly TransactionBLL _transactionBll;
         private readonly BuildWiseDbContext _context;
 
         public BudgetController(IConfiguration configuration, BuildWiseDbContext context)
@@ -18,6 +19,7 @@ namespace BuildWise.Controllers
             _connectionString = configuration.GetConnectionString("BuildWise") ?? "";
             _budgetBll = new BudgetBLL(_connectionString);
             _expenseBll = new ExpenseBLL(_connectionString);
+            _transactionBll = new TransactionBLL(_connectionString);
             _context = context;
         }
 
@@ -75,7 +77,7 @@ namespace BuildWise.Controllers
             
             if (project != null && project.TotalBudget > 0 && (currentAllocated + item.Amount) > project.TotalBudget)
             {
-                return Json(new { success = false, message = $"Category budget exceeds the Total Project Budget (PKR {project.TotalBudget}). Please increase the Total Budget first." });
+                return Json(new { success = false, message = $"Category budget exceeds the Total Project Budget (RS. {project.TotalBudget}). Please increase the Total Budget first." });
             }
 
             item.ProjectId = projectId;
@@ -96,6 +98,15 @@ namespace BuildWise.Controllers
             {
                 project.TotalBudget = amount;
                 _context.SaveChanges();
+                _transactionBll.AddTransaction(new TransactionLog
+                {
+                    ProjectId = projectId.Value,
+                    TransactionType = "Updated",
+                    Category = "Project Budget",
+                    Description = "Total project budget updated.",
+                    Amount = amount,
+                    BudgetEffect = 0
+                });
                 return Json(new { success = true });
             }
             return Json(new { success = false, message = "Project not found" });

@@ -734,6 +734,8 @@ public partial class BuildWiseDbContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasComment("Optional contact number");
+            entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.Profession).HasMaxLength(100);
             entity.Property(e => e.ProfileImageUrl)
                 .HasMaxLength(500)
                 .HasColumnName("ProfileImageURL");

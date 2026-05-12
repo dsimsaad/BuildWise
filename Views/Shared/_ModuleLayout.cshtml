@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - BuildWise</title>
+    <link rel="icon" type="image/png" href="~/logo.png" asp-append-version="true" />
+    <link rel="shortcut icon" type="image/png" href="~/logo.png" asp-append-version="true" />
     <link rel="stylesheet" href="~/assets/css/style.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/assets/css/dashboard.css" asp-append-version="true" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -94,6 +96,10 @@
 
                         <!-- Dropdown Menu -->
                         <div class="profile-menu">
+                            <a asp-controller="Account" asp-action="Profile" class="profile-menu-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                Profile
+                            </a>
                             <form asp-controller="Account" asp-action="Logout" method="post" style="width: 100%;">
                                 <button type="submit" class="profile-menu-item" style="width: 100%; border: none; background: none; text-align: left; color: #EF4444 !important;">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>

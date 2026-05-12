@@ -21,7 +21,7 @@ public partial class User
     public string Email { get; set; } = null!;
 
     /// <summary>
-    /// BCrypt hashed password — never store plain text
+    /// BCrypt hashed password - never store plain text
     /// </summary>
     public string PasswordHash { get; set; } = null!;
 
@@ -29,6 +29,10 @@ public partial class User
     /// Optional contact number
     /// </summary>
     public string? PhoneNumber { get; set; }
+
+    public string? City { get; set; }
+
+    public string? Profession { get; set; }
 
     public string? ProfileImageUrl { get; set; }
 

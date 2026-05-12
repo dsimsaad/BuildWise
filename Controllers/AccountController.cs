@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using BuildWise.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BuildWise.Controllers
 {
@@ -16,6 +17,85 @@ namespace BuildWise.Controllers
         public AccountController(BuildWiseDbContext context)
         {
             _context = context;
+        }
+
+        private int GetUserId()
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+        }
+
+        private async Task<Project> EnsureDefaultProjectAsync(User user)
+        {
+            var existingProject = await _context.Projects
+                .Where(p => p.UserId == user.UserId)
+                .OrderBy(p => p.ProjectId)
+                .FirstOrDefaultAsync();
+
+            if (existingProject != null)
+            {
+                return existingProject;
+            }
+
+            var propertyId = await _context.Properties
+                .Where(p => p.UserId == user.UserId)
+                .OrderBy(p => p.PropertyId)
+                .Select(p => (int?)p.PropertyId)
+                .FirstOrDefaultAsync();
+
+            if (!propertyId.HasValue)
+            {
+                var defaultTypeId = await _context.PropertyTypes
+                    .OrderBy(t => t.TypeId)
+                    .Select(t => (byte?)t.TypeId)
+                    .FirstOrDefaultAsync();
+                var defaultStatusId = await _context.PropertyStatuses
+                    .OrderBy(s => s.StatusId)
+                    .Select(s => (byte?)s.StatusId)
+                    .FirstOrDefaultAsync();
+                var defaultAreaUnitId = await _context.AreaUnits
+                    .OrderBy(a => a.UnitId)
+                    .Select(a => (byte?)a.UnitId)
+                    .FirstOrDefaultAsync();
+
+                if (!defaultTypeId.HasValue || !defaultStatusId.HasValue || !defaultAreaUnitId.HasValue)
+                {
+                    throw new InvalidOperationException("Unable to initialize required default project metadata.");
+                }
+
+                var defaultProperty = new Property
+                {
+                    PropertyName = "Default Property",
+                    UserId = user.UserId,
+                    TypeId = defaultTypeId.Value,
+                    StatusId = defaultStatusId.Value,
+                    Location = "Not specified",
+                    AreaSize = 0,
+                    AreaUnitId = defaultAreaUnitId.Value,
+                    Notes = "Auto-created for the main project.",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.Properties.Add(defaultProperty);
+                await _context.SaveChangesAsync();
+                propertyId = defaultProperty.PropertyId;
+            }
+
+            var defaultProject = new Project
+            {
+                ProjectName = "main",
+                PropertyId = propertyId.Value,
+                UserId = user.UserId,
+                StartDate = DateOnly.FromDateTime(DateTime.Today),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                TotalBudget = 0,
+                IsCompleted = false
+            };
+            _context.Projects.Add(defaultProject);
+            await _context.SaveChangesAsync();
+
+            return defaultProject;
         }
 
         [HttpPost]
@@ -30,7 +110,7 @@ namespace BuildWise.Controllers
                 string email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString()! : "";
                 
                 // Determine the best name to use
-                string name = request.Name ?? "";
+                string name = request.Name ?? request.FullName ?? "";
                 
                 // If name from request is empty or just the email, look in claims
                 if (string.IsNullOrWhiteSpace(name) || name.Contains("@"))
@@ -69,39 +149,10 @@ namespace BuildWise.Controllers
                     };
                     _context.Users.Add(user);
                     await _context.SaveChangesAsync();
-
-                    // Create default property and project
-                    var defaultProperty = new Property
-                    {
-                        PropertyName = "Default Property",
-                        UserId = user.UserId,
-                        TypeId = 1,
-                        StatusId = 1,
-                        Location = "Not Specified",
-                        AreaSize = 0,
-                        AreaUnitId = 1,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    _context.Properties.Add(defaultProperty);
-                    await _context.SaveChangesAsync();
-
-                    var defaultProject = new Project
-                    {
-                        ProjectName = "Main",
-                        PropertyId = defaultProperty.PropertyId,
-                        UserId = user.UserId,
-                        StartDate = DateOnly.FromDateTime(DateTime.Now),
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        TotalBudget = 0,
-                        IsCompleted = false
-                    };
-                    _context.Projects.Add(defaultProject);
-                    await _context.SaveChangesAsync();
-                    
-                    HttpContext.Session.SetInt32("SelectedProjectId", defaultProject.ProjectId);
                 }
+
+                var activeProject = await EnsureDefaultProjectAsync(user);
+                HttpContext.Session.SetInt32("SelectedProjectId", activeProject.ProjectId);
 
                 // 3. Create Local Cookie Session
                 var claims = new List<Claim>
@@ -135,6 +186,81 @@ namespace BuildWise.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Index", "Home");
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            int userId = GetUserId();
+            if (userId == 0) return Unauthorized();
+
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null) return NotFound();
+
+            var model = new ProfileViewModel
+            {
+                UserId = user.UserId,
+                FullName = user.FullName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                City = user.City,
+                Profession = user.Profession,
+                CreatedAt = user.CreatedAt,
+                ProjectCount = await _context.Projects.CountAsync(p => p.UserId == userId)
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile(ProfileViewModel model)
+        {
+            int userId = GetUserId();
+            if (userId == 0 || model.UserId != userId) return Unauthorized();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null) return NotFound();
+
+            if (!ModelState.IsValid)
+            {
+                model.Email = user.Email;
+                model.CreatedAt = user.CreatedAt;
+                model.ProjectCount = await _context.Projects.CountAsync(p => p.UserId == userId);
+                return View(model);
+            }
+
+            user.FullName = model.FullName.Trim();
+            user.PhoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber) ? null : model.PhoneNumber.Trim();
+            user.City = string.IsNullOrWhiteSpace(model.City) ? null : model.City.Trim();
+            user.Profession = string.IsNullOrWhiteSpace(model.Profession) ? null : model.Profession.Trim();
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            var identity = (ClaimsIdentity?)User.Identity;
+            var nameClaim = identity?.FindFirst(ClaimTypes.Name);
+            if (identity != null && nameClaim != null)
+            {
+                identity.RemoveClaim(nameClaim);
+                identity.AddClaim(new Claim(ClaimTypes.Name, user.FullName));
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(identity),
+                    new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
+                    });
+            }
+
+            TempData["ProfileSaved"] = "Profile updated.";
+            return RedirectToAction(nameof(Profile));
         }
 
         public class FirebaseLoginRequest

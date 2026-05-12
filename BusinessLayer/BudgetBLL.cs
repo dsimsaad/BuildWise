@@ -9,10 +9,12 @@ namespace BuildWise.BusinessLayer
     public class BudgetBLL
     {
         private BudgetDAL dal;
+        private TransactionDAL transactionDal;
 
         public BudgetBLL(string connectionString)
         {
             dal = new BudgetDAL(connectionString);
+            transactionDal = new TransactionDAL(connectionString);
         }
 
         public List<BudgetItem> GetAllBudgets(int? projectId = null, int? userId = null)
@@ -32,7 +34,12 @@ namespace BuildWise.BusinessLayer
             {
                 return false;
             }
-            return dal.Add(item);
+            bool success = dal.Add(item);
+            if (success)
+            {
+                LogTransaction("Added", item, "Budget allocation added.");
+            }
+            return success;
         }
 
         public bool UpdateBudget(BudgetItem item)
@@ -41,13 +48,24 @@ namespace BuildWise.BusinessLayer
             {
                 return false;
             }
-            return dal.Update(item);
+            bool success = dal.Update(item);
+            if (success)
+            {
+                LogTransaction("Updated", item, "Budget allocation updated.");
+            }
+            return success;
         }
 
         public bool DeleteBudget(int id)
         {
             if (id <= 0) return false;
-            return dal.Delete(id);
+            var item = dal.GetById(id);
+            bool success = dal.Delete(id);
+            if (success && item != null)
+            {
+                LogTransaction("Deleted", item, "Budget allocation deleted.");
+            }
+            return success;
         }
 
         public decimal GetTotalBudget(int? projectId = null)
@@ -58,6 +76,21 @@ namespace BuildWise.BusinessLayer
         public decimal GetTotalBudgetForUser(int userId)
         {
             return dal.GetTotalBudgetForUser(userId);
+        }
+
+        private void LogTransaction(string type, BudgetItem item, string description)
+        {
+            TransactionLog log = new TransactionLog
+            {
+                ProjectId = item.ProjectId,
+                TransactionType = type,
+                Category = item.Category,
+                Description = description,
+                Amount = item.Amount,
+                BudgetEffect = 0
+            };
+
+            transactionDal.Add(log);
         }
     }
 }
