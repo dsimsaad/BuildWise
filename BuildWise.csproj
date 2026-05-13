@@ -15,13 +15,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <None Update="firebase-admin-sdk.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="ViewComponents/BuildWiseApp/**/*.cs" />
+    <Content Remove="ViewComponents/BuildWiseApp/**" />
+    <EmbeddedResource Remove="ViewComponents/BuildWiseApp/**" />
+    <None Remove="ViewComponents/BuildWiseApp/**" />
+  </ItemGroup>
 </Project>

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using BuildWise.Models;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,14 +41,45 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// Initialize Firebase App if the service account key exists
-string firebaseKeyPath = System.IO.Path.Combine(AppContext.BaseDirectory, "firebase-admin-sdk.json");
-if (System.IO.File.Exists(firebaseKeyPath) && FirebaseAdmin.FirebaseApp.DefaultInstance == null)
+// Firebase Admin is optional. Configure Firebase:ServiceAccountPath, or keep firebase-admin-sdk.json
+// in the project root for local development.
+string? firebaseKeyPath = builder.Configuration["Firebase:ServiceAccountPath"];
+if (string.IsNullOrWhiteSpace(firebaseKeyPath))
 {
-    FirebaseAdmin.FirebaseApp.Create(new FirebaseAdmin.AppOptions()
+    string localFirebaseKeyPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, "firebase-admin-sdk.json");
+    if (System.IO.File.Exists(localFirebaseKeyPath))
     {
-        Credential = Google.Apis.Auth.OAuth2.GoogleCredential.FromFile(firebaseKeyPath)
-    });
+        firebaseKeyPath = localFirebaseKeyPath;
+    }
+}
+
+if (!string.IsNullOrWhiteSpace(firebaseKeyPath) && FirebaseApp.DefaultInstance == null)
+{
+    try
+    {
+        if (!System.IO.Path.IsPathRooted(firebaseKeyPath))
+        {
+            firebaseKeyPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, firebaseKeyPath);
+        }
+
+        if (System.IO.File.Exists(firebaseKeyPath))
+        {
+            FirebaseApp.Create(new AppOptions
+            {
+                Credential = CredentialFactory
+                    .FromFile<ServiceAccountCredential>(firebaseKeyPath)
+                    .ToGoogleCredential()
+            });
+        }
+        else
+        {
+            app.Logger.LogWarning("Firebase service account file was not found at {FirebaseKeyPath}. Firebase login is disabled.", firebaseKeyPath);
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Firebase Admin could not be initialized. Firebase login is disabled.");
+    }
 }
 
 // Configure the HTTP request pipeline.

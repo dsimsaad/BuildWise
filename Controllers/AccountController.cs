@@ -1,4 +1,5 @@
 using FirebaseAdmin.Auth;
+using FirebaseAdmin;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
@@ -104,9 +105,18 @@ namespace BuildWise.Controllers
         {
             try
             {
+                if (request == null || string.IsNullOrWhiteSpace(request.IdToken))
+                {
+                    return BadRequest(new { success = false, message = "Login token was not received. Please try signing in again." });
+                }
+
+                if (FirebaseApp.DefaultInstance == null)
+                {
+                    return BadRequest(new { success = false, message = "Firebase authentication is not configured on the server. Add firebase-admin-sdk.json to the project root or set Firebase:ServiceAccountPath." });
+                }
+
                 // 1. Verify the ID Token
                 var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(request.IdToken);
-                string uid = decodedToken.Uid;
                 string email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString()! : "";
                 
                 // Determine the best name to use
