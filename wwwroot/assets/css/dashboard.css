@@ -147,8 +147,8 @@ body.dashboard-body {
 }
 
 .sidebar-brand-link img {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
     object-fit: contain;
     flex-shrink: 0;
 }
@@ -167,10 +167,10 @@ body.dashboard-body {
 }
 
 .logo-text {
-    font-size: 1.1rem;
+    font-size: 1.4rem;
     font-weight: 800;
     color: var(--dash-navy);
-    letter-spacing: -0.3px;
+    letter-spacing: -0.4px;
 }
 
 .sidebar-nav {
