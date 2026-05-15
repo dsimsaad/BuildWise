@@ -6,6 +6,7 @@ obj/
 *.user
 *.suo
 *.userosscache
+*.lscache
 *.sln.docstates
 .vs/
 
