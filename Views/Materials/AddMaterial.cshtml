@@ -1,45 +1,57 @@
 @model BuildWise.Models.Material
 
 @{
-    ViewData["Title"] = "Add Custom Material";
+    ViewData["Title"] = "Add Material";
     Layout = "_ModuleLayout";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white">
-                <h4 class="mb-0">Add Material to Catalog</h4>
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Add Material</h1>
+        <p>Create a reusable material type for purchase entries.</p>
+    </div>
+    <a asp-action="Catalog" class="btn-secondary">Back to Catalog</a>
+</div>
+
+<div class="module-card">
+    <div class="card-header">
+        <h2>Material Details</h2>
+    </div>
+    <div class="card-body">
+        <form asp-action="AddMaterial">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label asp-for="MaterialName">Material Name</label>
+                    <input asp-for="MaterialName" class="form-control" placeholder="e.g. Portland Cement" />
+                    <span asp-validation-for="MaterialName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="DefaultUnitId">Default Unit</label>
+                    <select asp-for="DefaultUnitId" class="form-control" asp-items="ViewBag.DefaultUnitId">
+                        <option value="">Select unit</option>
+                    </select>
+                    <span asp-validation-for="DefaultUnitId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group full-width">
+                    <label asp-for="Description">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
             </div>
-            <div class="card-body">
-                <form asp-action="AddMaterial">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    
-                    <div class="mb-3">
-                        <label asp-for="MaterialName" class="form-label">Material Name</label>
-                        <input asp-for="MaterialName" class="form-control" placeholder="e.g. Portland Cement" />
-                        <span asp-validation-for="MaterialName" class="text-danger"></span>
-                    </div>
 
-                    <div class="mb-3">
-                        <label asp-for="DefaultUnitId" class="form-label">Default Unit</label>
-                        <select asp-for="DefaultUnitId" class="form-select" asp-items="ViewBag.DefaultUnitId">
-                            <option value="">-- Select Unit --</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="Description" class="form-label">Description (Optional)</label>
-                        <textarea asp-for="Description" class="form-control" rows="2"></textarea>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2">
-                        <a asp-action="Catalog" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Add Material</button>
-                    </div>
-                </form>
+            <div class="form-actions">
+                <a asp-action="Catalog" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Add Material</button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 

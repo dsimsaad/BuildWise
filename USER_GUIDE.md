@@ -29,8 +29,9 @@ Before running the application, make sure you have the following installed on yo
 
 ### 1. Database Setup
 1. Open **SSMS** and connect to your local SQL Server instance.
-2. Click **File → Open → File** and locate the `BuildWise_Full_Script.sql` (if provided in your SQL dump folder).
-3. Execute the script to create the database and tables.
+2. Click **File -> Open -> File** and locate `BuildWiseDB/BuildWiseDB.sql`.
+3. Execute the script to create the database and main tables.
+4. Open `migrate.sql` and execute it too. This applies the latest table/column fixes for the current project version.
 4. You should see `BuildWiseDB` appear in your databases list.
 
 ### 2. Configuration (`appsettings.json`)
@@ -55,15 +56,32 @@ The connection string dictates how the application talks to your database. **Eve
 }
 ```
 
-### 3. Run the Application
+### 3. Run the Latest Local Version
 Open a terminal in the root folder of the project and run:
 
+**Mac / Linux terminal:**
 ```bash
 dotnet restore
-dotnet run
+PORT=$((5000 + RANDOM % 1000))
+dotnet run --no-launch-profile --urls "http://localhost:$PORT"
 ```
 
-Once the build is complete, the terminal will display the local URL (e.g., `http://localhost:5057`). Open that URL in your browser to start using BuildWise!
+**Windows PowerShell:**
+```powershell
+dotnet restore
+$port = Get-Random -Minimum 5000 -Maximum 5999
+dotnet run --no-launch-profile --urls "http://localhost:$port"
+```
+
+This starts the app on a different local port most of the time. That means you usually do not need to stop an older `localhost` window before opening the latest version.
+
+The URL to open will be the port shown in the command. For example, if the terminal says `Now listening on: http://localhost:5482`, open `http://localhost:5482`.
+
+If you prefer the old fixed-port behavior, you can still run:
+
+```bash
+dotnet run
+```
 
 ---
 

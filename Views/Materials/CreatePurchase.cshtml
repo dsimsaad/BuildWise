@@ -5,69 +5,85 @@
     Layout = "_ModuleLayout";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white">
-                <h4 class="mb-0">Log Material Purchase</h4>
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Log Material Purchase</h1>
+        <p>Record quantity, supplier, invoice, and cost for the active project.</p>
+    </div>
+    <a asp-action="Index" class="btn-secondary">Back to Purchases</a>
+</div>
+
+<div class="module-card">
+    <div class="card-header">
+        <h2>Purchase Details</h2>
+    </div>
+    <div class="card-body">
+        <form asp-action="CreatePurchase">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label asp-for="MaterialId">Material</label>
+                    <select asp-for="MaterialId" class="form-control" asp-items="ViewBag.MaterialId">
+                        <option value="">Select material</option>
+                    </select>
+                    <span asp-validation-for="MaterialId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="SupplierId">Supplier</label>
+                    <select asp-for="SupplierId" class="form-control" asp-items="ViewBag.SupplierId">
+                        <option value="">No supplier selected</option>
+                    </select>
+                    <span asp-validation-for="SupplierId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Quantity">Quantity</label>
+                    <input asp-for="Quantity" class="form-control" type="number" step="0.01" />
+                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="UnitId">Unit</label>
+                    <select asp-for="UnitId" class="form-control" asp-items="ViewBag.UnitId"></select>
+                    <span asp-validation-for="UnitId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="UnitPrice">Unit Price (PKR)</label>
+                    <input asp-for="UnitPrice" class="form-control" type="number" step="0.01" />
+                    <span asp-validation-for="UnitPrice" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="PurchaseDate">Purchase Date</label>
+                    <input asp-for="PurchaseDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="PurchaseDate" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="InvoiceNumber">Invoice Number</label>
+                    <input asp-for="InvoiceNumber" class="form-control" />
+                    <span asp-validation-for="InvoiceNumber" class="text-danger"></span>
+                </div>
+
+                <div class="form-group full-width">
+                    <label asp-for="Notes">Notes</label>
+                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
             </div>
-            <div class="card-body">
-                <form asp-action="CreatePurchase">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="MaterialId" class="form-label">Material</label>
-                            <select asp-for="MaterialId" class="form-select" asp-items="ViewBag.MaterialId">
-                                <option value="">-- Select Material --</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="SupplierId" class="form-label">Supplier (Optional)</label>
-                            <select asp-for="SupplierId" class="form-select" asp-items="ViewBag.SupplierId">
-                                <option value="">-- Select Supplier --</option>
-                            </select>
-                        </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label asp-for="Quantity" class="form-label">Quantity</label>
-                            <input asp-for="Quantity" class="form-control" type="number" step="0.01" />
-                        </div>
-                        
-                        <div class="col-md-4 mb-3">
-                            <label asp-for="UnitId" class="form-label">Unit</label>
-                            <select asp-for="UnitId" class="form-select" asp-items="ViewBag.UnitId"></select>
-                        </div>
-
-                        <div class="col-md-4 mb-3">
-                            <label asp-for="UnitPrice" class="form-label">Unit Price ($)</label>
-                            <input asp-for="UnitPrice" class="form-control" type="number" step="0.01" />
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="PurchaseDate" class="form-label">Purchase Date</label>
-                            <input asp-for="PurchaseDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="InvoiceNumber" class="form-label">Invoice #</label>
-                            <input asp-for="InvoiceNumber" class="form-control" />
-                        </div>
-
-                        <div class="col-md-12 mb-3">
-                            <label asp-for="Notes" class="form-label">Notes</label>
-                            <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2">
-                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Log Purchase</button>
-                    </div>
-                </form>
+            <div class="form-actions">
+                <a asp-action="Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Log Purchase</button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 

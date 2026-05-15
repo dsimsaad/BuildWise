@@ -106,7 +106,8 @@ public class HomeController : Controller
         {
             selectedProjectId = await _context.Projects
                 .Where(p => p.UserId == userId)
-                .OrderBy(p => p.ProjectId)
+                .OrderBy(p => p.ProjectName == "main" ? 0 : 1)
+                .ThenBy(p => p.ProjectName)
                 .Select(p => (int?)p.ProjectId)
                 .FirstOrDefaultAsync();
 
@@ -131,6 +132,9 @@ public class HomeController : Controller
         var scopedExpQuery = selectedProjectId.HasValue
             ? vwExpQuery.Where(v => v.ProjectId == selectedProjectId.Value)
             : vwExpQuery;
+        var scopedTaskQuery = selectedProjectId.HasValue
+            ? taskQuery.Where(t => t.Phase.ProjectId == selectedProjectId.Value)
+            : taskQuery;
 
         var budgetBll = new BudgetBLL(_configuration.GetConnectionString("BuildWise") ?? "");
         var expenseBll = new ExpenseBLL(_configuration.GetConnectionString("BuildWise") ?? "");
@@ -155,10 +159,10 @@ public class HomeController : Controller
                 .CountAsync();
 
             ViewBag.TotalTasks      = activeStats?.TotalTasks ?? 0;
-            ViewBag.TasksToDo       = await taskQuery.CountAsync(t => t.Phase.ProjectId == selectedProjectId && t.StatusId == 1);
-            ViewBag.TasksInProgress = await taskQuery.CountAsync(t => t.Phase.ProjectId == selectedProjectId && t.StatusId == 2);
+            ViewBag.TasksToDo       = await scopedTaskQuery.CountAsync(t => t.StatusId == 1);
+            ViewBag.TasksInProgress = await scopedTaskQuery.CountAsync(t => t.StatusId == 2);
             ViewBag.TasksCompleted  = activeStats?.CompletedTasks ?? 0;
-            ViewBag.TasksOverdue    = await taskQuery.CountAsync(t => t.Phase.ProjectId == selectedProjectId && t.StatusId == 1 && t.CreatedAt < DateTime.Now.AddDays(-7));
+            ViewBag.TasksOverdue    = await scopedTaskQuery.CountAsync(t => t.StatusId == 1 && t.CreatedAt < DateTime.Now.AddDays(-7));
             
             ViewBag.Phases = await _context.Phases
                 .Include(p => p.PhaseType).Include(p => p.Tasks)
@@ -205,6 +209,14 @@ public class HomeController : Controller
             .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
             .Select(g => new { Month = g.Key.Month, Total = g.Sum(e => e.Amount) })
             .Take(12)
+            .ToListAsync();
+
+        ViewBag.ToDoTasks = await scopedTaskQuery
+            .Include(t => t.Phase)
+                .ThenInclude(p => p.PhaseType)
+            .Where(t => t.StatusId == 1)
+            .OrderBy(t => t.CreatedAt)
+            .Take(6)
             .ToListAsync();
             
         ViewBag.WorkersOffSite  = 0;

@@ -484,21 +484,7 @@ footer {
 .auth-bg-dots { position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(15,37,87,0.08) 1.5px, transparent 1.5px); background-size: 28px 28px; }
 
 .login-container { width: 100%; max-width: 420px; z-index: 10; position: relative; }
-.glass-card { position: relative; background: #ffffff; border: 1px solid rgba(29,78,216,0.1); border-radius: 24px; padding: 36px 40px; box-shadow: 0 8px 40px rgba(15,37,87,0.10), 0 2px 8px rgba(29,78,216,0.06); overflow: hidden; }
-
-/* Light Beams */
-.beam { position: absolute; background: linear-gradient(to right, transparent, rgba(29, 78, 216, 0.4), transparent); opacity: 0; transition: opacity 0.5s; }
-.beam-top { top: 0; left: -100%; width: 50%; height: 2px; animation: beam-x 4s infinite 1s; }
-.beam-bottom { bottom: 0; right: -100%; width: 50%; height: 2px; animation: beam-x-rev 4s infinite 2s; }
-.beam-left { left: 0; bottom: -100%; width: 2px; height: 50%; background: linear-gradient(to top, transparent, rgba(29, 78, 216, 0.4), transparent); animation: beam-y 4s infinite 3s; }
-.beam-right { right: 0; top: -100%; width: 2px; height: 50%; background: linear-gradient(to bottom, transparent, rgba(29, 78, 216, 0.4), transparent); animation: beam-y-rev 4s infinite 0s; }
-
-@keyframes beam-x { 0% { left: -100%; opacity: 0; } 50% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
-@keyframes beam-x-rev { 0% { right: -100%; opacity: 0; } 50% { opacity: 1; } 100% { right: 100%; opacity: 0; } }
-@keyframes beam-y { 0% { bottom: -100%; opacity: 0; } 50% { opacity: 1; } 100% { bottom: 100%; opacity: 0; } }
-@keyframes beam-y-rev { 0% { top: -100%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-
-.glass-card:hover .beam { opacity: 0.8; }
+.glass-card { position: relative; background: #ffffff; border: 1px solid rgba(29,78,216,0.1); border-radius: 20px; padding: 36px 40px; box-shadow: 0 8px 32px rgba(15,37,87,0.10); overflow: hidden; }
 
 .login-header { text-align: center; margin-bottom: 24px; }
 .login-header .logo-box { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(15, 37, 87, 0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; background: rgba(15, 37, 87, 0.05); }
@@ -506,9 +492,9 @@ footer {
 .login-header p { font-size: 13px; color: #64748b; }
 
 .glass-input-group { margin-bottom: 20px; }
-.glass-input-wrapper { position: relative; border-radius: 12px; background: #f8faff; border: 1px solid #e2e8f0; transition: all 0.3s; }
+.glass-input-wrapper { position: relative; border-radius: 12px; background: #f8faff; border: 1px solid #e2e8f0; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; }
 .glass-input-wrapper:hover { background: #f1f5f9; }
-.glass-input-wrapper.focused { border-color: #1D4ED8; background: #fff; transform: scale(1.02); box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.05); }
+.glass-input-wrapper.focused { border-color: #1D4ED8; background: #fff; box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.05); }
 
 .glass-input-wrapper > svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #94a3b8; transition: color 0.3s; pointer-events: none; }
 .glass-input-wrapper.focused > svg { color: #1D4ED8; }
@@ -533,14 +519,14 @@ footer {
 .forgot-pass { color: #1D4ED8; text-decoration: none; transition: color 0.2s; font-weight: 500; }
 .forgot-pass:hover { color: #1d4ed8; text-decoration: underline; }
 
-.glass-btn-primary { width: 100%; background: #1D4ED8; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px; }
-.glass-btn-primary:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(29, 78, 216, 0.2); }
-.glass-btn-primary:active { transform: translateY(0); }
+.glass-btn-primary { width: 100%; background: #1D4ED8; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px; }
+.glass-btn-primary:hover { background: #1E40AF; box-shadow: 0 6px 14px rgba(29, 78, 216, 0.18); }
+.glass-btn-primary:active { box-shadow: none; }
 
 .glass-divider { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; color: #cbd5e1; font-size: 11px; }
 .glass-divider::before, .glass-divider::after { content: ""; flex: 1; height: 1px; background: #e2e8f0; }
 
-.glass-btn-google { width: 100%; background: #fff; color: #475569; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.glass-btn-google { width: 100%; background: #fff; color: #475569; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s, border-color 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .glass-btn-google:hover { background: #f8faff; border-color: #cbd5e1; }
 .glass-btn-google svg path { fill: #4285F4; } /* Basic blue for google icon in light mode */
 
@@ -563,13 +549,6 @@ footer {
     font-weight: 500;
     margin-bottom: 16px;
     text-align: center;
-    animation: shake 0.4s ease-in-out;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
 }
 
 /* === FORGOT PASSWORD MODAL === */

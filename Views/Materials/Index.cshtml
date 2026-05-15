@@ -1,63 +1,122 @@
 @model IEnumerable<BuildWise.Models.MaterialPurchase>
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Material Purchases";
     Layout = "_ModuleLayout";
+    var totalCost = Model.Sum(m => m.TotalCost ?? 0);
+    var totalQuantity = Model.Sum(m => m.Quantity);
+    var totalUsed = Model.Sum(m => m.MaterialUsages?.Sum(u => u.QuantityUsed) ?? 0);
+    var pkrCulture = new CultureInfo("en-IN");
+    string FormatPkr(decimal value) => $"PKR {value.ToString("N0", pkrCulture)}";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-box-seam"></i> Material Purchases for Current Project</h2>
-    <div>
-        <a asp-action="Catalog" class="btn btn-outline-info me-2">Manage Material Catalog</a>
-        <a asp-action="CreatePurchase" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Log Purchase
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Material Purchases</h1>
+        <p>Track project material purchases, costs, and usage.</p>
+    </div>
+    <div class="entity-actions">
+        <a asp-action="Catalog" class="btn-secondary">Material Catalog</a>
+        <a asp-action="CreatePurchase" class="btn-create">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Log Purchase
         </a>
     </div>
 </div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body">
+<div class="summary-grid">
+    <div class="sum-card">
+        <div class="sum-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="M3.3 7 12 12l8.7-5"></path><path d="M12 22V12"></path></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Purchases</h3>
+            <p>@Model.Count()</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#DCFCE7; color:#10B981;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Total Cost</h3>
+            <p>@FormatPkr(totalCost)</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#FEF3C7; color:#F59E0B;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Used / Purchased</h3>
+            <p>@totalUsed.ToString("N0") / @totalQuantity.ToString("N0")</p>
+        </div>
+    </div>
+</div>
+
+<div class="module-card">
+    <div class="card-header">
+        <h2>Project Purchases</h2>
+        <span class="badge badge-info">@Model.Count() records</span>
+    </div>
+    <div class="card-body" style="padding:0;">
         @if (!Model.Any())
         {
-            <div class="text-center text-muted py-5">
-                <i class="bi bi-cart-x display-4"></i>
-                <p class="mt-3">No material purchases recorded for this project yet.</p>
-                <a asp-action="CreatePurchase" class="btn btn-outline-primary">Log First Purchase</a>
+            <div class="empty-state" style="border:none; box-shadow:none; border-radius:0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path></svg>
+                <h2>No material purchases yet</h2>
+                <p>Log the first purchase for the active project.</p>
+                <a asp-action="CreatePurchase" class="btn-primary">Log Purchase</a>
             </div>
         }
         else
         {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
+                <table class="modern-table">
+                    <thead>
                         <tr>
                             <th>Date</th>
                             <th>Material</th>
                             <th>Supplier</th>
                             <th>Quantity</th>
+                            <th>Used</th>
+                            <th>Remaining</th>
                             <th>Unit Price</th>
                             <th>Total Cost</th>
-                            <th>Invoice #</th>
-                            <th>Action</th>
+                            <th>Invoice</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model)
                         {
+                            var used = item.MaterialUsages?.Sum(u => u.QuantityUsed) ?? 0;
+                            var remaining = item.Quantity - used;
                             <tr>
                                 <td>@item.PurchaseDate.ToString("MMM dd, yyyy")</td>
-                                <td><span class="fw-bold text-primary">@item.Material?.MaterialName</span></td>
-                                <td>@(item.Supplier?.SupplierName ?? "Unknown Supplier")</td>
+                                <td><strong>@item.Material?.MaterialName</strong></td>
+                                <td>@(item.Supplier?.SupplierName ?? "-")</td>
                                 <td>@item.Quantity @item.Unit?.UnitName</td>
-                                <td>@item.UnitPrice.ToString("C")</td>
-                                <td><span class="badge bg-success">@((item.TotalCost ?? 0).ToString("C"))</span></td>
-                                <td>@item.InvoiceNumber</td>
+                                <td>@used @item.Unit?.UnitName</td>
+                                <td><span class="badge @(remaining > 0 ? "badge-success" : "badge-warning")">@remaining @item.Unit?.UnitName</span></td>
+                                <td>@FormatPkr(item.UnitPrice)</td>
+                                <td><strong>@FormatPkr(item.TotalCost ?? 0)</strong></td>
+                                <td>@(string.IsNullOrWhiteSpace(item.InvoiceNumber) ? "-" : item.InvoiceNumber)</td>
                                 <td>
-                                    <div class="d-flex gap-2">
-                                        <a asp-action="LogUsage" asp-route-purchaseId="@item.PurchaseId" class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-right-circle"></i> Log Usage</a>
-                                        <form asp-action="DeletePurchase" method="post" onsubmit="return confirm('Delete this purchase? This affects project costs.');">
+                                    <div class="action-btns">
+                                        <a asp-action="LogUsage" asp-route-purchaseId="@item.PurchaseId" class="btn-icon btn-edit" title="Log Usage">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                        </a>
+                                        <form asp-action="DeletePurchase" method="post" class="inline-delete-form" onsubmit="return confirm('Delete this purchase? This affects project costs.');">
                                             <input type="hidden" name="id" value="@item.PurchaseId" />
-                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                            <button type="submit" class="btn-icon btn-delete" title="Delete">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                                            </button>
                                         </form>
                                     </div>
                                 </td>

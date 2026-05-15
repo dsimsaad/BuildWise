@@ -21,7 +21,8 @@ public class ProjectSelectorViewComponent : ViewComponent
 
         var projects = await _context.Projects
             .Where(p => p.UserId == userId)
-            .OrderBy(p => p.ProjectName)
+            .OrderBy(p => p.ProjectName == "main" ? 0 : 1)
+            .ThenBy(p => p.ProjectName)
             .ToListAsync();
 
         var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");

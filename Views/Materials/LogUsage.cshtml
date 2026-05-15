@@ -5,52 +5,61 @@
     Layout = "_ModuleLayout";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white">
-                <h4 class="mb-0">Log Material Usage</h4>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-info">
-                    <strong>Purchase:</strong> @ViewBag.PurchaseDetails
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Log Material Usage</h1>
+        <p>Assign used material quantity to a project phase.</p>
+    </div>
+    <a asp-action="Index" class="btn-secondary">Back to Purchases</a>
+</div>
+
+<div class="module-card">
+    <div class="card-header">
+        <h2>Usage Details</h2>
+        <span class="badge badge-info">@ViewBag.PurchaseDetails</span>
+    </div>
+    <div class="card-body">
+        <form asp-action="LogUsage">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="PurchaseId" />
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label asp-for="PhaseId">Project Phase</label>
+                    <select asp-for="PhaseId" class="form-control" asp-items="ViewBag.PhaseId">
+                        <option value="">Select phase</option>
+                    </select>
+                    <span asp-validation-for="PhaseId" class="text-danger"></span>
                 </div>
 
-                <form asp-action="LogUsage">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <input type="hidden" asp-for="PurchaseId" />
-                    
-                    <div class="mb-3">
-                        <label asp-for="PhaseId" class="form-label">Project Phase</label>
-                        <select asp-for="PhaseId" class="form-select" asp-items="ViewBag.PhaseId">
-                            <option value="">-- Select Phase --</option>
-                        </select>
-                        <span asp-validation-for="PhaseId" class="text-danger"></span>
-                    </div>
+                <div class="form-group">
+                    <label asp-for="QuantityUsed">Quantity Used</label>
+                    <input asp-for="QuantityUsed" class="form-control" type="number" step="0.01" />
+                    <span asp-validation-for="QuantityUsed" class="text-danger"></span>
+                </div>
 
-                    <div class="mb-3">
-                        <label asp-for="QuantityUsed" class="form-label">Quantity Used</label>
-                        <input asp-for="QuantityUsed" class="form-control" type="number" step="0.01" />
-                        <span asp-validation-for="QuantityUsed" class="text-danger"></span>
-                    </div>
+                <div class="form-group">
+                    <label asp-for="UsageDate">Usage Date</label>
+                    <input asp-for="UsageDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="UsageDate" class="text-danger"></span>
+                </div>
 
-                    <div class="mb-3">
-                        <label asp-for="UsageDate" class="form-label">Usage Date</label>
-                        <input asp-for="UsageDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="Notes" class="form-label">Notes (Optional)</label>
-                        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2">
-                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Log Usage</button>
-                    </div>
-                </form>
+                <div class="form-group full-width">
+                    <label asp-for="Notes">Notes</label>
+                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
             </div>
-        </div>
+
+            <div class="form-actions">
+                <a asp-action="Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Log Usage</button>
+            </div>
+        </form>
     </div>
 </div>
 

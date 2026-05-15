@@ -3,6 +3,20 @@
     Layout = User.Identity?.IsAuthenticated == true ? "_ModuleLayout" : "_MarketingLayout";
 }
 
+@section Styles {
+  @if (User.Identity?.IsAuthenticated == true)
+  {
+    <link rel="stylesheet" href="~/assets/css/style.css" asp-append-version="true" />
+  }
+}
+
+@section Scripts {
+  @if (User.Identity?.IsAuthenticated == true)
+  {
+    <script src="~/assets/js/main.js" asp-append-version="true" defer></script>
+  }
+}
+
 
 <!-- ── CONTACT SECTION ── -->
 <section class="contact-section">
@@ -81,5 +95,4 @@
 </section>
 
 <!-- ══════════════ FOOTER ══════════════ -->
-
 

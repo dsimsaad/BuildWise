@@ -1,8 +1,11 @@
 @model BuildWise.Models.Worker
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Worker Details";
     Layout = "_ModuleLayout";
+    var pkrCulture = new CultureInfo("en-IN");
+    string FormatPkr(decimal value) => $"PKR {value.ToString("N0", pkrCulture)}";
 }
 
 @section Styles {
@@ -28,7 +31,7 @@
         <dd>@Html.DisplayFor(model => model.Cnic)</dd>
 
         <dt>Daily Wage</dt>
-        <dd>RS. @Html.DisplayFor(model => model.DailyWage)</dd>
+        <dd>@FormatPkr(Model.DailyWage)</dd>
 
         <dt>Skill Type</dt>
         <dd><span class="badge badge-info">@Html.DisplayFor(model => model.SkillType)</span></dd>

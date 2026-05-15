@@ -1,4 +1,5 @@
 @using BuildWise.Models
+@using System.Globalization
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "_ModuleLayout";
@@ -30,12 +31,11 @@
 
     var projects = ViewBag.Projects as List<VwProjectDashboard> ?? new();
     var recentExpenses = ViewBag.RecentExpensesList as List<VwExpenseHistory> ?? new();
+    var toDoTasks = ViewBag.ToDoTasks as List<BuildWise.Models.Task> ?? new();
 
-    string FormatCrore(decimal val)
+    string FormatMoney(decimal val)
     {
-        if (val >= 10_000_000) return $"RS. {val / 10_000_000:0.##} Cr";
-        if (val >= 100_000) return $"RS. {val / 100_000:0.##} L";
-        return $"RS. {val:N0}";
+        return $"PKR {val.ToString("N0", new CultureInfo("en-IN"))}";
     }
 
     double budgetUsedPct = totalBudget > 0 ? (double)(totalExpenses / totalBudget * 100) : 0;
@@ -80,7 +80,7 @@
             <div class="stat-info">
                 <span class="stat-label">Project Budget</span>
                 <div style="display:flex; align-items:baseline; gap:8px;">
-                    <h2 class="stat-value">@FormatCrore(totalBudget)</h2>
+                    <h2 class="stat-value">@FormatMoney(totalBudget)</h2>
                 </div>
             </div>
         </div>
@@ -95,7 +95,7 @@
             <div class="stat-info">
                 <span class="stat-label">Total Expenses</span>
                 <div style="display:flex; align-items:baseline; gap:8px;">
-                    <h2 class="stat-value">@FormatCrore(totalExpenses)</h2>
+                    <h2 class="stat-value">@FormatMoney(totalExpenses)</h2>
                     <span class="stat-trend @(budgetUsedPct > 90 ? "trend-down" : "trend-up")">@budgetUsedPct.ToString("0")% Used</span>
                 </div>
             </div>
@@ -237,10 +237,87 @@
                             <span class="dot"></span>
                             <span class="cat-name">@cat.Category</span>
                         </div>
-                        <span class="cat-val">@FormatCrore(cat.Total)</span>
+                        <span class="cat-val">@FormatMoney(cat.Total)</span>
                     </div>
                 }
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- To Do Row -->
+<div class="dashboard-row grid-2">
+    <div class="dash-card">
+        <div class="card-header">
+            <h3>To Do Tasks</h3>
+            <a href="/Construction" class="btn-link">Open Tasks -></a>
+        </div>
+        <div class="table-responsive-clean">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Phase</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (toDoTasks.Any())
+                    {
+                        foreach (var task in toDoTasks)
+                        {
+                            <tr>
+                                <td><strong>@task.TaskName</strong></td>
+                                <td>@(task.Phase?.PhaseType?.PhaseName ?? task.Phase?.CustomPhaseName ?? "Phase")</td>
+                                <td>@task.CreatedAt.ToString("MMM dd")</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="text-muted">No pending tasks.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <h3>Recent Expenses</h3>
+            <a href="/Budget" class="btn-link">Details -></a>
+        </div>
+        <div class="table-responsive-clean">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (recentExpenses.Any())
+                    {
+                        foreach (var expense in recentExpenses)
+                        {
+                            <tr>
+                                <td>@expense.ExpenseDate.ToString("MMM dd")</td>
+                                <td>@expense.CategoryName</td>
+                                <td><strong>@FormatMoney(expense.Amount)</strong></td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="text-muted">No expenses recorded yet.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -266,9 +343,7 @@
         type: 'doughnut',
         data: {
             datasets: [{
-                data: @(ViewBag.SelectedProjectId != null 
-                    ? $"[{tasksToDo}, {tasksInProgress}, {tasksCompleted}]" 
-                    : "[0, 0, 0]"),
+                data: [@tasksToDo, @tasksInProgress, @tasksCompleted],
                 backgroundColor: [colors.muted, colors.primary, colors.success],
                 borderWidth: 0,
                 hoverOffset: 10,
@@ -319,7 +394,7 @@
                 y: { 
                     beginAtZero: true, 
                     grid: { display: true, color: '#f1f5f9' },
-                    ticks: { callback: v => 'RS. ' + (v >= 100000 ? (v/100000).toFixed(1) + 'L' : v) }
+                    ticks: { callback: v => formatPKR(v) }
                 },
                 x: { grid: { display: false } }
             }
@@ -346,4 +421,16 @@
             plugins: { legend: { display: false } }
         }
     });
+
+    function updateDateDisplay(value) {
+        const display = document.getElementById('dateDisplay');
+        if (!display || !value) return;
+
+        const selectedDate = new Date(value + 'T00:00:00');
+        display.textContent = selectedDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: '2-digit',
+            year: 'numeric'
+        });
+    }
 </script>

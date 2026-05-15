@@ -24,7 +24,7 @@ namespace BuildWise.Controllers
 
         private int GetCurrentUserId()
         {
-            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            return int.Parse(User.FindFirstValue("UserId") ?? "0");
         }
 
         public async Task<IActionResult> Index()

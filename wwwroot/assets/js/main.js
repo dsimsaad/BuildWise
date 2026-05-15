@@ -127,14 +127,6 @@ if (faqSearch) {
     });
 }
 
-// === LORDICON HOVER TRIGGER ===
-document.querySelectorAll('.feature-card, .feat-card').forEach(card => {
-    const icon = card.querySelector('lord-icon');
-    if (icon) {
-        card.addEventListener('mouseenter', () => icon.play());
-    }
-});
-
 // === DASHBOARD SCROLL ANIMATION (index.html) ===
 const scrollContainer = document.getElementById('scroll-container');
 const scrollWrapper = document.getElementById('scroll-wrapper');

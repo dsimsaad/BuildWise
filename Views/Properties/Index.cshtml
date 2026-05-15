@@ -1,52 +1,89 @@
 @model IEnumerable<BuildWise.Models.Property>
 
 @{
-    ViewData["Title"] = "My Properties";
+    ViewData["Title"] = "Properties";
     Layout = "_ModuleLayout";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>My Properties</h2>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add New Property
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Properties</h1>
+        <p>Manage land, buildings, and sites linked to your projects.</p>
+    </div>
+    <a asp-action="Create" class="btn-create">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add Property
     </a>
 </div>
 
-<div class="row">
-    @if (!Model.Any())
-    {
-        <div class="col-12 text-center text-muted py-5">
-            <i class="bi bi-house-door display-4"></i>
-            <p class="mt-3">You don't have any properties yet.</p>
-            <a asp-action="Create" class="btn btn-outline-primary">Add Your First Property</a>
+<div class="summary-grid">
+    <div class="sum-card">
+        <div class="sum-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M9 21v-6h6v6"></path></svg>
         </div>
-    }
-    else
-    {
+        <div class="sum-info">
+            <h3>Total Properties</h3>
+            <p>@Model.Count()</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#DCFCE7; color:#10B981;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-6"></path></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Linked Projects</h3>
+            <p>@Model.Sum(p => p.Projects?.Count ?? 0)</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#FEF3C7; color:#F59E0B;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 2"></path></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Latest Added</h3>
+            <p>@(Model.Any() ? Model.Max(p => p.CreatedAt).ToString("MMM dd") : "-")</p>
+        </div>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M9 21v-6h6v6"></path></svg>
+        <h2>No properties yet</h2>
+        <p>Add your first property so projects can be linked to a real site.</p>
+        <a asp-action="Create" class="btn-primary">Add Property</a>
+    </div>
+}
+else
+{
+    <div class="entity-grid">
         @foreach (var item in Model)
         {
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm border-0">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <h5 class="card-title text-primary fw-bold">@item.PropertyName</h5>
-                            <span class="badge bg-info text-dark">@item.Type?.TypeName</span>
-                        </div>
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            <i class="bi bi-geo-alt"></i> @item.Location, @item.City
-                        </h6>
-                        <ul class="list-unstyled mt-3 mb-0">
-                            <li><strong>Area:</strong> @item.AreaSize @item.AreaUnit?.UnitName</li>
-                            <li><strong>Status:</strong> @item.Status?.StatusName</li>
-                            <li><strong>Added:</strong> @item.CreatedAt.ToString("MMM dd, yyyy")</li>
-                        </ul>
+            <article class="entity-card">
+                <div class="entity-card-header">
+                    <div>
+                        <h2 class="entity-card-title">@item.PropertyName</h2>
+                        <div class="entity-card-subtitle">@item.Location@(string.IsNullOrWhiteSpace(item.City) ? "" : ", " + item.City)</div>
                     </div>
-                    <div class="card-footer bg-transparent border-0 text-end">
-                        <a asp-action="Details" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline-info">Details</a>
-                        <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline-secondary">Edit</a>
-                    </div>
+                    <span class="badge badge-info">@item.Type?.TypeName</span>
                 </div>
-            </div>
+
+                <ul class="entity-meta">
+                    <li><span>Area</span><strong>@item.AreaSize @item.AreaUnit?.UnitName</strong></li>
+                    <li><span>Status</span><strong>@item.Status?.StatusName</strong></li>
+                    <li><span>Added</span><strong>@item.CreatedAt.ToString("MMM dd, yyyy")</strong></li>
+                </ul>
+
+                <div class="entity-actions">
+                    <a asp-action="Details" asp-route-id="@item.PropertyId" class="btn-secondary">Details</a>
+                    <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn-primary">Edit</a>
+                </div>
+            </article>
         }
-    }
-</div>
+    </div>
+}

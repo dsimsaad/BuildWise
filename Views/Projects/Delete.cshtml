@@ -1,8 +1,11 @@
 @model BuildWise.Models.Project
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Delete Project";
     Layout = "_ModuleLayout";
+    var pkrCulture = new CultureInfo("en-IN");
+    string FormatPkr(decimal value) => $"PKR {value.ToString("N0", pkrCulture)}";
 }
 
 @section Styles {
@@ -31,7 +34,7 @@
         <dd>@(Model.ExpectedEndDate.HasValue ? Model.ExpectedEndDate.Value.ToString("MMM dd, yyyy") : "—")</dd>
 
         <dt>Total Budget</dt>
-        <dd>RS. @Html.DisplayFor(model => model.TotalBudget)</dd>
+        <dd>@FormatPkr(Model.TotalBudget)</dd>
 
         <dt>Status</dt>
         <dd>

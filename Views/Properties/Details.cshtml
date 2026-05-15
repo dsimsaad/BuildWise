@@ -5,77 +5,83 @@
     Layout = "_ModuleLayout";
 }
 
-<div class="mb-4">
-    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Back to Properties
-    </a>
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>@Model.PropertyName</h1>
+        <p>@Model.Location@(string.IsNullOrWhiteSpace(Model.City) ? "" : ", " + Model.City)</p>
+    </div>
+    <div class="entity-actions">
+        <a asp-action="Index" class="btn-secondary">Back</a>
+        <a asp-action="Edit" asp-route-id="@Model.PropertyId" class="btn-primary">Edit Property</a>
+    </div>
 </div>
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h4 class="mb-0 text-primary">@Model.PropertyName</h4>
-                <a asp-action="Edit" asp-route-id="@Model.PropertyId" class="btn btn-sm btn-outline-primary">Edit Property</a>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Type</div>
-                    <div class="col-sm-8 fw-bold">@Model.Type?.TypeName</div>
+<div class="detail-grid">
+    <div class="module-card">
+        <div class="card-header">
+            <h2>Property Information</h2>
+            <span class="badge badge-info">@Model.Type?.TypeName</span>
+        </div>
+        <div class="card-body">
+            <div class="detail-list">
+                <div class="detail-row">
+                    <span>Status</span>
+                    <strong>@Model.Status?.StatusName</strong>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Status</div>
-                    <div class="col-sm-8"><span class="badge bg-info text-dark">@Model.Status?.StatusName</span></div>
+                <div class="detail-row">
+                    <span>Area</span>
+                    <strong>@Model.AreaSize @Model.AreaUnit?.UnitName</strong>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Location</div>
-                    <div class="col-sm-8">@Model.Location, @Model.City</div>
+                <div class="detail-row">
+                    <span>Location</span>
+                    <strong>@Model.Location</strong>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Area Size</div>
-                    <div class="col-sm-8">@Model.AreaSize @Model.AreaUnit?.UnitName</div>
+                <div class="detail-row">
+                    <span>City</span>
+                    <strong>@(string.IsNullOrWhiteSpace(Model.City) ? "-" : Model.City)</strong>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted">Added On</div>
-                    <div class="col-sm-8">@Model.CreatedAt.ToString("f")</div>
+                <div class="detail-row">
+                    <span>Added</span>
+                    <strong>@Model.CreatedAt.ToString("MMM dd, yyyy")</strong>
                 </div>
-                @if (!string.IsNullOrEmpty(Model.Notes))
-                {
-                    <div class="row mb-3">
-                        <div class="col-sm-4 text-muted">Notes</div>
-                        <div class="col-sm-8">@Model.Notes</div>
-                    </div>
-                }
+                <div class="detail-row">
+                    <span>Notes</span>
+                    <strong>@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</strong>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0 bg-light">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-building"></i> Associated Projects</h5>
-                <p class="card-text text-muted small">Projects being built on this property.</p>
-                
-                @if (Model.Projects != null && Model.Projects.Any())
-                {
-                    <ul class="list-group list-group-flush mt-3">
-                        @foreach (var proj in Model.Projects)
-                        {
-                            <li class="list-group-item bg-transparent px-0 border-bottom">
-                                <a asp-controller="Projects" asp-action="Details" asp-route-id="@proj.ProjectId" class="text-decoration-none">
-                                    @proj.ProjectName
-                                </a>
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <div class="alert alert-secondary mt-3 mb-0">
-                        No projects are currently linked to this property.
-                    </div>
-                    <a asp-controller="Projects" asp-action="Create" class="btn btn-sm btn-primary w-100 mt-3">Start New Project</a>
-                }
-            </div>
+
+    <div class="module-card">
+        <div class="card-header">
+            <h2>Associated Projects</h2>
+            <span class="badge badge-info">@(Model.Projects?.Count ?? 0)</span>
+        </div>
+        <div class="card-body">
+            @if (Model.Projects != null && Model.Projects.Any())
+            {
+                <div class="detail-list">
+                    @foreach (var project in Model.Projects)
+                    {
+                        <div class="detail-row" style="grid-template-columns: 1fr auto;">
+                            <strong>@project.ProjectName</strong>
+                            <a asp-controller="Projects" asp-action="Details" asp-route-id="@project.ProjectId" class="btn-secondary">Open</a>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state" style="box-shadow:none; padding:28px 18px;">
+                    <h2>No linked projects</h2>
+                    <p>Start a project to connect it with this property.</p>
+                    <a asp-controller="Projects" asp-action="Create" class="btn-primary">New Project</a>
+                </div>
+            }
         </div>
     </div>
 </div>

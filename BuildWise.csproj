@@ -17,10 +17,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="ViewComponents/BuildWiseApp/**/*.cs" />
-    <Content Remove="ViewComponents/BuildWiseApp/**" />
-    <EmbeddedResource Remove="ViewComponents/BuildWiseApp/**" />
-    <None Remove="ViewComponents/BuildWiseApp/**" />
-  </ItemGroup>
 </Project>

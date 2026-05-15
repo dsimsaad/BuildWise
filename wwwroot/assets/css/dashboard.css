@@ -106,6 +106,7 @@ body.dashboard-body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+.dash-container,
 .dash-wrapper {
     display: flex;
     min-height: 100vh;
@@ -178,6 +179,31 @@ body.dashboard-body {
     padding: 16px 12px;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    overscroll-behavior: contain;
+    scrollbar-color: transparent transparent;
+    scrollbar-width: thin;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+}
+
+.sidebar-nav:hover,
+.sidebar-nav.is-scrolling {
+    scrollbar-color: #CBD5E1 transparent;
+}
+
+.sidebar-nav:hover::-webkit-scrollbar-thumb,
+.sidebar-nav.is-scrolling::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
 }
 
 .nav-group-title {
@@ -1196,5 +1222,4 @@ body.dashboard-body {
 }
 
 
- 
- 
+

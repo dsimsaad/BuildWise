@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using BuildWise.Models;
 using BuildWise.BusinessLayer;
 
@@ -24,7 +25,7 @@ namespace BuildWise.Controllers
 
         private int GetCurrentUserId()
         {
-            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            return int.Parse(User.FindFirstValue("UserId") ?? "0");
         }
 
         private int? GetSelectedProjectId()
@@ -35,10 +36,17 @@ namespace BuildWise.Controllers
         // Dashboard/Index for Purchases
         public async Task<IActionResult> Index()
         {
+            var userId = GetCurrentUserId();
             var projectId = GetSelectedProjectId();
             if (projectId == null)
             {
                 TempData["WarningMessage"] = "Please select a specific project from the top navigation to view material purchases.";
+                return RedirectToAction("Index", "Projects");
+            }
+
+            if (!await UserOwnsProjectAsync(projectId.Value, userId))
+            {
+                HttpContext.Session.Remove("SelectedProjectId");
                 return RedirectToAction("Index", "Projects");
             }
 
@@ -61,14 +69,28 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePurchase([Bind("MaterialId,SupplierId,Quantity,UnitId,UnitPrice,PurchaseDate,InvoiceNumber,Notes")] MaterialPurchase purchase)
         {
+            var userId = GetCurrentUserId();
             var projectId = GetSelectedProjectId();
             if (projectId == null) return RedirectToAction("Index", "Projects");
+
+            if (!await UserOwnsProjectAsync(projectId.Value, userId))
+            {
+                HttpContext.Session.Remove("SelectedProjectId");
+                return RedirectToAction("Index", "Projects");
+            }
 
             ModelState.Remove("Material");
             ModelState.Remove("Unit");
             ModelState.Remove("Project");
             ModelState.Remove("Supplier");
             ModelState.Remove("MaterialUsages");
+
+            bool materialAllowed = await _context.Materials
+                .AnyAsync(m => m.MaterialId == purchase.MaterialId && m.IsActive && (m.UserId == userId || m.UserId == 1));
+            if (!materialAllowed)
+            {
+                ModelState.AddModelError(nameof(MaterialPurchase.MaterialId), "Please select a valid material.");
+            }
 
             if (ModelState.IsValid)
             {
@@ -90,8 +112,15 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeletePurchase(int id)
         {
+            var userId = GetCurrentUserId();
             var projectId = GetSelectedProjectId();
             if (projectId == null) return RedirectToAction("Index", "Projects");
+
+            if (!await UserOwnsProjectAsync(projectId.Value, userId))
+            {
+                HttpContext.Session.Remove("SelectedProjectId");
+                return RedirectToAction("Index", "Projects");
+            }
 
             await _materialBll.DeletePurchaseAsync(id, projectId.Value);
             return RedirectToAction(nameof(Index));
@@ -100,8 +129,15 @@ namespace BuildWise.Controllers
         // Material Usage
         public async Task<IActionResult> LogUsage(int purchaseId)
         {
+            var userId = GetCurrentUserId();
             var projectId = GetSelectedProjectId();
             if (projectId == null) return RedirectToAction("Index", "Projects");
+
+            if (!await UserOwnsProjectAsync(projectId.Value, userId))
+            {
+                HttpContext.Session.Remove("SelectedProjectId");
+                return RedirectToAction("Index", "Projects");
+            }
 
             var purchase = await _materialBll.GetProjectPurchasesAsync(projectId.Value);
             var selectedPurchase = purchase.FirstOrDefault(p => p.PurchaseId == purchaseId);
@@ -114,7 +150,8 @@ namespace BuildWise.Controllers
             var phases = _context.Phases.Where(p => p.ProjectId == projectId.Value).ToList();
             ViewData["PhaseId"] = new SelectList(phases, "PhaseId", "PhaseName");
             
-            ViewBag.PurchaseDetails = $"{selectedPurchase.Material.MaterialName} ({selectedPurchase.Quantity} {selectedPurchase.Unit.UnitName} available)";
+            var used = selectedPurchase.MaterialUsages.Sum(u => u.QuantityUsed);
+            ViewBag.PurchaseDetails = $"{selectedPurchase.Material.MaterialName} ({selectedPurchase.Quantity - used} {selectedPurchase.Unit.UnitName} remaining)";
             return View(usage);
         }
 
@@ -122,11 +159,44 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LogUsage([Bind("PurchaseId,PhaseId,QuantityUsed,UsageDate,Notes")] MaterialUsage usage)
         {
+            var userId = GetCurrentUserId();
             var projectId = GetSelectedProjectId();
             if (projectId == null) return RedirectToAction("Index", "Projects");
 
+            if (!await UserOwnsProjectAsync(projectId.Value, userId))
+            {
+                HttpContext.Session.Remove("SelectedProjectId");
+                return RedirectToAction("Index", "Projects");
+            }
+
             ModelState.Remove("Phase");
             ModelState.Remove("Purchase");
+
+            var purchase = await _context.MaterialPurchases
+                .Include(p => p.MaterialUsages)
+                .FirstOrDefaultAsync(p => p.PurchaseId == usage.PurchaseId && p.ProjectId == projectId.Value);
+            if (purchase == null)
+            {
+                return NotFound();
+            }
+
+            bool phaseBelongsToProject = await _context.Phases
+                .AnyAsync(p => p.PhaseId == usage.PhaseId && p.ProjectId == projectId.Value);
+            if (!phaseBelongsToProject)
+            {
+                ModelState.AddModelError(nameof(MaterialUsage.PhaseId), "Please select a valid project phase.");
+            }
+
+            var alreadyUsed = purchase.MaterialUsages.Sum(u => u.QuantityUsed);
+            var remaining = purchase.Quantity - alreadyUsed;
+            if (usage.QuantityUsed <= 0)
+            {
+                ModelState.AddModelError(nameof(MaterialUsage.QuantityUsed), "Quantity used must be greater than zero.");
+            }
+            else if (usage.QuantityUsed > remaining)
+            {
+                ModelState.AddModelError(nameof(MaterialUsage.QuantityUsed), $"Only {remaining} is remaining from this purchase.");
+            }
 
             if (ModelState.IsValid)
             {
@@ -175,12 +245,19 @@ namespace BuildWise.Controllers
         private void PopulateDropdowns(MaterialPurchase? purchase = null)
         {
             var userId = GetCurrentUserId();
-            // User-specific materials
-            var materials = _context.Materials.Where(m => m.UserId == userId && m.IsActive).ToList();
+            var materials = _context.Materials
+                .Where(m => (m.UserId == userId || m.UserId == 1) && m.IsActive)
+                .OrderBy(m => m.MaterialName)
+                .ToList();
             ViewData["MaterialId"] = new SelectList(materials, "MaterialId", "MaterialName", purchase?.MaterialId);
             
             ViewData["UnitId"] = new SelectList(_context.Set<MaterialUnit>(), "UnitId", "UnitName", purchase?.UnitId);
             ViewData["SupplierId"] = new SelectList(_context.Set<Supplier>(), "SupplierId", "SupplierName", purchase?.SupplierId);
+        }
+
+        private async Task<bool> UserOwnsProjectAsync(int projectId, int userId)
+        {
+            return await _context.Projects.AnyAsync(p => p.ProjectId == projectId && p.UserId == userId);
         }
     }
 }

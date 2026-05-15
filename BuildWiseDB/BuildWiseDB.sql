@@ -466,6 +466,7 @@ CREATE TABLE [dbo].[Materials](
 	[DefaultUnitID] [tinyint] NOT NULL,
 	[Description] [nvarchar](300) NULL,
 	[IsActive] [bit] NOT NULL,
+	[UserID] [int] NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[MaterialID] ASC
@@ -1294,6 +1295,9 @@ GO
 ALTER TABLE [dbo].[Materials]  WITH CHECK ADD FOREIGN KEY([DefaultUnitID])
 REFERENCES [dbo].[MaterialUnit] ([UnitID])
 GO
+ALTER TABLE [dbo].[Materials]  WITH CHECK ADD CONSTRAINT [FK_Materials_Users] FOREIGN KEY([UserID])
+REFERENCES [dbo].[Users] ([UserID])
+GO
 ALTER TABLE [dbo].[MaterialUsages]  WITH CHECK ADD FOREIGN KEY([PhaseID])
 REFERENCES [dbo].[Phases] ([PhaseID])
 GO
@@ -1960,4 +1964,3 @@ ALTER DATABASE [BuildWiseDB] SET  READ_WRITE
 GO
 USE BuildWiseDB;
 GO
-

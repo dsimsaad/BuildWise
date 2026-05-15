@@ -1,44 +1,75 @@
 @model IEnumerable<BuildWise.Models.Material>
 
 @{
-    ViewData["Title"] = "My Material Catalog";
+    ViewData["Title"] = "Material Catalog";
     Layout = "_ModuleLayout";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-collection"></i> My Material Catalog</h2>
-    <a asp-action="AddMaterial" class="btn btn-primary">
-        <i class="bi bi-plus"></i> Add New Material Type
-    </a>
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Material Catalog</h1>
+        <p>Maintain reusable material types for project purchases.</p>
+    </div>
+    <div class="entity-actions">
+        <a asp-action="Index" class="btn-secondary">Back to Purchases</a>
+        <a asp-action="AddMaterial" class="btn-create">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Material
+        </a>
+    </div>
 </div>
 
-<div class="row">
-    @if (!Model.Any())
-    {
-        <div class="col-12 text-center text-muted py-5">
-            <i class="bi bi-box display-4"></i>
-            <p class="mt-3">Your material catalog is empty.</p>
-            <p class="small">Add custom materials like Cement, Steel, or Bricks to start logging purchases.</p>
-            <a asp-action="AddMaterial" class="btn btn-outline-primary mt-2">Add First Material</a>
+<div class="summary-grid">
+    <div class="sum-card">
+        <div class="sum-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
         </div>
-    }
-    else
-    {
+        <div class="sum-info">
+            <h3>Total Materials</h3>
+            <p>@Model.Count()</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#DCFCE7; color:#10B981;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Active</h3>
+            <p>@Model.Count(m => m.IsActive)</p>
+        </div>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+        <h2>No materials in catalog</h2>
+        <p>Add common materials like cement, steel, bricks, or paint.</p>
+        <a asp-action="AddMaterial" class="btn-primary">Add Material</a>
+    </div>
+}
+else
+{
+    <div class="entity-grid">
         @foreach (var item in Model)
         {
-            <div class="col-md-3 mb-4">
-                <div class="card h-100 shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">@item.MaterialName</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Unit: @item.DefaultUnit?.UnitName</h6>
-                        <p class="card-text small">@item.Description</p>
+            <article class="entity-card">
+                <div class="entity-card-header">
+                    <div>
+                        <h2 class="entity-card-title">@item.MaterialName</h2>
+                        <div class="entity-card-subtitle">Default unit: @item.DefaultUnit?.UnitName</div>
                     </div>
+                    <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span>
                 </div>
-            </div>
+                <p style="margin:0; color:var(--text-muted); font-size:0.875rem;">
+                    @(string.IsNullOrWhiteSpace(item.Description) ? "No description added." : item.Description)
+                </p>
+            </article>
         }
-    }
-</div>
-
-<div class="mt-3">
-    <a asp-action="Index" class="btn btn-outline-secondary">Back to Project Purchases</a>
-</div>
+    </div>
+}

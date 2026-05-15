@@ -42,6 +42,8 @@ namespace BuildWise.BusinessLayer
                 throw new ArgumentException("Quantity must be greater than zero.");
             if (purchase.UnitPrice < 0)
                 throw new ArgumentException("Unit price cannot be negative.");
+            if (purchase.PurchaseDate == default)
+                purchase.PurchaseDate = DateOnly.FromDateTime(DateTime.Today);
 
             purchase.ProjectId = projectId;
             

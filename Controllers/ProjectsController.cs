@@ -129,7 +129,7 @@ namespace BuildWise.Controllers
                 _context.Add(project);
                 await _context.SaveChangesAsync();
                 HttpContext.Session.SetInt32("SelectedProjectId", project.ProjectId);
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Dashboard", "Home");
             }
             return View(model);
         }

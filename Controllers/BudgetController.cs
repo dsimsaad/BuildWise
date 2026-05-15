@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using BuildWise.Models;
 using BuildWise.BusinessLayer;
 using Microsoft.AspNetCore.Authorization;
+using System.Globalization;
 
 namespace BuildWise.Controllers
 {
@@ -77,7 +78,8 @@ namespace BuildWise.Controllers
             
             if (project != null && project.TotalBudget > 0 && (currentAllocated + item.Amount) > project.TotalBudget)
             {
-                return Json(new { success = false, message = $"Category budget exceeds the Total Project Budget (RS. {project.TotalBudget}). Please increase the Total Budget first." });
+                var formattedBudget = project.TotalBudget.ToString("N0", new CultureInfo("en-IN"));
+                return Json(new { success = false, message = $"Category budget exceeds the Total Project Budget (PKR {formattedBudget}). Please increase the Total Budget first." });
             }
 
             item.ProjectId = projectId;
@@ -136,6 +138,7 @@ namespace BuildWise.Controllers
                 return Json(new { success = false, message = "Please select a project first." });
 
             item.ProjectId = projectId;
+            item.Description = string.IsNullOrWhiteSpace(item.Description) ? "" : item.Description.Trim();
             if (_expenseBll.AddExpense(item))
                 return Json(new { success = true });
             return Json(new { success = false, message = "Invalid data" });

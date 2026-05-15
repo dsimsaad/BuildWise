@@ -20,7 +20,8 @@ namespace BuildWise.DataLayer
         {
             return await _context.Materials
                 .Include(m => m.DefaultUnit)
-                .Where(m => m.UserId == userId && m.IsActive)
+                .Where(m => (m.UserId == userId || m.UserId == 1) && m.IsActive)
+                .OrderBy(m => m.MaterialName)
                 .ToListAsync();
         }
 
@@ -36,6 +37,7 @@ namespace BuildWise.DataLayer
                 .Include(mp => mp.Material)
                 .Include(mp => mp.Unit)
                 .Include(mp => mp.Supplier)
+                .Include(mp => mp.MaterialUsages)
                 .Where(mp => mp.ProjectId == projectId)
                 .OrderByDescending(mp => mp.PurchaseDate)
                 .ToListAsync();
