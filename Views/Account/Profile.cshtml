@@ -3,94 +3,284 @@
 @{
     ViewData["Title"] = "Profile";
     Layout = "_ModuleLayout";
+    var initials = string.Join("", (Model.FullName ?? Model.Email ?? "BW")
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Take(2)
+        .Select(part => part[0]))
+        .ToUpperInvariant();
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/modules.css">
+    <style>
+        .profile-shell {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .profile-hero {
+            background:
+                linear-gradient(135deg, rgba(29, 78, 216, 0.08), rgba(96, 165, 250, 0.04)),
+                #FFFFFF;
+            border: 1px solid #D6E3F5;
+            border-radius: 6px;
+            box-shadow: var(--card-shadow);
+            padding: 28px;
+        }
+
+        .profile-heading {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: flex-start;
+        }
+
+        .profile-identity {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .profile-avatar-lg {
+            width: 72px;
+            height: 72px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #1D4ED8, #2563EB);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            font-size: 1.35rem;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+        }
+
+        .profile-name h2 {
+            margin: 0;
+            color: #0F172A;
+            font-size: 1.45rem;
+            letter-spacing: -0.03em;
+        }
+
+        .profile-name p {
+            margin: 5px 0 0;
+            color: #64748B;
+            font-size: 0.9rem;
+        }
+
+        .profile-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .profile-meta-item {
+            border: 1px solid #DCE8F7;
+            background: #F8FBFF;
+            border-radius: 4px;
+            padding: 14px 16px;
+        }
+
+        .profile-meta-item span {
+            display: block;
+            color: #1E3A8A;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.055em;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .profile-meta-item strong {
+            display: block;
+            color: #0F172A;
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+
+        .profile-edit-card {
+            display: none;
+            margin-top: 22px;
+            max-width: none;
+        }
+
+        .profile-edit-card.is-open {
+            display: block;
+        }
+
+        .profile-side-card .card-body {
+            display: grid;
+            gap: 14px;
+        }
+
+        .profile-stat {
+            border-left: 3px solid #1D4ED8;
+            background: #F8FBFF;
+            padding: 14px 16px;
+        }
+
+        .profile-stat span {
+            color: #64748B;
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.055em;
+        }
+
+        .profile-stat strong {
+            display: block;
+            margin-top: 5px;
+            font-size: 1.1rem;
+            color: #0F172A;
+        }
+
+        .profile-saved {
+            margin-bottom: 18px;
+        }
+
+        @@media (max-width: 900px) {
+            .profile-shell,
+            .profile-meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-heading {
+                flex-direction: column;
+            }
+        }
+    </style>
 }
 
 <div class="module-header">
     <div class="module-title">
         <h1>Profile</h1>
-        <p>Manage your account details and contact information.</p>
+        <p>Review your account details and update them only when needed.</p>
     </div>
 </div>
 
-<div class="content-grid" style="grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);">
-    <div class="scaffold-form-card">
-        @if (TempData["ProfileSaved"] != null)
-        {
-            <div class="badge badge-success" style="margin-bottom: 16px;">@TempData["ProfileSaved"]</div>
-        }
+@if (TempData["ProfileSaved"] != null)
+{
+    <div class="badge badge-success profile-saved">@TempData["ProfileSaved"]</div>
+}
 
-        <form asp-action="Profile" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
-            <input type="hidden" asp-for="UserId" />
-
-            <div class="form-group">
-                <label asp-for="FullName">Name</label>
-                <input asp-for="FullName" class="form-control" />
-                <span asp-validation-for="FullName" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+<div class="profile-shell">
+    <section class="profile-hero">
+        <div class="profile-heading">
+            <div class="profile-identity">
+                <div class="profile-avatar-lg">@initials</div>
+                <div class="profile-name">
+                    <h2>@Model.FullName</h2>
+                    <p>@(string.IsNullOrWhiteSpace(Model.Profession) ? "BuildWise account" : Model.Profession)</p>
+                </div>
             </div>
+            <button type="button" class="btn-primary" id="editProfileBtn">Edit Profile</button>
+        </div>
 
-            <div class="form-group">
-                <label asp-for="Email">Email</label>
-                <input asp-for="Email" class="form-control" disabled />
+        <div class="profile-meta-grid">
+            <div class="profile-meta-item">
+                <span>Email</span>
+                <strong>@Model.Email</strong>
             </div>
-
-            <div class="form-group">
-                <label asp-for="PhoneNumber">Phone Number</label>
-                <input asp-for="PhoneNumber" class="form-control" placeholder="Add phone number" />
-                <span asp-validation-for="PhoneNumber" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+            <div class="profile-meta-item">
+                <span>Phone</span>
+                <strong>@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "Not added" : Model.PhoneNumber)</strong>
             </div>
-
-            <div class="form-group">
-                <label asp-for="City">City</label>
-                <input asp-for="City" class="form-control" placeholder="Add city" />
-                <span asp-validation-for="City" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+            <div class="profile-meta-item">
+                <span>City</span>
+                <strong>@(string.IsNullOrWhiteSpace(Model.City) ? "Not added" : Model.City)</strong>
             </div>
-
-            <div class="form-group">
-                <label asp-for="Profession">Profession</label>
-                <input asp-for="Profession" class="form-control" placeholder="Project manager, contractor, owner" />
-                <span asp-validation-for="Profession" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+            <div class="profile-meta-item">
+                <span>Profession</span>
+                <strong>@(string.IsNullOrWhiteSpace(Model.Profession) ? "Not added" : Model.Profession)</strong>
             </div>
+        </div>
 
-            <div style="display: flex; gap: 12px; margin-top: 24px;">
-                <button type="submit" class="btn-primary">Save Profile</button>
-                <a asp-controller="Home" asp-action="Dashboard" class="back-link">Back to Dashboard</a>
-            </div>
-        </form>
-    </div>
+        <div class="scaffold-form-card profile-edit-card" id="profileEditCard">
+            <form asp-action="Profile" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
+                <input type="hidden" asp-for="UserId" />
 
-    <div class="module-card">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="FullName">Name</label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Email">Email</label>
+                        <input asp-for="Email" class="form-control" disabled />
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="PhoneNumber">Phone Number</label>
+                        <input asp-for="PhoneNumber" class="form-control" placeholder="Add phone number" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="City">City</label>
+                        <input asp-for="City" class="form-control" placeholder="Add city" />
+                        <span asp-validation-for="City" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label asp-for="Profession">Profession</label>
+                        <input asp-for="Profession" class="form-control" placeholder="Project manager, contractor, owner" />
+                        <span asp-validation-for="Profession" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelEditProfileBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <aside class="module-card profile-side-card">
         <div class="card-header">
             <h2>Account Summary</h2>
         </div>
         <div class="card-body">
-            <dl class="scaffold-detail-card" style="box-shadow:none; border:none; padding:0; margin:0;">
-                <dt>Email</dt>
-                <dd>@Model.Email</dd>
-
-                <dt>Projects</dt>
-                <dd>@Model.ProjectCount</dd>
-
-                <dt>Member Since</dt>
-                <dd>@Model.CreatedAt.ToString("MMM dd, yyyy")</dd>
-
-                <dt>Phone</dt>
-                <dd>@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "Not added" : Model.PhoneNumber)</dd>
-
-                <dt>City</dt>
-                <dd>@(string.IsNullOrWhiteSpace(Model.City) ? "Not added" : Model.City)</dd>
-
-                <dt>Profession</dt>
-                <dd>@(string.IsNullOrWhiteSpace(Model.Profession) ? "Not added" : Model.Profession)</dd>
-            </dl>
+            <div class="profile-stat">
+                <span>Projects</span>
+                <strong>@Model.ProjectCount</strong>
+            </div>
+            <div class="profile-stat">
+                <span>Member Since</span>
+                <strong>@Model.CreatedAt.ToString("MMM dd, yyyy")</strong>
+            </div>
+            <div class="profile-stat">
+                <span>Account Email</span>
+                <strong>@Model.Email</strong>
+            </div>
         </div>
-    </div>
+    </aside>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const cancelEditProfileBtn = document.getElementById('cancelEditProfileBtn');
+        const profileEditCard = document.getElementById('profileEditCard');
+
+        function setProfileEditOpen(isOpen) {
+            profileEditCard.classList.toggle('is-open', isOpen);
+            editProfileBtn.style.display = isOpen ? 'none' : 'inline-flex';
+        }
+
+        editProfileBtn.addEventListener('click', () => setProfileEditOpen(true));
+        cancelEditProfileBtn.addEventListener('click', () => setProfileEditOpen(false));
+
+        if (document.querySelector('.field-validation-error')) {
+            setProfileEditOpen(true);
+        }
+    </script>
 }

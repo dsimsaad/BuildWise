@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "Add Worker";
     Layout = "_ModuleLayout";
+    var commonSkills = ViewBag.CommonSkills as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var selectedSkillChoice = ViewBag.SelectedSkillChoice as string;
+    var customSkill = ViewBag.CustomSkill as string;
 }
 
 @section Styles {
@@ -12,7 +15,7 @@
 <div class="module-header">
     <div class="module-title">
         <h1>Add New Worker</h1>
-        <p>Fill in the details below to register a new worker.</p>
+        <p>Only name and skill are required. New workers are active by default.</p>
     </div>
 </div>
 
@@ -20,22 +23,34 @@
     <form asp-action="Create">
         <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
         <div class="form-group">
-            <label asp-for="ContractorId">Contractor</label>
-            <select asp-for="ContractorId" class="form-control" asp-items="ViewBag.ContractorId"></select>
-        </div>
-        <div class="form-group">
             <label asp-for="FullName">Full Name</label>
-            <input asp-for="FullName" class="form-control" placeholder="Worker's full name" />
+            <input asp-for="FullName" class="form-control" placeholder="Worker's full name" required />
             <span asp-validation-for="FullName" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
         </div>
         <div class="form-group">
+            <label for="SkillChoice">Skill Type</label>
+            <select id="SkillChoice" name="SkillChoice" class="form-control" required>
+                <option value="">Select skill</option>
+                @foreach (var skill in commonSkills)
+                {
+                    <option value="@skill" selected="@(selectedSkillChoice == skill || (selectedSkillChoice == null && Model?.SkillType == skill))">@skill</option>
+                }
+                <option value="Custom" selected="@(selectedSkillChoice == "Custom")">Custom</option>
+            </select>
+            <span asp-validation-for="SkillType" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+        </div>
+        <div class="form-group" id="customSkillGroup" style="display: none;">
+            <label for="CustomSkill">Custom Skill</label>
+            <input id="CustomSkill" name="CustomSkill" class="form-control" value="@customSkill" placeholder="Enter worker skill" />
+        </div>
+        <div class="form-group">
             <label asp-for="Phone">Phone</label>
-            <input asp-for="Phone" class="form-control" placeholder="Phone number" />
+            <input asp-for="Phone" class="form-control" placeholder="03001234567" inputmode="numeric" />
             <span asp-validation-for="Phone" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
         </div>
         <div class="form-group">
             <label asp-for="Cnic">CNIC</label>
-            <input asp-for="Cnic" class="form-control" placeholder="CNIC number" />
+            <input asp-for="Cnic" class="form-control" placeholder="1234512345671" inputmode="numeric" />
             <span asp-validation-for="Cnic" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
         </div>
         <div class="form-group">
@@ -43,18 +58,26 @@
             <input asp-for="DailyWage" class="form-control" placeholder="0.00" />
             <span asp-validation-for="DailyWage" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
         </div>
-        <div class="form-group">
-            <label asp-for="SkillType">Skill Type</label>
-            <input asp-for="SkillType" class="form-control" placeholder="e.g. Electrician, Mason, Plumber" />
-            <span asp-validation-for="SkillType" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
-        </div>
         <div style="display: flex; gap: 12px; margin-top: 24px;">
             <button type="submit" class="btn-primary">Add Worker</button>
-            <a asp-action="Index" class="back-link">← Back to List</a>
+            <a asp-action="Index" class="back-link">Back to List</a>
         </div>
     </form>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        const skillChoice = document.getElementById('SkillChoice');
+        const customSkillGroup = document.getElementById('customSkillGroup');
+
+        function toggleCustomSkill() {
+            const customSelected = skillChoice.value === 'Custom';
+            customSkillGroup.style.display = customSelected ? 'block' : 'none';
+            document.getElementById('CustomSkill').required = customSelected;
+        }
+
+        skillChoice.addEventListener('change', toggleCustomSkill);
+        toggleCustomSkill();
+    </script>
 }
