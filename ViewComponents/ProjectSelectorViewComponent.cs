@@ -2,16 +2,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using BuildWise.Models;
+using BuildWise.Services;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BuildWise.ViewComponents;
 
 public class ProjectSelectorViewComponent : ViewComponent
 {
     private readonly BuildWiseDbContext _context;
+    private readonly IMemoryCache _cache;
 
-    public ProjectSelectorViewComponent(BuildWiseDbContext context)
+    public ProjectSelectorViewComponent(BuildWiseDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     public async Task<IViewComponentResult> InvokeAsync()
@@ -19,11 +23,24 @@ public class ProjectSelectorViewComponent : ViewComponent
         var userIdClaim = ((ClaimsPrincipal)User).Claims.FirstOrDefault(c => c.Type == "UserId");
         int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
 
-        var projects = await _context.Projects
-            .Where(p => p.UserId == userId)
-            .OrderBy(p => p.ProjectName == "main" ? 0 : 1)
-            .ThenBy(p => p.ProjectName)
-            .ToListAsync();
+        var projects = await _cache.GetOrCreateAsync(ProjectCacheKeys.SelectorProjects(userId), async entry =>
+        {
+            entry.SlidingExpiration = TimeSpan.FromMinutes(30);
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2);
+
+            return await _context.Projects
+                .AsNoTracking()
+                .Where(p => p.UserId == userId)
+                .OrderBy(p => p.ProjectName == "main" ? 0 : 1)
+                .ThenBy(p => p.ProjectName)
+                .Select(p => new Project
+                {
+                    ProjectId = p.ProjectId,
+                    ProjectName = p.ProjectName,
+                    IsCompleted = p.IsCompleted
+                })
+                .ToListAsync();
+        }) ?? new List<Project>();
 
         var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
         if (!selectedProjectId.HasValue && projects.Count > 0)

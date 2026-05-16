@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using BuildWise.Models;
+using BuildWise.Services;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 
@@ -8,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddDbContext<BuildWiseDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("BuildWise"), 
@@ -20,6 +22,7 @@ builder.Services.AddScoped<BuildWise.DataLayer.PropertyDAL>();
 builder.Services.AddScoped<BuildWise.BusinessLayer.PropertyBLL>();
 builder.Services.AddScoped<BuildWise.DataLayer.MaterialDAL>();
 builder.Services.AddScoped<BuildWise.BusinessLayer.MaterialBLL>();
+builder.Services.AddHostedService<DatabaseWarmupService>();
 
 // Configure Cookie Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

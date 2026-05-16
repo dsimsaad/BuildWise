@@ -137,8 +137,15 @@
 
         const sidebarNav = document.querySelector('.sidebar-nav');
         if (sidebarNav) {
+            const sidebarScrollKey = 'buildwise.sidebar.scrollTop';
+            const savedScrollTop = Number(sessionStorage.getItem(sidebarScrollKey) || 0);
+            if (savedScrollTop > 0) {
+                sidebarNav.scrollTop = savedScrollTop;
+            }
+
             let scrollTimer;
             sidebarNav.addEventListener('scroll', function () {
+                sessionStorage.setItem(sidebarScrollKey, String(sidebarNav.scrollTop));
                 sidebarNav.classList.add('is-scrolling');
                 clearTimeout(scrollTimer);
                 scrollTimer = setTimeout(function () {

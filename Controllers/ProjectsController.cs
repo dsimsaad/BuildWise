@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BuildWise.Models;
+using BuildWise.Services;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BuildWise.Controllers
 {
@@ -11,16 +13,23 @@ namespace BuildWise.Controllers
     public class ProjectsController : Controller
     {
         private readonly BuildWiseDbContext _context;
+        private readonly IMemoryCache _cache;
 
-        public ProjectsController(BuildWiseDbContext context)
+        public ProjectsController(BuildWiseDbContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         private int GetUserId()
         {
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+        }
+
+        private void ClearProjectSelectorCache(int userId)
+        {
+            _cache.Remove(ProjectCacheKeys.SelectorProjects(userId));
         }
 
         // GET: Projects
@@ -128,6 +137,7 @@ namespace BuildWise.Controllers
 
                 _context.Add(project);
                 await _context.SaveChangesAsync();
+                ClearProjectSelectorCache(currentUserId);
                 HttpContext.Session.SetInt32("SelectedProjectId", project.ProjectId);
                 return RedirectToAction("Dashboard", "Home");
             }
@@ -184,6 +194,7 @@ namespace BuildWise.Controllers
                     existingProject.UpdatedAt = DateTime.Now;
 
                     await _context.SaveChangesAsync();
+                    ClearProjectSelectorCache(userId);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -223,6 +234,7 @@ namespace BuildWise.Controllers
             }
 
             await _context.SaveChangesAsync();
+            ClearProjectSelectorCache(userId);
             if (HttpContext.Session.GetInt32("SelectedProjectId") == id)
             {
                 var nextProjectId = await _context.Projects
