@@ -393,31 +393,32 @@ footer {
 .cta-outline:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
 
 /* === FAQ PAGE === */
-.faq-hero { padding: 90px 24px 70px; text-align: center; background: linear-gradient(180deg, #f0f5ff 0%, #fff 100%); border-bottom: 1px solid #f1f5f9; }
+.dash-content.marketing-page-content { padding: 0; background: #fff; }
+.faq-hero { padding: 76px 24px 44px; text-align: center; background: linear-gradient(180deg, #f0f5ff 0%, #fff 100%); border-bottom: 1px solid #f1f5f9; }
 .faq-hero h1 { font-size: clamp(28px, 5vw, 46px); font-weight: 800; color: #0f172a; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 14px; }
-.faq-hero p { font-size: 15px; color: #64748b; max-width: 480px; margin: 0 auto 32px; line-height: 1.65; }
+.faq-hero p { font-size: 15px; color: #64748b; max-width: 480px; margin: 0 auto; line-height: 1.65; }
 .search-wrap { max-width: 540px; margin: 0 auto; position: relative; }
 .search-wrap svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: #94a3b8; }
 .search-input { width: 100%; padding: 14px 44px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 14px; font-family: 'Inter', sans-serif; color: #0f172a; background: #fff; box-shadow: 0 2px 12px rgba(15, 37, 87, 0.06); outline: none; transition: border-color .2s, box-shadow .2s; }
 .search-input:focus { border-color: #1D4ED8; box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1); }
 .search-kbd { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #94a3b8; background: #f1f5f9; padding: 2px 7px; border-radius: 5px; border: 1px solid #e2e8f0; }
-.faq-body { background: #f8faff; padding: 48px 24px 80px; }
+.faq-body { background: #f8faff; padding: 34px 24px 80px; }
 .faq-inner { max-width: 760px; margin: 0 auto; }
-.faq-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 36px; }
+.faq-filters { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
 .filter-btn { padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 600; border: 1.5px solid #e2e8f0; background: #fff; color: #475569; cursor: pointer; transition: all .2s; font-family: 'Inter', sans-serif; }
 .filter-btn:hover { border-color: #1D4ED8; color: #1D4ED8; }
 .filter-btn.active { background: #1D4ED8; border-color: #1D4ED8; color: #fff; box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3); }
 .faq-list { display: flex; flex-direction: column; }
 .faq-item { background: #fff; border-top: 1px solid #e2e8f0; }
 .faq-item:last-child { border-bottom: 1px solid #e2e8f0; }
-.faq-question { width: 100%; background: none; border: none; padding: 22px 8px; display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0f172a; text-align: left; transition: color .2s; }
+.faq-question { width: 100%; background: none; border: none; padding: 20px 8px; display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0f172a; text-align: left; line-height: 1.45; transition: color .2s; }
 .faq-question:hover { color: #1D4ED8; }
 .faq-item.open .faq-question { color: #1D4ED8; }
 .faq-chevron { width: 20px; height: 20px; flex-shrink: 0; stroke: currentColor; transition: transform .3s ease; }
 .faq-item.open .faq-chevron { transform: rotate(180deg); }
-.faq-answer { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
-.faq-answer-inner { padding: 0 8px 22px; font-size: 14px; color: #64748b; line-height: 1.8; }
-.faq-item.open .faq-answer { max-height: 400px; }
+.faq-answer { height: 0; overflow: hidden; transition: height .24s ease; }
+.faq-answer-inner { padding: 0 44px 20px 8px; font-size: 14px; color: #64748b; line-height: 1.8; }
+.faq-answer-inner p { margin: 0; }
 .faq-cta { margin-top: 56px; background: linear-gradient(135deg, #0F172A 0%, #1E40AF 100%); border-radius: 18px; padding: 40px 36px; text-align: center; color: #fff; }
 .faq-cta h3 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
 .faq-cta p { font-size: 14px; color: #93c5fd; margin-bottom: 24px; }
@@ -434,16 +435,17 @@ footer {
 .contact-info h1 { font-size: 48px; font-weight: 800; color: #0f172a; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 16px; }
 .contact-info > p { font-size: 15px; color: #64748b; line-height: 1.7; margin-bottom: 40px; }
 
-.details-card { background: #fff; border-radius: 20px; padding: 32px; box-shadow: 0 4px 24px rgba(15,37,87,0.06); }
+.details-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 18px rgba(15,37,87,0.05); border: 1px solid #eaf0f8; }
 .details-card h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 24px; }
 .detail-item { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
 .detail-item:last-child { margin-bottom: 0; }
 .detail-icon { width: 40px; height: 40px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #1D4ED8; }
 .detail-icon svg { width: 18px; height: 18px; }
 .detail-text strong { display: block; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-.detail-text span { font-size: 14px; color: #0f172a; font-weight: 500; }
+.detail-text span, .detail-text a { font-size: 14px; color: #0f172a; font-weight: 500; text-decoration: none; overflow-wrap: anywhere; }
+.detail-text a:hover { color: #1D4ED8; }
 
-.contact-form-card { flex: 1; background: #fff; border-radius: 24px; padding: 48px; box-shadow: 0 10px 40px rgba(15,37,87,0.08); }
+.contact-form-card { flex: 1; background: #fff; border-radius: 18px; padding: 44px; box-shadow: 0 8px 28px rgba(15,37,87,0.07); border: 1px solid #eaf0f8; }
 .contact-form-card h2 { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 32px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }

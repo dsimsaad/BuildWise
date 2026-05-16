@@ -250,8 +250,9 @@
 <div id="tab-budgets" class="tab-section">
     <div class="split-grid">
         <div class="scaffold-form-card" style="margin: 0; position: sticky; top: 24px;">
-            <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A; margin-bottom: 20px;">Allocate Budget</h2>
+            <h2 id="budget-form-title" style="font-size: 1.125rem; font-weight: 600; color: #0F172A; margin-bottom: 20px;">Allocate Budget</h2>
             <form id="budget-form">
+                <input type="hidden" id="budget-id" value="">
                 <div class="form-group">
                     <label>Category</label>
                     <select id="budget-category" class="form-control" onchange="checkCustom('budget-category', 'budget-custom')">
@@ -273,7 +274,8 @@
                     <label>Amount (PKR)</label>
                     <input type="number" id="budget-amount" class="form-control" placeholder="e.g. 500000" required>
                 </div>
-                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 12px;">Save Allocation</button>
+                <button type="submit" class="btn-primary" id="budget-submit-btn" style="width: 100%; margin-top: 12px;">Save Allocation</button>
+                <button type="button" class="btn-secondary" id="budget-cancel-edit" onclick="resetBudgetForm()" style="width: 100%; justify-content: center; margin-top: 10px; display: none;">Cancel Edit</button>
             </form>
         </div>
         <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
@@ -368,6 +370,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let barChart, pieChart;
+        let currentBudgets = [];
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-section').forEach(t => t.classList.remove('active'));
@@ -384,9 +387,46 @@
             if (select.value === 'custom') input.focus();
         }
 
+        function resetBudgetForm() {
+            document.getElementById('budget-id').value = '';
+            document.getElementById('budget-form-title').innerText = 'Allocate Budget';
+            document.getElementById('budget-submit-btn').innerText = 'Save Allocation';
+            document.getElementById('budget-cancel-edit').style.display = 'none';
+            document.getElementById('budget-form').reset();
+            document.getElementById('budget-custom').style.display = 'none';
+        }
+
+        function editBudget(id) {
+            const budget = currentBudgets.find(item => item.budgetId === id);
+            if (!budget) return;
+
+            const categorySelect = document.getElementById('budget-category');
+            const customInput = document.getElementById('budget-custom');
+            const hasCategoryOption = Array.from(categorySelect.options).some(option => option.value === budget.category);
+
+            document.getElementById('budget-id').value = budget.budgetId;
+            document.getElementById('budget-form-title').innerText = 'Edit Budget Allocation';
+            document.getElementById('budget-submit-btn').innerText = 'Update Allocation';
+            document.getElementById('budget-cancel-edit').style.display = 'inline-flex';
+            document.getElementById('budget-amount').value = budget.amount;
+
+            if (hasCategoryOption) {
+                categorySelect.value = budget.category;
+                customInput.value = '';
+                customInput.style.display = 'none';
+            } else {
+                categorySelect.value = 'custom';
+                customInput.value = budget.category;
+                customInput.style.display = 'block';
+            }
+
+            document.getElementById('budget-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         async function loadData() {
             const res = await fetch('/Budget/GetData');
             const data = await res.json();
+            currentBudgets = data.budgets || [];
             
             if (!data.selectedProjectId) {
                 document.getElementById('no-project-warning').style.display = 'block';
@@ -419,9 +459,14 @@
                         <td><span style="font-weight: 500; color: #0F172A;">${b.category}</span></td>
                         <td>${formatPKR(b.amount)}</td>
                         <td style="text-align: right;">
-                            <button class="btn-icon btn-delete" onclick="deleteBudget(${b.budgetId})" title="Delete Budget" style="margin-left: auto;">
+                            <div class="action-btns" style="justify-content: flex-end;">
+                            <button class="btn-icon btn-edit" onclick="editBudget(${b.budgetId})" title="Edit Budget" type="button">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+                            </button>
+                            <button class="btn-icon btn-delete" onclick="deleteBudget(${b.budgetId})" title="Delete Budget" type="button">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                             </button>
+                            </div>
                         </td>
                     </tr>
                 `).join('');
@@ -509,6 +554,7 @@
 
         document.getElementById('budget-form').onsubmit = async (e) => {
             e.preventDefault();
+            const budgetId = document.getElementById('budget-id').value;
             const categorySelect = document.getElementById('budget-category').value;
             const category = categorySelect === 'custom' ? document.getElementById('budget-custom').value : categorySelect;
             const amount = document.getElementById('budget-amount').value;
@@ -518,10 +564,15 @@
             btn.innerText = 'Saving...';
             btn.disabled = true;
 
-            const req = await fetch('/Budget/AddBudget', {
+            const endpoint = budgetId ? '/Budget/UpdateBudget' : '/Budget/AddBudget';
+            const payload = budgetId
+                ? { budgetId: parseInt(budgetId, 10), category, amount: parseFloat(amount) }
+                : { category, amount: parseFloat(amount) };
+
+            const req = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ category, amount: parseFloat(amount) })
+                body: JSON.stringify(payload)
             });
             const result = await req.json();
             
@@ -530,9 +581,7 @@
             }
             
             await loadData();
-            e.target.reset();
-            document.getElementById('budget-custom').style.display = 'none';
-            btn.innerText = originalText;
+            resetBudgetForm();
             btn.disabled = false;
         };
 

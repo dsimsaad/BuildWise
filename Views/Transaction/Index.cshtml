@@ -5,6 +5,21 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/modules.css">
+    <style>
+        .desc-cell {
+            max-width: 350px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            vertical-align: middle;
+        }
+        
+        .modern-table td {
+            vertical-align: middle;
+        }
+    </style>
 }
 
 <div class="module-header">
@@ -126,7 +141,7 @@
                         <td><strong>${t.category}</strong></td>
                         <td>${formatPKR(t.amount)}</td>
                         <td style="color:var(--text-muted)">${t.budgetEffect}% effect</td>
-                        <td><small>${t.description || '-'}</small></td>
+                        <td class="desc-cell" title="${t.description || ''}">${t.description || '-'}</td>
                     </tr>
                 `;
             }).join('');

@@ -231,6 +231,7 @@ select.form-control {
     align-items: center;
     gap: 6px;
     font-family: inherit;
+    text-decoration: none;
 }
 
 .btn-primary:hover {
@@ -253,6 +254,7 @@ select.form-control {
     align-items: center;
     gap: 6px;
     font-family: inherit;
+    text-decoration: none;
 }
 
 .btn-secondary:hover {
@@ -275,6 +277,7 @@ select.form-control {
     align-items: center;
     gap: 6px;
     font-family: inherit;
+    text-decoration: none;
 }
 
 .btn-danger:hover {
@@ -432,9 +435,18 @@ select.form-control {
 
 .entity-actions {
     display: flex;
+    align-items: center;
     gap: 8px;
     flex-wrap: wrap;
     margin-top: auto;
+}
+
+.module-header .entity-actions {
+    margin-top: 0;
+}
+
+.module-header .btn-create {
+    margin-bottom: 0;
 }
 
 .empty-state {
@@ -869,6 +881,9 @@ select.form-control {
     text-decoration: none;
     transition: all 0.15s;
     margin-bottom: 20px;
+    border: 0;
+    cursor: pointer;
+    font-family: inherit;
 }
 
 .btn-create:hover {
@@ -876,23 +891,32 @@ select.form-control {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2);
     color: #FFFFFF;
+    text-decoration: none;
 }
 
 /* Back Link */
 .back-link {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--accent);
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 4px;
     text-decoration: none;
-    margin-top: 16px;
-    transition: color 0.15s;
+    background: #FFFFFF;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    font-family: inherit;
 }
 
 .back-link:hover {
-    color: var(--accent-hover);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+    text-decoration: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════

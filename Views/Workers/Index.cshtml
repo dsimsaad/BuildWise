@@ -19,26 +19,70 @@
     }
     var selectedSkill = ViewBag.SkillFilter as string;
     var skillOptions = ViewBag.SkillOptions as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var commonSkills = ViewBag.CommonSkills as IEnumerable<string> ?? Enumerable.Empty<string>();
     var workerTotals = ViewBag.WorkerTotals as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
     var selectedProjectId = ViewBag.SelectedProjectId as int?;
     var todayWagesRecorded = ViewBag.TodayWagesRecorded as bool? ?? false;
+    var workersMessage = TempData["WorkersMessage"] as string;
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/modules.css">
     <style>
+        .workers-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 20px 22px;
+            border-bottom: 1px solid #E2E8F0;
+            background: #FFFFFF;
+        }
+
+        .workers-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 0;
+        }
+
+        .workers-toolbar-divider {
+            width: 1px;
+            min-height: 58px;
+            background: #E2E8F0;
+            flex: 0 0 auto;
+        }
+
         .workers-filter {
             display: flex;
-            align-items: end;
+            align-items: flex-end;
             gap: 12px;
             flex-wrap: wrap;
-            padding: 18px 20px;
-            border-bottom: 1px solid #E2E8F0;
+            margin-left: auto;
         }
 
         .workers-filter .form-group {
             margin: 0;
-            min-width: 220px;
+            min-width: 190px;
+        }
+
+        .workers-filter .btn-primary {
+            min-width: 86px;
+            min-height: 38px;
+            justify-content: center;
+        }
+
+        .workers-filter label {
+            font-size: 0.64rem;
+            color: #64748B;
+            margin-bottom: 6px;
+        }
+
+        .workers-filter .form-control {
+            min-height: 38px;
+            background-color: #FFFFFF;
         }
 
         .status-toggle-form {
@@ -51,25 +95,49 @@
             font-family: inherit;
         }
 
-        .workers-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            padding: 0 20px 18px;
-        }
-
         .workers-actions form {
             margin: 0;
         }
 
         .btn-soft {
-            border: 0;
+            border: 1px solid #C9D9EE;
             border-radius: 4px;
-            padding: 10px 14px;
-            background: #F1F5F9;
+            padding: 9px 12px;
+            background: #FFFFFF;
             color: #334155;
-            font-weight: 700;
+            font-weight: 600;
+            font-size: 0.76rem;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 38px;
+            transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.15s;
+        }
+
+        .btn-soft svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .btn-soft:hover {
+            border-color: #1D4ED8;
+            background: #EFF6FF;
+            color: #1D4ED8;
+            transform: translateY(-1px);
+        }
+
+        .btn-soft.is-danger {
+            color: #991B1B;
+            border-color: #FECACA;
+            background: #FFF7F7;
+        }
+
+        .btn-soft.is-warning {
+            color: #1E40AF;
+            border-color: #BFDBFE;
+            background: #F8FBFF;
         }
 
         .worker-detail-panel {
@@ -167,9 +235,31 @@
         .record-locked {
             color: #92400E;
             background: #FEF3C7;
-            border: 1px solid #FDE68A;
-            padding: 10px 14px;
+            border: 1px solid #FCD34D;
+            border-radius: 4px;
+            padding: 13px 16px;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 2px rgba(146, 64, 14, 0.06);
+        }
+
+        .record-locked-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #FBBF24;
+            color: #FFFFFF;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 900;
+            flex-shrink: 0;
         }
 
         .workers-message {
@@ -180,17 +270,133 @@
             color: #166534;
             font-weight: 600;
         }
+
+        .worker-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 1300;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.42);
+            backdrop-filter: blur(5px);
+        }
+
+        .worker-modal-backdrop.is-open {
+            display: flex;
+        }
+
+        .worker-modal {
+            width: min(560px, 100%);
+            max-height: calc(100vh - 48px);
+            overflow: auto;
+            background: #FFFFFF;
+            border: 1px solid #D6E3F5;
+            border-radius: 8px;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.26);
+            animation: workerModalIn 0.18s ease;
+        }
+
+        .worker-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 22px 24px 16px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .worker-modal-header h2 {
+            margin: 0;
+            font-size: 1.05rem;
+            color: #0F172A;
+        }
+
+        .worker-modal-header p {
+            margin: 5px 0 0;
+            color: #64748B;
+            font-size: 0.84rem;
+        }
+
+        .worker-modal-close {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #E2E8F0;
+            border-radius: 4px;
+            background: #FFFFFF;
+            color: #64748B;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .worker-modal-body {
+            padding: 22px 24px 24px;
+        }
+
+        .worker-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .module-header .btn-create {
+            margin-bottom: 0;
+        }
+
+        @@keyframes workerModalIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @@media (max-width: 700px) {
+            .workers-toolbar {
+                align-items: stretch;
+                gap: 14px;
+            }
+
+            .workers-toolbar-divider {
+                display: none;
+            }
+
+            .workers-filter {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .workers-filter .form-group {
+                flex: 1 1 100%;
+            }
+
+            .workers-filter .btn-primary {
+                width: 100%;
+            }
+
+            .worker-modal-actions {
+                flex-direction: column-reverse;
+            }
+
+            .worker-modal-actions .btn-primary,
+            .worker-modal-actions .btn-secondary {
+                justify-content: center;
+            }
+        }
     </style>
 }
 
-@if (TempData["WorkersMessage"] != null)
+@if (!string.IsNullOrWhiteSpace(workersMessage))
 {
-    <div class="workers-message">@TempData["WorkersMessage"]</div>
+    <div class="workers-message">@workersMessage</div>
 }
 
-@if (todayWagesRecorded)
+@if (todayWagesRecorded && string.IsNullOrWhiteSpace(workersMessage))
 {
-    <div class="record-locked" style="margin-bottom:18px;">Today's wages already recorded for the selected project.</div>
+    <div class="record-locked">
+        <span class="record-locked-icon" aria-hidden="true">i</span>
+        <span>Today's wages already recorded for the selected project.</span>
+    </div>
 }
 
 <div class="module-header">
@@ -198,10 +404,63 @@
         <h1>Workers</h1>
         <p>Manage your workforce and daily wage status.</p>
     </div>
-    <a asp-action="Create" class="btn-create">
+    <button type="button" class="btn-create" id="openAddWorkerModal">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         Add Worker
-    </a>
+    </button>
+</div>
+
+<div class="worker-modal-backdrop" id="addWorkerModal" aria-hidden="true">
+    <div class="worker-modal" role="dialog" aria-modal="true" aria-labelledby="addWorkerModalTitle">
+        <div class="worker-modal-header">
+            <div>
+                <h2 id="addWorkerModalTitle">Add New Worker</h2>
+                <p>Only name and skill are required. New workers are active by default.</p>
+            </div>
+            <button type="button" class="worker-modal-close" id="closeAddWorkerModal" aria-label="Close add worker modal">&times;</button>
+        </div>
+        <div class="worker-modal-body">
+            <form asp-action="Create" method="post" id="addWorkerForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
+                <div class="form-group">
+                    <label for="addWorkerFullName">Full Name</label>
+                    <input id="addWorkerFullName" name="FullName" class="form-control" placeholder="Worker's full name" required />
+                </div>
+                <div class="form-group">
+                    <label for="addWorkerSkillChoice">Skill Type</label>
+                    <select id="addWorkerSkillChoice" name="SkillChoice" class="form-control" required>
+                        <option value="">Select skill</option>
+                        @foreach (var skill in commonSkills)
+                        {
+                            <option value="@skill">@skill</option>
+                        }
+                        <option value="Custom">Custom</option>
+                    </select>
+                </div>
+                <div class="form-group" id="addWorkerCustomSkillGroup" style="display: none;">
+                    <label for="addWorkerCustomSkill">Custom Skill</label>
+                    <input id="addWorkerCustomSkill" name="CustomSkill" class="form-control" placeholder="Enter worker skill" />
+                </div>
+                <div class="form-group">
+                    <label for="addWorkerPhone">Phone</label>
+                    <input id="addWorkerPhone" name="Phone" class="form-control" placeholder="03001234567" inputmode="numeric" />
+                </div>
+                <div class="form-group">
+                    <label for="addWorkerCnic">CNIC</label>
+                    <input id="addWorkerCnic" name="Cnic" class="form-control" placeholder="1234512345671" inputmode="numeric" />
+                </div>
+                <div class="form-group">
+                    <label for="addWorkerDailyWage">Daily Wage (PKR)</label>
+                    <input id="addWorkerDailyWage" name="DailyWage" class="form-control" placeholder="0.00" />
+                </div>
+                <div class="worker-modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelAddWorkerModal">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Worker</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div class="summary-grid">
@@ -262,61 +521,79 @@
             <a href="#" class="btn-danger" id="deleteWorkerLink">Delete Worker</a>
         </div>
     </div>
-    <form asp-action="Index" method="get" class="workers-filter">
-        <div class="form-group">
-            <label for="skill">Filter by Skill</label>
-            <select id="skill" name="skill" class="form-control">
-                <option value="">All skills</option>
-                @foreach (var skill in skillOptions)
-                {
-                    <option value="@skill" selected="@(skill == selectedSkill)">@skill</option>
-                }
-            </select>
+    <div class="workers-toolbar">
+        <div class="workers-actions">
+            <form asp-action="SetAllStatus" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="active" value="true" />
+                <input type="hidden" name="skill" value="@selectedSkill" />
+                <button type="submit" class="btn-soft">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Make Everyone Active
+                </button>
+            </form>
+            <form asp-action="SetAllStatus" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="active" value="false" />
+                <input type="hidden" name="skill" value="@selectedSkill" />
+                <button type="submit" class="btn-soft is-danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.3"><circle cx="12" cy="12" r="9"></circle><path d="M15 9l-6 6"></path><path d="M9 9l6 6"></path></svg>
+                    Make Everyone Inactive
+                </button>
+            </form>
+            <div id="stagedBonusInputs"></div>
+            @if (selectedProjectId.HasValue && !todayWagesRecorded)
+            {
+                <form id="recordWagesForm" asp-action="RecordDailyWages" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="skill" value="@selectedSkill" />
+                    <button type="submit" class="btn-soft is-warning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
+                        Record Today's Wages
+                    </button>
+                </form>
+            }
+            else if (todayWagesRecorded)
+            {
+                <form asp-action="UndoDailyWages" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="skill" value="@selectedSkill" />
+                    <button type="submit" class="btn-soft is-warning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
+                        Undo Today's Wages
+                    </button>
+                </form>
+            }
+            else
+            {
+                <form id="recordWagesForm" asp-action="RecordDailyWages" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="skill" value="@selectedSkill" />
+                    <button type="submit" class="btn-soft is-warning" disabled title="Select a project first">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
+                        Record Today's Wages
+                    </button>
+                </form>
+            }
         </div>
-        <button type="submit" class="btn-primary">Filter</button>
-        @if (!string.IsNullOrWhiteSpace(selectedSkill))
-        {
-            <a asp-action="Index" class="back-link">Clear filter</a>
-        }
-    </form>
-    <div class="workers-actions">
-        <form asp-action="SetAllStatus" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="active" value="true" />
-            <input type="hidden" name="skill" value="@selectedSkill" />
-            <button type="submit" class="btn-soft">Make Everyone Active</button>
+        <div class="workers-toolbar-divider" aria-hidden="true"></div>
+        <form asp-action="Index" method="get" class="workers-filter">
+            <div class="form-group">
+                <label for="skill">Filter by Skill</label>
+                <select id="skill" name="skill" class="form-control">
+                    <option value="">All skills</option>
+                    @foreach (var skill in skillOptions)
+                    {
+                        <option value="@skill" selected="@(skill == selectedSkill)">@skill</option>
+                    }
+                </select>
+            </div>
+            <button type="submit" class="btn-primary">Filter</button>
+            @if (!string.IsNullOrWhiteSpace(selectedSkill))
+            {
+                <a asp-action="Index" class="back-link">Clear filter</a>
+            }
         </form>
-        <form asp-action="SetAllStatus" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="active" value="false" />
-            <input type="hidden" name="skill" value="@selectedSkill" />
-            <button type="submit" class="btn-soft">Make Everyone Inactive</button>
-        </form>
-        <div id="stagedBonusInputs"></div>
-        @if (selectedProjectId.HasValue && !todayWagesRecorded)
-        {
-            <form id="recordWagesForm" asp-action="RecordDailyWages" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="skill" value="@selectedSkill" />
-                <button type="submit" class="btn-primary">Record Today's Wages</button>
-            </form>
-        }
-        else if (todayWagesRecorded)
-        {
-            <form asp-action="UndoDailyWages" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="skill" value="@selectedSkill" />
-                <button type="submit" class="btn-secondary">Undo Today's Wages</button>
-            </form>
-        }
-        else
-        {
-            <form id="recordWagesForm" asp-action="RecordDailyWages" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="skill" value="@selectedSkill" />
-                <button type="submit" class="btn-primary" disabled title="Select a project first">Record Today's Wages</button>
-            </form>
-        }
     </div>
     <div class="card-body" style="padding: 0;">
         <div class="table-responsive">
@@ -372,11 +649,52 @@
 </div>
 
 @section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
+        const addWorkerModal = document.getElementById('addWorkerModal');
+        const addWorkerForm = document.getElementById('addWorkerForm');
+        const openAddWorkerModal = document.getElementById('openAddWorkerModal');
+        const closeAddWorkerModal = document.getElementById('closeAddWorkerModal');
+        const cancelAddWorkerModal = document.getElementById('cancelAddWorkerModal');
+        const addWorkerSkillChoice = document.getElementById('addWorkerSkillChoice');
+        const addWorkerCustomSkillGroup = document.getElementById('addWorkerCustomSkillGroup');
+        const addWorkerCustomSkill = document.getElementById('addWorkerCustomSkill');
+        const addWorkerFullName = document.getElementById('addWorkerFullName');
         const workerDetailPanel = document.getElementById('workerDetailPanel');
         const stagedBonusInputs = document.getElementById('stagedBonusInputs');
         const todayWagesRecorded = @todayWagesRecorded.ToString().ToLowerInvariant();
         let selectedWorkerId = null;
+
+        function toggleAddWorkerModal(open) {
+            addWorkerModal.classList.toggle('is-open', open);
+            addWorkerModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+            document.body.style.overflow = open ? 'hidden' : '';
+
+            if (open) {
+                setTimeout(() => addWorkerFullName.focus(), 50);
+            }
+        }
+
+        function toggleAddWorkerCustomSkill() {
+            const customSelected = addWorkerSkillChoice.value === 'Custom';
+            addWorkerCustomSkillGroup.style.display = customSelected ? 'block' : 'none';
+            addWorkerCustomSkill.required = customSelected;
+            if (!customSelected) addWorkerCustomSkill.value = '';
+        }
+
+        openAddWorkerModal.addEventListener('click', () => toggleAddWorkerModal(true));
+        closeAddWorkerModal.addEventListener('click', () => toggleAddWorkerModal(false));
+        cancelAddWorkerModal.addEventListener('click', () => toggleAddWorkerModal(false));
+        addWorkerSkillChoice.addEventListener('change', toggleAddWorkerCustomSkill);
+        addWorkerModal.addEventListener('click', event => {
+            if (event.target === addWorkerModal) toggleAddWorkerModal(false);
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && addWorkerModal.classList.contains('is-open')) {
+                toggleAddWorkerModal(false);
+            }
+        });
+        toggleAddWorkerCustomSkill();
 
         function getStagedBonus(workerId) {
             const input = stagedBonusInputs.querySelector(`input[data-worker-id="${workerId}"]`);

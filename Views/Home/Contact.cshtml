@@ -1,5 +1,6 @@
 @{
     ViewData["Title"] = "Contact";
+    ViewData["DashboardContentClass"] = "marketing-page-content";
     Layout = User.Identity?.IsAuthenticated == true ? "_ModuleLayout" : "_MarketingLayout";
 }
 
@@ -36,7 +37,7 @@
           </div>
           <div class="detail-text">
             <strong>Phone</strong>
-            <span>(123) 34567890</span>
+            <a href="tel:+923360714515">+923360714515</a>
           </div>
         </div>
 
@@ -46,17 +47,7 @@
           </div>
           <div class="detail-text">
             <strong>Email</strong>
-            <span>hello@buildwise.com</span>
-          </div>
-        </div>
-
-        <div class="detail-item">
-          <div class="detail-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          </div>
-          <div class="detail-text">
-            <strong>Website</strong>
-            <span>buildwise.com</span>
+            <a href="mailto:buildwise.help@gmail.com">buildwise.help@gmail.com</a>
           </div>
         </div>
       </div>

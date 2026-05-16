@@ -51,6 +51,7 @@ namespace BuildWise.Controllers
 
             ViewBag.SkillFilter = skill;
             ViewBag.SkillOptions = availableSkills;
+            ViewBag.CommonSkills = CommonSkills;
             ViewBag.SelectedProjectId = selectedProjectId;
             ViewBag.TodayWagesRecorded = selectedProjectId.HasValue && await HasRecordedWagesForToday(userId, selectedProjectId.Value);
             ViewBag.WorkerTotals = await _context.WagePayments

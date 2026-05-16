@@ -1,5 +1,6 @@
 @{
     ViewData["Title"] = "faq";
+    ViewData["DashboardContentClass"] = "marketing-page-content";
     Layout = User.Identity?.IsAuthenticated == true ? "_ModuleLayout" : "_MarketingLayout";
 }
 
@@ -23,11 +24,6 @@
   <div class="hero-inner reveal">
     <h1>Frequently Asked Questions</h1>
     <p>Find answers to common questions about BuildWise construction management system.</p>
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" class="search-input" id="faq-search" placeholder="Search for answers...">
-      <span class="search-kbd">/</span>
-    </div>
   </div>
 </section>
 
@@ -49,7 +45,9 @@
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
         <div class="faq-answer">
-          <p>BuildWise is an all-in-one construction management platform designed for contractors, project managers, and site engineers. It simplifies project tracking, workforce management, and material inventory.</p>
+          <div class="faq-answer-inner">
+            <p>BuildWise is an all-in-one construction management platform designed for contractors, project managers, and site engineers. It simplifies project tracking, workforce management, and material inventory.</p>
+          </div>
         </div>
       </div>
 
@@ -58,7 +56,9 @@
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
         <div class="faq-answer">
-          <p>Not at all. BuildWise is built with a focus on simplicity. If you can use a smartphone, you can manage your construction site with BuildWise.</p>
+          <div class="faq-answer-inner">
+            <p>Not at all. BuildWise is built with a focus on simplicity. If you can use a smartphone, you can manage your construction site with BuildWise.</p>
+          </div>
         </div>
       </div>
 
@@ -67,7 +67,9 @@
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
         <div class="faq-answer">
-          <p>By providing real-time data on material usage and labor hours, BuildWise allows you to spot inefficiencies and wastage immediately, before they turn into major expenses.</p>
+          <div class="faq-answer-inner">
+            <p>By providing real-time data on material usage and labor hours, BuildWise allows you to spot inefficiencies and wastage immediately, before they turn into major expenses.</p>
+          </div>
         </div>
       </div>
 
@@ -76,7 +78,9 @@
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
         <div class="faq-answer">
-          <p>Yes. BuildWise supports multi-project management. You can switch between different sites and see an overview of all active projects from your dashboard.</p>
+          <div class="faq-answer-inner">
+            <p>Yes. BuildWise supports multi-project management. You can switch between different sites and see an overview of all active projects from your dashboard.</p>
+          </div>
         </div>
       </div>
 
@@ -85,7 +89,9 @@
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
         <div class="faq-answer">
-          <p>Managers can log attendance directly on-site. The system automatically calculates wages based on the hours worked and the set rates for different worker categories.</p>
+          <div class="faq-answer-inner">
+            <p>Managers can log attendance directly on-site. The system automatically calculates wages based on the hours worked and the set rates for different worker categories.</p>
+          </div>
         </div>
       </div>
 
@@ -94,7 +100,9 @@
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
         <div class="faq-answer">
-          <p>Yes. You can log all material deliveries, track current inventory levels, and maintain a directory of your regular suppliers for quick ordering.</p>
+          <div class="faq-answer-inner">
+            <p>Yes. You can log all material deliveries, track current inventory levels, and maintain a directory of your regular suppliers for quick ordering.</p>
+          </div>
         </div>
       </div>
 
@@ -103,7 +111,9 @@
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
         <div class="faq-answer">
-          <p>Security is our top priority. All your project data is encrypted and stored on secure cloud servers with regular backups.</p>
+          <div class="faq-answer-inner">
+            <p>Security is our top priority. All your project data is encrypted and stored on secure cloud servers with regular backups.</p>
+          </div>
         </div>
       </div>
     </div>

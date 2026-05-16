@@ -34,19 +34,24 @@ if (mobileToggle && mobileMenu) {
 }
 
 // === SCROLL REVEAL ANIMATION ===
-const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add("active");
-        }
-    });
-}, {
-    threshold: 0.1,
-    rootMargin: "0px 0px -50px 0px"
-});
-
 const revealElements = document.querySelectorAll(".reveal");
-revealElements.forEach(el => revealObserver.observe(el));
+if (revealElements.length && "IntersectionObserver" in window) {
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("active");
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px"
+    });
+
+    revealElements.forEach(el => revealObserver.observe(el));
+} else {
+    revealElements.forEach(el => el.classList.add("active"));
+}
 
 // === BACK TO TOP BUTTON ===
 const backToTopBtn = document.getElementById("backToTop");
@@ -69,63 +74,63 @@ if (backToTopBtn) {
 }
 
 // === FAQ ACCORDION ===
-const faqItems = document.querySelectorAll(".faq-item");
-faqItems.forEach(item => {
-    const question = item.querySelector(".faq-question");
-    if (question) {
-        question.addEventListener("click", () => {
-            const isActive = item.classList.contains("open");
-            
-            // Close all other items
-            faqItems.forEach(otherItem => {
-                otherItem.classList.remove("open");
-            });
+const faqList = document.getElementById("faq-list");
+const faqItems = faqList ? Array.from(faqList.querySelectorAll(".faq-item")) : [];
 
-            // Toggle current item
-            if (!isActive) {
-                item.classList.add("open");
-            }
+function setFaqOpen(item, shouldOpen) {
+    const answer = item.querySelector(".faq-answer");
+    if (!answer) return;
+
+    item.classList.toggle("open", shouldOpen);
+    answer.style.height = shouldOpen ? `${answer.scrollHeight}px` : "0px";
+}
+
+if (faqList) {
+    faqList.addEventListener("click", (event) => {
+        const question = event.target.closest(".faq-question");
+        if (!question) return;
+
+        const item = question.closest(".faq-item");
+        const willOpen = item && !item.classList.contains("open");
+
+        faqItems.forEach(otherItem => setFaqOpen(otherItem, false));
+        if (item && willOpen) setFaqOpen(item, true);
+    });
+
+    window.addEventListener("resize", () => {
+        faqItems.forEach(item => {
+            if (item.classList.contains("open")) setFaqOpen(item, true);
         });
-    }
+    }, { passive: true });
+}
+
+document.fonts?.ready.then(() => {
+    faqItems.forEach(item => {
+        if (item.classList.contains("open")) setFaqOpen(item, true);
+    });
 });
 
 // === FAQ FILTER BUTTONS ===
 const filterBtns = document.querySelectorAll(".filter-btn");
-const faqSearch = document.getElementById("faq-search");
+let currentFilter = "all";
 
-function applyFaqFilter(activeFilter, searchQuery = "") {
+function applyFaqFilter(activeFilter) {
     faqItems.forEach(item => {
         const category = item.getAttribute("data-category") || "";
-        const text = item.textContent.toLowerCase();
-        const matchesFilter = activeFilter === "all" || category === activeFilter;
-        const matchesSearch = searchQuery === "" || text.includes(searchQuery.toLowerCase());
-        item.style.display = (matchesFilter && matchesSearch) ? "" : "none";
+        const isVisible = activeFilter === "all" || category === activeFilter;
+        item.hidden = !isVisible;
+        if (!isVisible) setFaqOpen(item, false);
     });
 }
-
-let currentFilter = "all";
 
 filterBtns.forEach(btn => {
     btn.addEventListener("click", () => {
         filterBtns.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         currentFilter = btn.getAttribute("data-filter") || "all";
-        applyFaqFilter(currentFilter, faqSearch ? faqSearch.value.trim() : "");
+        applyFaqFilter(currentFilter);
     });
 });
-
-if (faqSearch) {
-    faqSearch.addEventListener("input", () => {
-        applyFaqFilter(currentFilter, faqSearch.value.trim());
-    });
-    // Keyboard shortcut: press "/" to focus search
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "/" && document.activeElement !== faqSearch) {
-            e.preventDefault();
-            faqSearch.focus();
-        }
-    });
-}
 
 // === DASHBOARD SCROLL ANIMATION (index.html) ===
 const scrollContainer = document.getElementById('scroll-container');
@@ -190,19 +195,16 @@ if (contactForm) {
         const btn = contactForm.querySelector(".btn-submit");
         if (btn) {
             const originalText = btn.innerHTML;
-            btn.innerHTML = "Sending...";
+            btn.innerHTML = "Message Sent!";
             btn.disabled = true;
-            
+            btn.style.background = "#059669";
+            contactForm.reset();
+
             setTimeout(() => {
-                btn.innerHTML = "Message Sent! ✓";
-                btn.style.background = "#059669";
-                contactForm.reset();
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.style.background = "";
-                    btn.disabled = false;
-                }, 3000);
-            }, 1500);
+                btn.innerHTML = originalText;
+                btn.style.background = "";
+                btn.disabled = false;
+            }, 1800);
         }
     });
 }
