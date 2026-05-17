@@ -7,14 +7,69 @@
 @section Styles {
   @if (User.Identity?.IsAuthenticated == true)
   {
-    <link rel="stylesheet" href="~/assets/css/style.css" asp-append-version="true" />
+    <style>
+      .dash-content.marketing-page-content { padding: 0; background: #F8FAFC; }
+      .faq-hero { padding: 72px 24px 48px; text-align: center; background: linear-gradient(180deg, #EFF6FF 0%, #FFFFFF 100%); border-bottom: 1px solid #E2E8F0; }
+      .faq-hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; color: #0F172A; margin: 0 0 14px; letter-spacing: -0.5px; line-height: 1.05; }
+      .faq-hero p { max-width: 560px; margin: 0 auto; color: #64748B; line-height: 1.75; font-size: 1rem; }
+      .faq-body { padding: 36px 24px 72px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 42%, #F1F5F9 100%); }
+      .faq-inner { max-width: 860px; margin: 0 auto; }
+      .faq-filters { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+      .filter-btn { border: 1px solid #D6E3F5; background: #FFFFFF; color: #475569; padding: 9px 15px; border-radius: 3px; font-weight: 800; cursor: pointer; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease; }
+      .filter-btn:hover { color: #1D4ED8; border-color: #BFDBFE; background: #F8FBFF; transform: translateY(-1px); }
+      .filter-btn.active { color: #FFFFFF; border-color: #1D4ED8; background: #1D4ED8; }
+      .faq-list { background: #FFFFFF; border: 1px solid #DCE8F7; border-radius: 3px; overflow: hidden; box-shadow: 0 18px 40px -32px rgba(15, 23, 42, 0.45), 0 1px 2px rgba(15, 23, 42, 0.04); }
+      .faq-item + .faq-item { border-top: 1px solid #E2E8F0; }
+      .faq-question { width: 100%; background: #FFFFFF; border: 0; padding: 21px 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #0F172A; font: 800 1rem Inter, sans-serif; text-align: left; cursor: pointer; transition: background .16s ease, color .16s ease; }
+      .faq-question:hover { background: #F8FBFF; color: #1D4ED8; }
+      .faq-item.open .faq-question { color: #1D4ED8; background: #F8FBFF; }
+      .faq-chevron { width: 19px; height: 19px; flex-shrink: 0; transition: transform .18s ease; }
+      .faq-item.open .faq-chevron { transform: rotate(180deg); }
+      .faq-answer { height: 0; overflow: hidden; transition: height .18s ease; }
+      .faq-answer-inner { padding: 0 52px 22px 22px; color: #64748B; line-height: 1.8; font-size: 0.94rem; }
+      .faq-answer-inner p { margin: 0; }
+      .faq-cta { margin-top: 34px; background: linear-gradient(135deg, #0F172A 0%, #1D4ED8 100%); border: 1px solid #1E40AF; border-radius: 3px; padding: 36px 30px; text-align: center; color: #FFFFFF; box-shadow: 0 20px 44px -34px rgba(15, 23, 42, 0.6); }
+      .faq-cta h2 { margin: 0 0 8px; font-size: 1.45rem; font-weight: 900; }
+      .faq-cta p { margin: 0 0 22px; color: #BFDBFE; }
+      .faq-cta a { display: inline-flex; background: #FFFFFF; color: #0F172A; padding: 11px 22px; border-radius: 3px; font-weight: 800; text-decoration: none; transition: background .16s ease, transform .16s ease; }
+      .faq-cta a:hover { background: #EFF6FF; transform: translateY(-1px); }
+    </style>
   }
 }
 
 @section Scripts {
   @if (User.Identity?.IsAuthenticated == true)
   {
-    <script src="~/assets/js/main.js" asp-append-version="true" defer></script>
+    <script>
+      const faqList = document.getElementById("faq-list");
+      const faqItems = faqList ? Array.from(faqList.querySelectorAll(".faq-item")) : [];
+      function setFaqOpen(item, open) {
+        const answer = item.querySelector(".faq-answer");
+        if (!answer) return;
+        item.classList.toggle("open", open);
+        answer.style.height = open ? `${answer.scrollHeight}px` : "0px";
+      }
+      faqList?.addEventListener("click", event => {
+        const question = event.target.closest(".faq-question");
+        if (!question) return;
+        const item = question.closest(".faq-item");
+        const willOpen = item && !item.classList.contains("open");
+        faqItems.forEach(other => setFaqOpen(other, false));
+        if (item && willOpen) setFaqOpen(item, true);
+      });
+      document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".filter-btn").forEach(item => item.classList.remove("active"));
+          btn.classList.add("active");
+          const filter = btn.dataset.filter || "all";
+          faqItems.forEach(item => {
+            const visible = filter === "all" || item.dataset.category === filter;
+            item.hidden = !visible;
+            if (!visible) setFaqOpen(item, false);
+          });
+        });
+      });
+    </script>
   }
 }
 
@@ -127,4 +182,3 @@
 </div>
 
 <!-- ══════════════ FOOTER ══════════════ -->
-

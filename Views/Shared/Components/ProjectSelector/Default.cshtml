@@ -17,19 +17,19 @@
     <div id="projectDropdown" class="project-dropdown">
         @foreach (var proj in Model)
         {
-            <div style="display: flex; align-items: center;">
-                <form asp-controller="ProjectContext" asp-action="SetActiveProject" method="post" style="flex: 1; margin: 0;">
+            <div class="project-dropdown-row @(selectedId == proj.ProjectId ? "active" : "")">
+                <form asp-controller="ProjectContext" asp-action="SetActiveProject" method="post" class="project-option-form">
                     <input type="hidden" name="projectId" value="@proj.ProjectId" />
                     <button type="submit" class="dropdown-item @(selectedId == proj.ProjectId ? "active" : "")">
                         <span class="dot" style="background: @(proj.IsCompleted ? "#10B981" : "#1D4ED8");"></span>
                         @proj.ProjectName
                     </button>
                 </form>
-                <div style="display: flex; gap: 8px; padding-right: 12px;">
-                    <a href="/Projects/Edit/@proj.ProjectId" title="Edit Project" style="color: #64748B;">
+                <div class="project-row-actions">
+                    <a href="/Projects/Edit/@proj.ProjectId" title="Edit Project" class="project-action-link edit">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </a>
-                    <a href="/Projects/Delete/@proj.ProjectId" title="Delete Project" style="color: #EF4444;">
+                    <a href="/Projects/Delete/@proj.ProjectId" title="Delete Project" class="project-action-link delete">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </a>
                 </div>
@@ -73,7 +73,7 @@
         padding: 8px 12px;
         background: #FFFFFF;
         border: 1px solid var(--dash-border);
-        border-radius: 10px;
+        border-radius: 3px;
         cursor: pointer;
         transition: all 0.2s;
         min-width: 220px;
@@ -110,7 +110,7 @@
         color: #1E40AF;
         background: #EFF6FF;
         border: 1px solid #DBEAFE;
-        border-radius: 999px;
+        border-radius: 3px;
         display: inline-flex;
         width: fit-content;
         padding: 2px 8px;
@@ -126,7 +126,7 @@
         overflow-y: auto;
         background: white;
         border: 1px solid var(--dash-border);
-        border-radius: 12px;
+        border-radius: 3px;
         box-shadow: var(--dash-shadow-md);
         z-index: 1100;
         padding: 8px;
@@ -134,6 +134,31 @@
     }
 
     .project-dropdown.show { display: block; }
+
+    .project-dropdown-row {
+        display: flex;
+        align-items: center;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        margin-bottom: 3px;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .project-dropdown-row:hover {
+        background: #F8FAFC;
+        border-color: #DBEAFE;
+    }
+
+    .project-dropdown-row.active {
+        background: #EFF6FF;
+        border-color: #1D4ED8;
+    }
+
+    .project-option-form {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+    }
 
     .dropdown-item {
         width: 100%;
@@ -143,7 +168,7 @@
         padding: 10px 12px;
         border: none;
         background: transparent;
-        border-radius: 8px;
+        border-radius: 0;
         font-size: 0.875rem;
         font-weight: 500;
         color: var(--dash-text-main);
@@ -153,12 +178,12 @@
     }
 
     .dropdown-item:hover {
-        background: #F1F5F9;
+        background: transparent;
         color: var(--dash-primary);
     }
 
     .dropdown-item.active {
-        background: #EFF6FF;
+        background: transparent;
         color: var(--dash-primary);
         font-weight: 600;
     }
@@ -169,10 +194,46 @@
         border-radius: 50%;
     }
 
+    .project-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding-right: 6px;
+    }
+
+    .project-action-link {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        color: #64748B;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .project-action-link:hover {
+        background: #FFFFFF;
+        border-color: #BFDBFE;
+        color: #1D4ED8;
+    }
+
+    .project-action-link.delete {
+        color: #EF4444;
+    }
+
+    .project-action-link.delete:hover {
+        border-color: #FECACA;
+        color: #DC2626;
+    }
+
     .dropdown-footer {
         margin-top: 8px;
-        padding: 8px 4px 4px;
+        padding: 8px 0 0;
         border-top: 1px solid var(--dash-border);
+        display: flex;
+        justify-content: center;
     }
 
     .add-project-btn {
@@ -181,11 +242,13 @@
         justify-content: center;
         gap: 8px;
         width: 100%;
+        max-width: 240px;
         padding: 10px;
         background: var(--dash-primary);
         color: white;
+        text-align: center;
         text-decoration: none;
-        border-radius: 8px;
+        border-radius: 3px;
         font-size: 0.8125rem;
         font-weight: 600;
         transition: opacity 0.2s;

@@ -4,433 +4,643 @@
     ViewData["Title"] = "Dashboard";
     Layout = "_ModuleLayout";
 
-    // Data from ViewBag
-    decimal totalBudget = ViewBag.TotalBudget ?? 0m;
-    decimal totalExpenses = ViewBag.TotalExpenses ?? 0m;
-    int totalProjects = ViewBag.TotalProjects ?? 0;
-    int activeProjects = ViewBag.ActiveProjects ?? 0;
-    int totalWorkers = ViewBag.TotalWorkers ?? 0;
-    int totalTasks = ViewBag.TotalTasks ?? 0;
+    decimal totalBudget   = ViewBag.TotalBudget   ?? 0m;
+    decimal totalExpenses = ViewBag.TotalExpenses  ?? 0m;
+    int totalWorkers      = ViewBag.TotalWorkers   ?? 0;
+    int workersOnSite     = ViewBag.WorkersOnSite  ?? 0;
 
-    // Projects status
-    int projNotStarted = ViewBag.ProjectsNotStarted ?? 0;
-    int projInProgress = ViewBag.ProjectsInProgress ?? 0;
-    int projCompleted = ViewBag.ProjectsCompleted ?? 0;
-    int projOnHold = ViewBag.ProjectsOnHold ?? 0;
+    var recentExpenses  = ViewBag.RecentExpensesList as List<TransactionLog> ?? new();
+    var monthlyExpenses = ViewBag.MonthlyExpenses as System.Collections.IEnumerable;
 
-    // Tasks summary
-    int tasksToDo = ViewBag.TasksToDo ?? 0;
-    int tasksInProgress = ViewBag.TasksInProgress ?? 0;
-    int tasksCompleted = ViewBag.TasksCompleted ?? 0;
-    int tasksOverdue = ViewBag.TasksOverdue ?? 0;
-
-    // Workers summary
-    int workersOnSite = ViewBag.WorkersOnSite ?? 0;
-    int workersOffSite = ViewBag.WorkersOffSite ?? 0;
-    int workersOnLeave = ViewBag.WorkersOnLeave ?? 0;
-
-    var projects = ViewBag.Projects as List<VwProjectDashboard> ?? new();
-    var recentExpenses = ViewBag.RecentExpensesList as List<VwExpenseHistory> ?? new();
-    var toDoTasks = ViewBag.ToDoTasks as List<BuildWise.Models.Task> ?? new();
-
-    string FormatMoney(decimal val)
-    {
-        return $"PKR {val.ToString("N0", new CultureInfo("en-IN"))}";
-    }
+    string FormatMoney(decimal val) =>
+        $"PKR {val.ToString("N0", new CultureInfo("en-IN"))}";
 
     double budgetUsedPct = totalBudget > 0 ? (double)(totalExpenses / totalBudget * 100) : 0;
 }
 
-<div class="content-header">
-    <div>
-        <h1>@(ViewBag.ActiveProjectName ?? "Global Dashboard")</h1>
-        <p class="text-muted" style="margin-top: 4px; font-size: 0.9rem;">Overview of @(ViewBag.ActiveProjectName ?? "your projects and business performance")</p>
+<!-- ══════════════════════════════════════════════
+     PAGE HEADER
+     ══════════════════════════════════════════════ -->
+<div class="db-page-header">
+    <div class="db-page-title-block">
+        <h1 id="dashboardProjectTitle">@(ViewBag.ActiveProjectName ?? "Global Dashboard")</h1>
+        <p class="db-subtitle">Overview of @(ViewBag.ActiveProjectName ?? "your projects and business performance")</p>
     </div>
-    <div class="date-selector" onclick="document.getElementById('dashDate').showPicker()" style="position: relative;">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        <span id="dateDisplay">@DateTime.Now.ToString("MMM dd, yyyy")</span>
-        <input type="date" id="dashDate" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;" onchange="updateDateDisplay(this.value)">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-    </div>
+    <a asp-controller="Home" asp-action="Dashboard" asp-route-overall="true"
+       class="db-overall-btn">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Overall Stats
+    </a>
 </div>
 
-<!-- Stats Grid -->
-<div class="stats-grid grid-3">
-    <div class="stat-card">
-        <div class="stat-header">
-            <div class="stat-icon-box" style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#10B981" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+<!-- ══════════════════════════════════════════════
+     TOP STAT CARDS
+     ══════════════════════════════════════════════ -->
+<div class="db-kpi-row">
+
+    <!-- Workforce Card -->
+    <div class="db-kpi-card db-kpi-workforce">
+        <div class="db-kpi-inner">
+            <div class="db-kpi-icon db-kpi-icon--green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
             </div>
-            <div class="stat-info">
-                <span class="stat-label">Workforce</span>
-                <div style="display:flex; align-items:baseline; gap:8px;">
-                    <h2 class="stat-value">@totalWorkers</h2>
-                    <span class="stat-trend trend-up">@workersOnSite On-Site</span>
+            <div class="db-kpi-body">
+                <span class="db-kpi-label">Workforce</span>
+                <div class="db-kpi-value-row">
+                    <span class="db-kpi-value" id="statTotalWorkers">@totalWorkers</span>
+                    <span class="db-kpi-badge db-kpi-badge--green" id="statWorkersOnSite">@workersOnSite Active</span>
+                </div>
+            </div>
+            <div class="db-kpi-more-wrap">
+                <button class="db-kpi-more" data-menu="menuWorkers" title="Options">•••</button>
+                <div class="db-kpi-dropdown" id="menuWorkers">
+                    <a href="/Workers" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        View All Workers
+                    </a>
+                    <a href="/Workers/Create" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Worker
+                    </a>
+                    <div class="db-kpi-dd-sep"></div>
+                    <a href="/Workers" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        Workforce Report
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="progress-mini"><div class="progress-mini-bar" style="width: @(totalWorkers > 0 ? (workersOnSite * 100 / totalWorkers) : 0)%; background: #10B981;"></div></div>
+        <div class="db-kpi-progress">
+            <div class="db-kpi-progress-fill db-kpi-progress--green" id="workersProgressBar"
+                 style="width:@(totalWorkers > 0 ? Math.Min(100, workersOnSite * 100 / totalWorkers) : 0)%"></div>
+        </div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-header">
-            <div class="stat-icon-box" style="background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#8B5CF6" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+    <!-- Project Budget Card -->
+    <div class="db-kpi-card db-kpi-budget">
+        <div class="db-kpi-inner">
+            <div class="db-kpi-icon db-kpi-icon--purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"/>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
             </div>
-            <div class="stat-info">
-                <span class="stat-label">Project Budget</span>
-                <div style="display:flex; align-items:baseline; gap:8px;">
-                    <h2 class="stat-value">@FormatMoney(totalBudget)</h2>
+            <div class="db-kpi-body">
+                <span class="db-kpi-label">Project Budget</span>
+                <span class="db-kpi-value db-kpi-value--lg" id="statTotalBudget">@FormatMoney(totalBudget)</span>
+            </div>
+            <div class="db-kpi-more-wrap">
+                <button class="db-kpi-more" data-menu="menuBudget" title="Options">•••</button>
+                <div class="db-kpi-dropdown" id="menuBudget">
+                    <a href="/Budget" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.5"/></svg>
+                        Manage Budget
+                    </a>
+                    <a href="/Projects" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7h6v14"/><path d="M13 21V3h6v18"/></svg>
+                        View Projects
+                    </a>
+                    <div class="db-kpi-dd-sep"></div>
+                    <a href="/Advisor" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                        Budget Analytics
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="progress-mini"><div class="progress-mini-bar" style="width: 100%; background: #8B5CF6; opacity: 0.2;"></div></div>
+        <div class="db-kpi-progress">
+            <div class="db-kpi-progress-fill db-kpi-progress--purple" style="width:100%;opacity:.15;"></div>
+        </div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-header">
-            <div class="stat-icon-box" style="background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#F97316" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+    <!-- Total Expenses Card -->
+    <div class="db-kpi-card db-kpi-expenses">
+        <div class="db-kpi-inner">
+            <div class="db-kpi-icon db-kpi-icon--orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
             </div>
-            <div class="stat-info">
-                <span class="stat-label">Total Expenses</span>
-                <div style="display:flex; align-items:baseline; gap:8px;">
-                    <h2 class="stat-value">@FormatMoney(totalExpenses)</h2>
-                    <span class="stat-trend @(budgetUsedPct > 90 ? "trend-down" : "trend-up")">@budgetUsedPct.ToString("0")% Used</span>
+            <div class="db-kpi-body">
+                <span class="db-kpi-label">Total Expenses</span>
+                <div class="db-kpi-value-row">
+                    <span class="db-kpi-value db-kpi-value--lg" id="statTotalExpenses">@FormatMoney(totalExpenses)</span>
+                    <span class="db-kpi-badge @(budgetUsedPct > 90 ? "db-kpi-badge--red" : "db-kpi-badge--green")"
+                          id="statBudgetUsed">@budgetUsedPct.ToString("0")% Used</span>
+                </div>
+            </div>
+            <div class="db-kpi-more-wrap">
+                <button class="db-kpi-more" data-menu="menuExpenses" title="Options">•••</button>
+                <div class="db-kpi-dropdown" id="menuExpenses">
+                    <a href="/Transaction" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h10"/><path d="M7 12h10"/><path d="M11 17h6"/><path d="M4 7h.01"/><path d="M4 12h.01"/><path d="M8 17h.01"/></svg>
+                        All Transactions
+                    </a>
+                    <a href="/Budget" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        Add Expense
+                    </a>
+                    <div class="db-kpi-dd-sep"></div>
+                    <a href="/Advisor" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+                        Expense Insights
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="progress-mini"><div class="progress-mini-bar" style="width: @(Math.Min(100, (int)budgetUsedPct))%; background: #F97316;"></div></div>
+        <div class="db-kpi-progress">
+            <div class="db-kpi-progress-fill @(budgetUsedPct > 90 ? "db-kpi-progress--red" : "db-kpi-progress--orange")"
+                 id="expenseProgressBar"
+                 style="width:@(Math.Min(100,(int)budgetUsedPct))%"></div>
+        </div>
     </div>
+
 </div>
 
-<!-- Charts Row -->
-<div class="dashboard-row grid-3">
-    <!-- Project/Phase Status Chart -->
-    <div class="dash-card">
-        <div class="card-header">
-            <h3>Phase Completion</h3>
-            <div class="card-actions">
-                <span class="dot-menu">•••</span>
-            </div>
-        </div>
-        <div class="chart-container-relative">
-            <canvas id="statusChart"></canvas>
-            <div class="chart-center-text">
-                <span class="center-value">@ViewBag.TotalTasks</span>
-                <span class="center-label">Tasks</span>
-            </div>
-        </div>
-        <div class="chart-legend-modern">
-            <div class="leg-item"><span class="dot" style="background: #94A3B8;"></span> <span>To Do (@tasksToDo)</span></div>
-            <div class="leg-item"><span class="dot" style="background: #1D4ED8;"></span> <span>Active (@tasksInProgress)</span></div>
-            <div class="leg-item"><span class="dot" style="background: #10B981;"></span> <span>Done (@tasksCompleted)</span></div>
-        </div>
-    </div>
+<!-- ══════════════════════════════════════════════
+     MIDDLE ROW: Expense Distribution + Recent Expenses
+     ══════════════════════════════════════════════ -->
+<div class="db-mid-row">
 
-    <!-- Spending Trend -->
-    <div class="dash-card grid-col-span-2">
-        <div class="card-header">
-            <h3>Cash Flow Analysis</h3>
-            <div class="card-tabs">
-                <button class="tab-btn active">6 Months</button>
-                <button class="tab-btn">1 Year</button>
-            </div>
+    <!-- Left: Expense Distribution Donut -->
+    <div class="db-card db-card--distribution">
+        <div class="db-card-header">
+            <span class="db-card-title">Expense Distribution</span>
+            <a href="/Budget" class="db-card-link">Manage Budget →</a>
         </div>
-        <div class="chart-container-large">
-            <canvas id="cashFlowChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Second Row -->
-<div class="dashboard-row grid-2">
-    <!-- Recent Projects or Phases -->
-    <div class="dash-card">
-        <div class="card-header">
-            <h3>@(ViewBag.SelectedProjectId != null ? "Project Phases" : "Active Projects")</h3>
-            <a href="/Projects" class="btn-link">Manage All →</a>
-        </div>
-        <div class="table-responsive-clean">
-            <table class="modern-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Progress</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (ViewBag.SelectedProjectId != null)
-                    {
-                        var phases = ViewBag.Phases as List<Phase> ?? new();
-                        foreach (var ph in phases)
-                        {
-                            var total = ph.Tasks?.Count ?? 0;
-                            var completed = ph.Tasks?.Count(t => t.StatusId == 3) ?? 0;
-                            var pct = total > 0 ? (completed * 100 / total) : 0;
-                            <tr>
-                                <td>
-                                    <div class="name-cell">
-                                        <div class="circle-icon">P</div>
-                                        <div class="name-info">
-                                            <strong>@(ph.PhaseType?.PhaseName ?? ph.CustomPhaseName ?? "Phase " + ph.Sequence)</strong>
-                                            <span>@(ph.StartDate?.ToString("MMM dd") ?? "Not Started")</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="bar-cell">
-                                        <span>@pct%</span>
-                                        <div class="bar-wrap"><div class="bar-fill" style="width: @pct%;"></div></div>
-                                    </div>
-                                </td>
-                                <td><span class="status-tag @(pct == 100 ? "tag-green" : "tag-blue")">@(pct == 100 ? "Completed" : "Active")</span></td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        foreach (var p in projects)
-                        {
-                            var pct = p.PhaseProgressPct ?? 0;
-                            <tr>
-                                <td>
-                                    <div class="name-cell">
-                                        <div class="circle-icon" style="background:#EFF6FF; color:#1D4ED8;">P</div>
-                                        <div class="name-info">
-                                            <strong>@p.ProjectName</strong>
-                                            <span>Target: @p.ExpectedEndDate?.ToString("MMM dd")</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="bar-cell">
-                                        <span>@pct.ToString("0")%</span>
-                                        <div class="bar-wrap"><div class="bar-fill" style="width: @pct.ToString("0")%;"></div></div>
-                                    </div>
-                                </td>
-                                <td><span class="status-tag @(p.IsCompleted ? "tag-green" : "tag-blue")">@(p.IsCompleted ? "Completed" : "Active")</span></td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Expense Breakdown -->
-    <div class="dash-card">
-        <div class="card-header">
-            <h3>Expense Distribution</h3>
-            <a href="/Budget" class="btn-link">Details →</a>
-        </div>
-        <div class="expense-content">
-            <div class="chart-side">
+        <div class="db-dist-body">
+            <!-- Donut -->
+            <div class="db-donut-wrap">
                 <canvas id="expenseCategoryChart"></canvas>
+                <div class="db-donut-center">
+                    <span class="db-donut-sublabel" id="dashPieCenterLabel">TOTAL EXPENSED</span>
+                    <strong class="db-donut-value" id="dashPieCenterValue">@FormatMoney(totalExpenses)</strong>
+                    <small class="db-donut-meta" id="dashPieCenterMeta">0 categories</small>
+                </div>
             </div>
-            <div class="legend-side">
-                @foreach (var cat in ViewBag.CategoryExpenses as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>())
+            <!-- Category boxes — rendered by JS, 2-column grid to the right of donut -->
+            <div class="db-cat-grid" id="dashboardCategoryBoxes">
+                <div class="db-cat-empty">Loading categories…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Recent Expenses -->
+    <div class="db-card db-card--recent">
+        <div class="db-card-header">
+            <span class="db-card-title">Recent Expenses</span>
+            <a href="/Transaction" class="db-card-link">View All →</a>
+        </div>
+        <table class="db-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="recentExpensesBody">
+                @if (recentExpenses.Any())
                 {
-                    <div class="exp-item">
-                        <div class="exp-left">
-                            <span class="dot"></span>
-                            <span class="cat-name">@cat.Category</span>
-                        </div>
-                        <span class="cat-val">@FormatMoney(cat.Total)</span>
-                    </div>
+                    foreach (var exp in recentExpenses)
+                    {
+                        <tr class="db-table-row">
+                            <td class="db-table-date">@exp.TransactionDate.ToString("MMM dd")</td>
+                            <td class="db-table-cat">@exp.Category</td>
+                            <td class="db-table-amount"><strong>@FormatMoney(exp.Amount)</strong></td>
+                            <td class="db-table-chevron">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#CBD5E1" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </td>
+                        </tr>
+                    }
                 }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="db-table-empty">No expenses recorded yet.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     BOTTOM ROW: Monthly Trend + Feature Cards
+     ══════════════════════════════════════════════ -->
+<div class="db-bottom-row">
+
+    <!-- Monthly Spend Trend -->
+    <div class="db-card db-card--trend">
+        <div class="db-card-header">
+            <span class="db-card-title">Monthly Spending Trend</span>
+            <div class="db-trend-tabs">
+                <button class="db-trend-tab active" data-period="all">All</button>
+                <button class="db-trend-tab" data-period="6">6M</button>
+                <button class="db-trend-tab" data-period="3">3M</button>
             </div>
         </div>
+        <div class="db-chart-area">
+            <canvas id="monthlyTrendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Feature Quick-Access Cards -->
+    <div class="db-feature-cards">
+
+        <a href="/Budget" class="db-feat-card">
+            <div class="db-feat-icon db-feat-icon--green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <div class="db-feat-body">
+                <strong>Budget Overview</strong>
+                <p>Track your project budget and expenses in real-time.</p>
+            </div>
+            <svg class="db-feat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+            </svg>
+        </a>
+
+        <a href="/Advisor" class="db-feat-card">
+            <div class="db-feat-icon db-feat-icon--purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 20V10M12 20V4M6 20v-6"/>
+                </svg>
+            </div>
+            <div class="db-feat-body">
+                <strong>Smart Analytics</strong>
+                <p>Get insights into spending patterns and category distribution.</p>
+            </div>
+            <svg class="db-feat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+            </svg>
+        </a>
+
+        <a href="/Transaction" class="db-feat-card">
+            <div class="db-feat-icon db-feat-icon--orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+            </div>
+            <div class="db-feat-body">
+                <strong>Stay Updated</strong>
+                <p>Recent transactions and budget alerts at your fingertips.</p>
+            </div>
+            <svg class="db-feat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+            </svg>
+        </a>
+
     </div>
 </div>
 
-<!-- To Do Row -->
-<div class="dashboard-row grid-2">
-    <div class="dash-card">
-        <div class="card-header">
-            <h3>To Do Tasks</h3>
-            <a href="/Construction" class="btn-link">Open Tasks -></a>
-        </div>
-        <div class="table-responsive-clean">
-            <table class="modern-table">
-                <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Phase</th>
-                        <th>Created</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (toDoTasks.Any())
-                    {
-                        foreach (var task in toDoTasks)
-                        {
-                            <tr>
-                                <td><strong>@task.TaskName</strong></td>
-                                <td>@(task.Phase?.PhaseType?.PhaseName ?? task.Phase?.CustomPhaseName ?? "Phase")</td>
-                                <td>@task.CreatedAt.ToString("MMM dd")</td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="3" class="text-muted">No pending tasks.</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="dash-card">
-        <div class="card-header">
-            <h3>Recent Expenses</h3>
-            <a href="/Budget" class="btn-link">Details -></a>
-        </div>
-        <div class="table-responsive-clean">
-            <table class="modern-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Category</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (recentExpenses.Any())
-                    {
-                        foreach (var expense in recentExpenses)
-                        {
-                            <tr>
-                                <td>@expense.ExpenseDate.ToString("MMM dd")</td>
-                                <td>@expense.CategoryName</td>
-                                <td><strong>@FormatMoney(expense.Amount)</strong></td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="3" class="text-muted">No expenses recorded yet.</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
+<!-- ══════════════════════════════════════════════
+     SCRIPTS
+     ══════════════════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Professional Chart Themes
-    const colors = {
-        primary: '#1D4ED8',
-        success: '#10B981',
-        warning: '#F59E0B',
-        danger: '#EF4444',
-        muted: '#94A3B8',
-        bg: '#F8FAFC'
-    };
-
+    // ── Design Tokens ──
     Chart.defaults.font.family = "'Inter', sans-serif";
     Chart.defaults.color = '#64748B';
 
-    // 1. Status Chart
-    const statusCtx = document.getElementById('statusChart').getContext('2d');
-    new Chart(statusCtx, {
-        type: 'doughnut',
-        data: {
-            datasets: [{
-                data: [@tasksToDo, @tasksInProgress, @tasksCompleted],
-                backgroundColor: [colors.muted, colors.primary, colors.success],
-                borderWidth: 0,
-                hoverOffset: 10,
-                cutout: '82%'
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            animation: { animateRotate: true, duration: 1500 }
+    const PALETTE = ['#2563EB','#14B8A6','#F59E0B','#8B5CF6','#EF4444',
+                     '#06B6D4','#84CC16','#F97316','#EC4899','#64748B',
+                     '#22C55E','#A855F7','#3B82F6','#10B981'];
+
+    // ─────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────
+    function normalizeCategoryData(items) {
+        return (items || [])
+            .map(i => ({ category: i.category ?? i.Category, total: Number(i.total ?? i.Total ?? i.amount ?? i.Amount ?? 0) }))
+            .filter(i => i.category && i.total > 0);
+    }
+    function sumCategories(items) {
+        return items.reduce((s, i) => s + Number(i.total || 0), 0);
+    }
+
+    // ─────────────────────────────────────────────
+    // PIE CENTER
+    // ─────────────────────────────────────────────
+    let catData = normalizeCategoryData(@Html.Raw(Json.Serialize(ViewBag.CategoryExpenses)));
+    let totalCatExp = sumCategories(catData);
+    let activePieIdx = null;
+
+    const pieCenterLabel = document.getElementById('dashPieCenterLabel');
+    const pieCenterValue = document.getElementById('dashPieCenterValue');
+    const pieCenterMeta  = document.getElementById('dashPieCenterMeta');
+
+    function setPieCenter(idx) {
+        if (idx === null || idx < 0 || !catData[idx]) {
+            pieCenterLabel.textContent = 'TOTAL EXPENSED';
+            pieCenterValue.textContent = formatPKR(totalCatExp);
+            pieCenterMeta.textContent  = `${catData.length} ${catData.length === 1 ? 'category' : 'categories'}`;
+            return;
         }
-    });
+        const it   = catData[idx];
+        const amt  = Number(it.total || 0);
+        const pct  = totalCatExp > 0 ? (amt / totalCatExp * 100).toFixed(1) : '0.0';
+        pieCenterLabel.textContent = it.category.toUpperCase();
+        pieCenterValue.textContent = formatPKR(amt);
+        pieCenterMeta.textContent  = `${pct}% allocation`;
+    }
 
-    // 2. Cash Flow Chart
-    const flowCtx = document.getElementById('cashFlowChart').getContext('2d');
-    const monthlyData = @Html.Raw(Json.Serialize(ViewBag.MonthlyExpenses));
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
-    const labels = monthlyData.length > 0 ? monthlyData.map(m => months[m.month - 1]) : months.slice(0,6);
-    const data = monthlyData.length > 0 ? monthlyData.map(m => m.total) : [0,0,0,0,0,0];
-
-    const gradient = flowCtx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(29, 78, 216, 0.1)');
-    gradient.addColorStop(1, 'rgba(29, 78, 216, 0)');
-
-    new Chart(flowCtx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Monthly Spending',
-                data: data,
-                borderColor: colors.primary,
-                backgroundColor: gradient,
-                fill: true,
-                tension: 0.45,
-                borderWidth: 3,
-                pointRadius: 4,
-                pointBackgroundColor: '#fff',
-                pointBorderColor: colors.primary,
-                pointBorderWidth: 2
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { 
-                    beginAtZero: true, 
-                    grid: { display: true, color: '#f1f5f9' },
-                    ticks: { callback: v => formatPKR(v) }
-                },
-                x: { grid: { display: false } }
-            }
-        }
-    });
-
-    // 3. Category Distribution
-    const catCtx = document.getElementById('expenseCategoryChart').getContext('2d');
-    const catData = @Html.Raw(Json.Serialize(ViewBag.CategoryExpenses));
-    
-    new Chart(catCtx, {
+    // ─────────────────────────────────────────────
+    // PIE CHART
+    // ─────────────────────────────────────────────
+    const pieCtx = document.getElementById('expenseCategoryChart').getContext('2d');
+    const pieChart = new Chart(pieCtx, {
         type: 'doughnut',
         data: {
             labels: catData.map(c => c.category),
             datasets: [{
                 data: catData.map(c => c.total),
-                backgroundColor: [colors.primary, colors.success, colors.warning, colors.danger, '#8B5CF6'],
-                borderWidth: 0,
-                cutout: '75%'
+                backgroundColor: catData.map((_, i) => PALETTE[i % PALETTE.length]),
+                borderColor: '#FFFFFF',
+                borderWidth: 3,
+                hoverBorderWidth: 5,
+                hoverOffset: 14,
+                spacing: 2
             }]
         },
         options: {
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } }
+            cutout: '68%',
+            animation: { animateRotate: true, duration: 900 },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0F172A',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => {
+                            const amt = Number(ctx.parsed || 0);
+                            const pct = totalCatExp > 0 ? (amt / totalCatExp * 100).toFixed(1) : '0.0';
+                            return `  ${ctx.label}: ${formatPKR(amt)} (${pct}%)`;
+                        }
+                    }
+                }
+            },
+            onHover: (e, els) => activatePie(els.length ? els[0].index : null),
+            onLeave: () => resetPie()
         }
     });
 
-    function updateDateDisplay(value) {
-        const display = document.getElementById('dateDisplay');
-        if (!display || !value) return;
+    // Always reset to total — called on mouse-out from both chart and category boxes
+    function resetPie() {
+        activePieIdx = null;
+        document.querySelectorAll('.db-cat-box').forEach(b => b.classList.remove('is-active'));
+        pieChart.setActiveElements([]);
+        setPieCenter(null);
+        pieChart.update('none'); // 'none' skips animation for instant reset
+    }
 
-        const selectedDate = new Date(value + 'T00:00:00');
-        display.textContent = selectedDate.toLocaleDateString('en-US', {
-            month: 'short',
-            day: '2-digit',
-            year: 'numeric'
+    function activatePie(idx) {
+        if (idx === null) { resetPie(); return; }
+        if (activePieIdx === idx) return;
+        activePieIdx = idx;
+        document.querySelectorAll('.db-cat-box').forEach((b, i) => {
+            b.classList.toggle('is-active', i === idx);
+        });
+        pieChart.setActiveElements([{ datasetIndex: 0, index: idx }]);
+        setPieCenter(idx);
+        pieChart.update();
+    }
+
+    // Explicit canvas mouseleave — reliable fallback for chart hover-out
+    document.getElementById('expenseCategoryChart').addEventListener('mouseleave', resetPie);
+
+    // ─────────────────────────────────────────────
+    // CATEGORY BOXES
+    // ─────────────────────────────────────────────
+    function renderCategoryBoxes() {
+        const wrap = document.getElementById('dashboardCategoryBoxes');
+        if (!catData.length) {
+            wrap.innerHTML = '<div class="db-cat-empty">No expense categories yet.</div>';
+            return;
+        }
+        wrap.innerHTML = catData.map((it, i) => {
+            const amt  = Number(it.total || 0);
+            const pct  = totalCatExp > 0 ? (amt / totalCatExp * 100).toFixed(0) : '0';
+            const col  = PALETTE[i % PALETTE.length];
+            return `
+                <button class="db-cat-box" data-idx="${i}" type="button">
+                    <span class="db-cat-pill" style="background:${col}">${pct}%</span>
+                    <span class="db-cat-info">
+                        <strong>${it.category}</strong>
+                        <small>${formatPKR(amt)}</small>
+                    </span>
+                </button>`;
+        }).join('');
+
+        document.querySelectorAll('.db-cat-box').forEach(b => {
+            const i = Number(b.dataset.idx);
+            b.addEventListener('mouseenter', () => activatePie(i));
+            b.addEventListener('focus',      () => activatePie(i));
+            b.addEventListener('mouseleave', () => activatePie(null));
+            b.addEventListener('blur',       () => activatePie(null));
         });
     }
+
+    // ─────────────────────────────────────────────
+    // MONTHLY TREND CHART
+    // ─────────────────────────────────────────────
+    const rawMonthly = @Html.Raw(Json.Serialize(ViewBag.MonthlyExpenses));
+
+    function buildMonthlyDataset(raw, periods) {
+        let items = (raw || []).map(m => ({
+            label: new Date(2000, (m.month ?? m.Month) - 1, 1).toLocaleString('default', { month: 'short' }),
+            value: Number(m.total ?? m.Total ?? 0)
+        }));
+        if (periods && items.length > periods) items = items.slice(-periods);
+        return items;
+    }
+
+    let monthlyPeriod = null;
+    let monthlyItems  = buildMonthlyDataset(rawMonthly, monthlyPeriod);
+
+    const trendCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+    const gradient = trendCtx.createLinearGradient(0, 0, 0, 220);
+    gradient.addColorStop(0, 'rgba(37,99,235,0.18)');
+    gradient.addColorStop(1, 'rgba(37,99,235,0)');
+
+    const trendChart = new Chart(trendCtx, {
+        type: 'bar',
+        data: {
+            labels: monthlyItems.map(m => m.label),
+            datasets: [{
+                label: 'Spending (PKR)',
+                data: monthlyItems.map(m => m.value),
+                backgroundColor: monthlyItems.map((_, i) =>
+                    i === monthlyItems.length - 1 ? '#2563EB' : 'rgba(37,99,235,0.18)'),
+                borderRadius: 6,
+                borderSkipped: false,
+                hoverBackgroundColor: '#2563EB'
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0F172A',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: { label: ctx => `  ${formatPKR(ctx.parsed.y)}` }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, border: { display: false } },
+                y: {
+                    grid: { color: '#F1F5F9', drawBorder: false },
+                    border: { display: false, dash: [4,4] },
+                    ticks: { callback: v => v >= 1000 ? `${(v/1000).toFixed(0)}K` : v }
+                }
+            }
+        }
+    });
+
+    function updateTrendChart(periods) {
+        const items = buildMonthlyDataset(rawMonthly, periods);
+        trendChart.data.labels = items.map(m => m.label);
+        trendChart.data.datasets[0].data = items.map(m => m.value);
+        trendChart.data.datasets[0].backgroundColor = items.map((_, i) =>
+            i === items.length - 1 ? '#2563EB' : 'rgba(37,99,235,0.18)');
+        trendChart.update();
+    }
+
+    document.querySelectorAll('.db-trend-tab').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.db-trend-tab').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const p = this.dataset.period;
+            updateTrendChart(p === 'all' ? null : Number(p));
+        });
+    });
+
+    // ─────────────────────────────────────────────
+    // STAT CARD LIVE UPDATE
+    // ─────────────────────────────────────────────
+    function updateStatCards(data) {
+        const tb  = Number(data.totalBudget   || 0);
+        const te  = Number(data.totalExpenses  || 0);
+        const tw  = Number(data.totalWorkers   || 0);
+        const ws  = Number(data.workersOnSite  || 0);
+        const pct = tb > 0 ? te / tb * 100 : 0;
+
+        document.getElementById('statTotalWorkers').textContent  = tw;
+        document.getElementById('statWorkersOnSite').textContent = `${ws} Active`;
+        document.getElementById('workersProgressBar').style.width = `${tw > 0 ? Math.min(100, ws * 100 / tw) : 0}%`;
+        document.getElementById('statTotalBudget').textContent   = formatPKR(tb);
+        document.getElementById('statTotalExpenses').textContent = formatPKR(te);
+        const badgeEl = document.getElementById('statBudgetUsed');
+        badgeEl.textContent = `${pct.toFixed(0)}% Used`;
+        badgeEl.className = `db-kpi-badge ${pct > 90 ? 'db-kpi-badge--red' : 'db-kpi-badge--green'}`;
+        document.getElementById('expenseProgressBar').style.width = `${Math.min(100, pct)}%`;
+    }
+
+    function updateExpenseChart(items) {
+        catData = normalizeCategoryData(items);
+        totalCatExp = sumCategories(catData);
+        activePieIdx = null;
+        pieChart.data.labels = catData.map(c => c.category);
+        pieChart.data.datasets[0].data = catData.map(c => c.total);
+        pieChart.data.datasets[0].backgroundColor = catData.map((_, i) => PALETTE[i % PALETTE.length]);
+        pieChart.setActiveElements([]);
+        pieChart.update();
+        renderCategoryBoxes();
+        setPieCenter(null);
+    }
+
+    function updateRecentExpenses(items) {
+        const tbody = document.getElementById('recentExpensesBody');
+        if (!items || !items.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="db-table-empty">No expenses recorded yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(it => {
+            const dv  = it.transactionDate ?? it.TransactionDate ?? it.expenseDate ?? it.ExpenseDate;
+            const cat = it.category ?? it.Category ?? '';
+            const amt = Number(it.amount ?? it.Amount ?? 0);
+            const dt  = new Date(dv).toLocaleDateString(undefined, { month: 'short', day: '2-digit' });
+            return `<tr class="db-table-row">
+                <td class="db-table-date">${dt}</td>
+                <td class="db-table-cat">${cat}</td>
+                <td class="db-table-amount"><strong>${formatPKR(amt)}</strong></td>
+                <td class="db-table-chevron"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#CBD5E1" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ─────────────────────────────────────────────
+    // LIVE REFRESH
+    // ─────────────────────────────────────────────
+    async function refreshDashboard() {
+        try {
+            const overall = new URLSearchParams(window.location.search).get('overall') === 'true';
+            const res = await fetch(`/Home/DashboardData${overall ? '?overall=true' : ''}`, { cache: 'no-store' });
+            if (!res.ok) return;
+            const data = await res.json();
+            updateStatCards(data);
+            // Only update the expense chart if the API actually returned categories.
+            // This prevents the live-refresh from wiping server-rendered category boxes
+            // when the API response differs from the initial page-load data.
+            const apiCats = data.categoryExpenses || [];
+            if (apiCats.length > 0) {
+                updateExpenseChart(apiCats);
+            }
+            updateRecentExpenses(data.recentExpenses || []);
+        } catch {}
+    }
+
+    // ─────────────────────────────────────────────
+    // KPI DROPDOWN MENUS
+    // ─────────────────────────────────────────────
+    document.querySelectorAll('.db-kpi-more').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const menuId = this.dataset.menu;
+            const menu   = document.getElementById(menuId);
+            const isOpen = menu.classList.contains('is-open');
+            // close all
+            document.querySelectorAll('.db-kpi-dropdown').forEach(m => m.classList.remove('is-open'));
+            document.querySelectorAll('.db-kpi-more').forEach(b => b.classList.remove('is-active'));
+            // toggle clicked
+            if (!isOpen) {
+                menu.classList.add('is-open');
+                this.classList.add('is-active');
+            }
+        });
+    });
+
+    // close menus on outside click
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.db-kpi-dropdown').forEach(m => m.classList.remove('is-open'));
+        document.querySelectorAll('.db-kpi-more').forEach(b => b.classList.remove('is-active'));
+    });
+
+    // ─────────────────────────────────────────────
+    // INIT
+    // ─────────────────────────────────────────────
+    // Render category boxes immediately from server-side data — no waiting for API
+    renderCategoryBoxes();
+    setPieCenter(null);
+    // Delay the first refresh so server-rendered boxes are visible before any update
+    setTimeout(refreshDashboard, 2000);
+    setInterval(refreshDashboard, 15000);
 </script>

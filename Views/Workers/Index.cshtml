@@ -19,7 +19,6 @@
     }
     var selectedSkill = ViewBag.SkillFilter as string;
     var skillOptions = ViewBag.SkillOptions as IEnumerable<string> ?? Enumerable.Empty<string>();
-    var commonSkills = ViewBag.CommonSkills as IEnumerable<string> ?? Enumerable.Empty<string>();
     var workerTotals = ViewBag.WorkerTotals as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
     var selectedProjectId = ViewBag.SelectedProjectId as int?;
     var todayWagesRecorded = ViewBag.TodayWagesRecorded as bool? ?? false;
@@ -101,7 +100,7 @@
 
         .btn-soft {
             border: 1px solid transparent;
-            border-radius: 12px;
+            border-radius: 3px;
             padding: 0 18px;
             background: #FFFFFF;
             color: #0F172A;
@@ -309,84 +308,8 @@
             font-weight: 600;
         }
 
-        .worker-modal-backdrop {
-            position: fixed;
-            inset: 0;
-            z-index: 1300;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            background: rgba(15, 23, 42, 0.42);
-            backdrop-filter: blur(5px);
-        }
-
-        .worker-modal-backdrop.is-open {
-            display: flex;
-        }
-
-        .worker-modal {
-            width: min(560px, 100%);
-            max-height: calc(100vh - 48px);
-            overflow: auto;
-            background: #FFFFFF;
-            border: 1px solid #D6E3F5;
-            border-radius: 8px;
-            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.26);
-            animation: workerModalIn 0.18s ease;
-        }
-
-        .worker-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-            padding: 22px 24px 16px;
-            border-bottom: 1px solid #E2E8F0;
-        }
-
-        .worker-modal-header h2 {
-            margin: 0;
-            font-size: 1.05rem;
-            color: #0F172A;
-        }
-
-        .worker-modal-header p {
-            margin: 5px 0 0;
-            color: #64748B;
-            font-size: 0.84rem;
-        }
-
-        .worker-modal-close {
-            width: 34px;
-            height: 34px;
-            border: 1px solid #E2E8F0;
-            border-radius: 4px;
-            background: #FFFFFF;
-            color: #64748B;
-            cursor: pointer;
-            font-size: 1.2rem;
-            line-height: 1;
-        }
-
-        .worker-modal-body {
-            padding: 22px 24px 24px;
-        }
-
-        .worker-modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 22px;
-        }
-
         .module-header .btn-create {
             margin-bottom: 0;
-        }
-
-        @@keyframes workerModalIn {
-            from { opacity: 0; transform: translateY(12px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         @@media (max-width: 700px) {
@@ -412,14 +335,6 @@
                 width: 100%;
             }
 
-            .worker-modal-actions {
-                flex-direction: column-reverse;
-            }
-
-            .worker-modal-actions .btn-primary,
-            .worker-modal-actions .btn-secondary {
-                justify-content: center;
-            }
         }
     </style>
 }
@@ -442,63 +357,10 @@
         <h1>Workers</h1>
         <p>Manage your workforce and daily wage status.</p>
     </div>
-    <button type="button" class="btn-create" id="openAddWorkerModal">
+    <a asp-action="Create" class="btn-create">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         Add Worker
-    </button>
-</div>
-
-<div class="worker-modal-backdrop" id="addWorkerModal" aria-hidden="true">
-    <div class="worker-modal" role="dialog" aria-modal="true" aria-labelledby="addWorkerModalTitle">
-        <div class="worker-modal-header">
-            <div>
-                <h2 id="addWorkerModalTitle">Add New Worker</h2>
-                <p>Only name and skill are required. New workers are active by default.</p>
-            </div>
-            <button type="button" class="worker-modal-close" id="closeAddWorkerModal" aria-label="Close add worker modal">&times;</button>
-        </div>
-        <div class="worker-modal-body">
-            <form asp-action="Create" method="post" id="addWorkerForm">
-                @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
-                <div class="form-group">
-                    <label for="addWorkerFullName">Full Name</label>
-                    <input id="addWorkerFullName" name="FullName" class="form-control" placeholder="Worker's full name" required />
-                </div>
-                <div class="form-group">
-                    <label for="addWorkerSkillChoice">Skill Type</label>
-                    <select id="addWorkerSkillChoice" name="SkillChoice" class="form-control" required>
-                        <option value="">Select skill</option>
-                        @foreach (var skill in commonSkills)
-                        {
-                            <option value="@skill">@skill</option>
-                        }
-                        <option value="Custom">Custom</option>
-                    </select>
-                </div>
-                <div class="form-group" id="addWorkerCustomSkillGroup" style="display: none;">
-                    <label for="addWorkerCustomSkill">Custom Skill</label>
-                    <input id="addWorkerCustomSkill" name="CustomSkill" class="form-control" placeholder="Enter worker skill" />
-                </div>
-                <div class="form-group">
-                    <label for="addWorkerPhone">Phone</label>
-                    <input id="addWorkerPhone" name="Phone" class="form-control" placeholder="03001234567" inputmode="numeric" />
-                </div>
-                <div class="form-group">
-                    <label for="addWorkerCnic">CNIC</label>
-                    <input id="addWorkerCnic" name="Cnic" class="form-control" placeholder="1234512345671" inputmode="numeric" />
-                </div>
-                <div class="form-group">
-                    <label for="addWorkerDailyWage">Daily Wage (PKR)</label>
-                    <input id="addWorkerDailyWage" name="DailyWage" class="form-control" placeholder="0.00" />
-                </div>
-                <div class="worker-modal-actions">
-                    <button type="button" class="btn-secondary" id="cancelAddWorkerModal">Cancel</button>
-                    <button type="submit" class="btn-primary">Add Worker</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    </a>
 </div>
 
 <div class="summary-grid">
@@ -688,50 +550,10 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
-        const addWorkerModal = document.getElementById('addWorkerModal');
-        const addWorkerForm = document.getElementById('addWorkerForm');
-        const openAddWorkerModal = document.getElementById('openAddWorkerModal');
-        const closeAddWorkerModal = document.getElementById('closeAddWorkerModal');
-        const cancelAddWorkerModal = document.getElementById('cancelAddWorkerModal');
-        const addWorkerSkillChoice = document.getElementById('addWorkerSkillChoice');
-        const addWorkerCustomSkillGroup = document.getElementById('addWorkerCustomSkillGroup');
-        const addWorkerCustomSkill = document.getElementById('addWorkerCustomSkill');
-        const addWorkerFullName = document.getElementById('addWorkerFullName');
         const workerDetailPanel = document.getElementById('workerDetailPanel');
         const stagedBonusInputs = document.getElementById('stagedBonusInputs');
         const todayWagesRecorded = @todayWagesRecorded.ToString().ToLowerInvariant();
         let selectedWorkerId = null;
-
-        function toggleAddWorkerModal(open) {
-            addWorkerModal.classList.toggle('is-open', open);
-            addWorkerModal.setAttribute('aria-hidden', open ? 'false' : 'true');
-            document.body.style.overflow = open ? 'hidden' : '';
-
-            if (open) {
-                setTimeout(() => addWorkerFullName.focus(), 50);
-            }
-        }
-
-        function toggleAddWorkerCustomSkill() {
-            const customSelected = addWorkerSkillChoice.value === 'Custom';
-            addWorkerCustomSkillGroup.style.display = customSelected ? 'block' : 'none';
-            addWorkerCustomSkill.required = customSelected;
-            if (!customSelected) addWorkerCustomSkill.value = '';
-        }
-
-        openAddWorkerModal.addEventListener('click', () => toggleAddWorkerModal(true));
-        closeAddWorkerModal.addEventListener('click', () => toggleAddWorkerModal(false));
-        cancelAddWorkerModal.addEventListener('click', () => toggleAddWorkerModal(false));
-        addWorkerSkillChoice.addEventListener('change', toggleAddWorkerCustomSkill);
-        addWorkerModal.addEventListener('click', event => {
-            if (event.target === addWorkerModal) toggleAddWorkerModal(false);
-        });
-        document.addEventListener('keydown', event => {
-            if (event.key === 'Escape' && addWorkerModal.classList.contains('is-open')) {
-                toggleAddWorkerModal(false);
-            }
-        });
-        toggleAddWorkerCustomSkill();
 
         function getStagedBonus(workerId) {
             const input = stagedBonusInputs.querySelector(`input[data-worker-id="${workerId}"]`);

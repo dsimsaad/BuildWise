@@ -86,9 +86,9 @@ namespace BuildWise.BusinessLayer
             return expenseDal.GetTotalSpentForUser(userId);
         }
 
-        public List<BudgetItem> GetExpensesByCategory(int? projectId = null)
+        public List<BudgetItem> GetExpensesByCategory(int? projectId = null, int? userId = null)
         {
-            return expenseDal.GetExpensesByCategory(projectId);
+            return expenseDal.GetExpensesByCategory(projectId, userId);
         }
 
         private void LogTransaction(string type, ExpenseItem item)

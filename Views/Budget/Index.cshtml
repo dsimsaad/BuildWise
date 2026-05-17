@@ -58,6 +58,133 @@
             justify-content: center;
         }
 
+        .budget-chart-card {
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid #E2E8F0;
+            border-radius: 3px;
+        }
+
+        .expense-distribution-grid {
+            display: grid;
+            grid-template-columns: minmax(260px, 0.9fr) minmax(260px, 1.1fr);
+            gap: 24px;
+            align-items: center;
+        }
+
+        .pie-stage {
+            position: relative;
+            height: 320px;
+            min-width: 0;
+        }
+
+        .pie-center-copy {
+            position: absolute;
+            inset: 50% auto auto 50%;
+            transform: translate(-50%, -50%);
+            width: min(170px, 52%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .pie-center-kicker {
+            display: block;
+            font-size: 0.68rem;
+            color: #64748B;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .pie-center-value {
+            display: block;
+            color: #0F172A;
+            font-size: 1.05rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .pie-center-meta {
+            display: block;
+            color: #64748B;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .category-box-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            align-content: center;
+        }
+
+        .category-expense-box {
+            border: 1px solid #E2E8F0;
+            background: #FFFFFF;
+            border-radius: 3px;
+            padding: 12px;
+            cursor: pointer;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease, background 0.16s ease;
+        }
+
+        .category-expense-box:hover,
+        .category-expense-box.is-active {
+            border-color: #1D4ED8;
+            background: #F8FBFF;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .category-box-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .category-box-name {
+            color: #0F172A;
+            font-size: 0.84rem;
+            font-weight: 800;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .category-box-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .category-box-amount {
+            display: block;
+            color: #334155;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .category-box-percent {
+            display: block;
+            color: #1D4ED8;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .category-empty-state {
+            grid-column: 1 / -1;
+            border: 1px dashed #CBD5E1;
+            color: #64748B;
+            padding: 26px 18px;
+            text-align: center;
+            border-radius: 3px;
+            background: #F8FAFC;
+        }
+
         .budget-limit-card {
             background: #FFFFFF;
             border: 1px solid #E2E8F0;
@@ -131,6 +258,10 @@
         }
 
         @@media (max-width: 900px) {
+            .expense-distribution-grid {
+                grid-template-columns: 1fr;
+            }
+
             .budget-limit-inner {
                 grid-template-columns: 1fr;
             }
@@ -227,7 +358,7 @@
     </div>
 
     <div class="content-grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
-        <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
+        <div class="module-card budget-chart-card">
             <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
                 <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A;">Budget vs Actual</h2>
             </div>
@@ -235,12 +366,21 @@
                 <div class="chart-wrapper"><canvas id="barChart"></canvas></div>
             </div>
         </div>
-        <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
+        <div class="module-card budget-chart-card">
             <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
                 <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A;">Expense Distribution</h2>
             </div>
             <div class="card-body" style="padding: 24px;">
-                <div class="chart-wrapper"><canvas id="pieChart"></canvas></div>
+                <div class="chart-wrapper" style="height: 320px;">
+                    <div class="pie-stage" style="width: min(360px, 100%); height: 100%;">
+                        <canvas id="pieChart"></canvas>
+                        <div class="pie-center-copy">
+                            <span class="pie-center-kicker" id="budgetPieCenterLabel">Total Expenses</span>
+                            <span class="pie-center-value" id="budgetPieCenterValue">PKR 0</span>
+                            <span class="pie-center-meta" id="budgetPieCenterMeta">0 categories</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -371,6 +511,7 @@
     <script>
         let barChart, pieChart;
         let currentBudgets = [];
+        const expenseColors = ['#2563EB', '#14B8A6', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#64748B'];
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-section').forEach(t => t.classList.remove('active'));
@@ -498,6 +639,10 @@
         function updateCharts(data) {
             const ctxBar = document.getElementById('barChart').getContext('2d');
             const ctxPie = document.getElementById('pieChart').getContext('2d');
+            const totalExpenses = data.categoryExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+            const budgetPieCenterLabel = document.getElementById('budgetPieCenterLabel');
+            const budgetPieCenterValue = document.getElementById('budgetPieCenterValue');
+            const budgetPieCenterMeta = document.getElementById('budgetPieCenterMeta');
 
             const labels = data.budgets.map(b => b.category);
             const budgetData = data.budgets.map(b => b.amount);
@@ -506,25 +651,78 @@
                 return ex ? ex.amount : 0;
             });
 
+            function setBudgetPieCenter(index = null) {
+                if (index === null || index < 0 || !data.categoryExpenses[index]) {
+                    budgetPieCenterLabel.innerText = 'Total Expenses';
+                    budgetPieCenterValue.innerText = formatPKR(totalExpenses);
+                    budgetPieCenterMeta.innerText = `${data.categoryExpenses.length} ${data.categoryExpenses.length === 1 ? 'category' : 'categories'}`;
+                    return;
+                }
+
+                const item = data.categoryExpenses[index];
+                const amount = Number(item.amount || 0);
+                const percent = totalExpenses > 0 ? (amount / totalExpenses * 100).toFixed(1) : '0.0';
+                budgetPieCenterLabel.innerText = item.category;
+                budgetPieCenterValue.innerText = formatPKR(amount);
+                budgetPieCenterMeta.innerText = `${percent}% allocation`;
+            }
+
             if (barChart) barChart.destroy();
             barChart = new Chart(ctxBar, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Budgeted', data: budgetData, backgroundColor: '#E2E8F0', borderRadius: 4, barPercentage: 0.6 },
-                        { label: 'Actual Spent', data: expenseData, backgroundColor: '#1D4ED8', borderRadius: 4, barPercentage: 0.6 }
+                        {
+                            label: 'Budgeted',
+                            data: budgetData,
+                            backgroundColor: '#CBD5E1',
+                            borderRadius: 3,
+                            borderSkipped: false,
+                            maxBarThickness: 16,
+                            barPercentage: 0.98,
+                            categoryPercentage: 0.52
+                        },
+                        {
+                            label: 'Actual Spent',
+                            data: expenseData,
+                            backgroundColor: '#2563EB',
+                            borderRadius: 3,
+                            borderSkipped: false,
+                            maxBarThickness: 16,
+                            barPercentage: 0.98,
+                            categoryPercentage: 0.52
+                        }
                     ]
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
                     scales: { 
-                        y: { beginAtZero: true, grid: { color: '#F1F5F9' }, border: { dash: [4, 4] }, ticks: { callback: v => formatPKR(v) } },
-                        x: { grid: { display: false } }
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#EEF2F7', drawTicks: false },
+                            border: { display: false },
+                            ticks: { padding: 10, color: '#64748B', callback: v => formatPKR(v) }
+                        },
+                        x: {
+                            grid: { display: false },
+                            border: { display: false },
+                            ticks: { color: '#64748B', maxRotation: 0, autoSkip: false }
+                        }
                     },
                     plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } }
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: { usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 8, boxHeight: 8, color: '#475569', padding: 18 }
+                        },
+                        tooltip: {
+                            backgroundColor: '#0F172A',
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: { label: context => `${context.dataset.label}: ${formatPKR(context.parsed.y)}` }
+                        }
                     }
                 }
             });
@@ -536,20 +734,39 @@
                     labels: data.categoryExpenses.map(e => e.category),
                     datasets: [{
                         data: data.categoryExpenses.map(e => e.amount),
-                        backgroundColor: ['#1D4ED8', '#60A5FA', '#10B981', '#F59E0B', '#A78BFA', '#F472B6', '#38BDF8'],
-                        borderWidth: 0,
-                        hoverOffset: 4
+                        backgroundColor: data.categoryExpenses.map((_, index) => expenseColors[index % expenseColors.length]),
+                        borderColor: '#FFFFFF',
+                        borderWidth: 3,
+                        hoverBorderWidth: 4,
+                        hoverOffset: 8,
+                        spacing: 2
                     }]
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    cutout: '70%',
+                    cutout: '66%',
                     plugins: { 
-                        legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, padding: 20 } } 
-                    } 
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: '#0F172A',
+                            padding: 12,
+                            callbacks: {
+                                label: context => {
+                                    const amount = Number(context.parsed || 0);
+                                    const percent = totalExpenses > 0 ? (amount / totalExpenses * 100).toFixed(1) : '0.0';
+                                    return `${context.label}: ${formatPKR(amount)} (${percent}%)`;
+                                }
+                            }
+                        }
+                    },
+                    onHover: (event, elements) => {
+                        setBudgetPieCenter(elements.length ? elements[0].index : null);
+                    }
                 }
             });
+            setBudgetPieCenter();
         }
 
         document.getElementById('budget-form').onsubmit = async (e) => {

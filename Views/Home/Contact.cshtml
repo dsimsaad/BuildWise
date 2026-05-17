@@ -7,14 +7,58 @@
 @section Styles {
   @if (User.Identity?.IsAuthenticated == true)
   {
-    <link rel="stylesheet" href="~/assets/css/style.css" asp-append-version="true" />
+    <style>
+      .dash-content.marketing-page-content { padding: 0; background: #F8FAFC; }
+      .contact-section { padding: 48px 28px 64px; }
+      .contact-wrapper { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 32px; align-items: start; }
+      .contact-info, .contact-form-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 3px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+      .contact-info { padding: 32px; }
+      .contact-eyebrow { display: inline-flex; color: #1D4ED8; background: #EFF6FF; border: 1px solid #DBEAFE; border-radius: 3px; padding: 5px 10px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px; }
+      .contact-info h1 { margin: 0 0 12px; color: #0F172A; font-size: 2rem; font-weight: 800; letter-spacing: -0.3px; }
+      .contact-info > p { margin: 0 0 28px; color: #64748B; line-height: 1.7; }
+      .details-card { border-top: 1px solid #E2E8F0; padding-top: 22px; }
+      .details-card h3 { margin: 0 0 16px; font-size: 1rem; color: #0F172A; }
+      .detail-item { display: flex; gap: 12px; align-items: center; padding: 12px 0; }
+      .detail-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #EFF6FF; color: #1D4ED8; border-radius: 3px; }
+      .detail-icon svg { width: 18px; height: 18px; }
+      .detail-text strong { display: block; color: #0F172A; font-size: 0.84rem; }
+      .detail-text a { color: #1D4ED8; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+      .contact-form-card { padding: 32px; }
+      .contact-form-card h2 { margin: 0 0 22px; color: #0F172A; font-size: 1.25rem; }
+      .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .input-group { display: grid; gap: 7px; margin-bottom: 14px; }
+      .input-group label { color: #1E3A8A; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.055em; }
+      .input-group input, .input-group textarea { width: 100%; border: 1px solid #C9D9EE; background: #F8FBFF; border-radius: 3px; padding: 11px 13px; color: #0F172A; font: inherit; box-sizing: border-box; }
+      .input-group textarea { min-height: 128px; resize: vertical; }
+      .input-group input:focus, .input-group textarea:focus { outline: none; background: #FFFFFF; border-color: #1D4ED8; box-shadow: inset 3px 0 0 #1D4ED8, 0 0 0 3px rgba(29, 78, 216, 0.08); }
+      .btn-submit { border: 0; background: #1D4ED8; color: #FFFFFF; border-radius: 3px; padding: 11px 18px; font-weight: 800; cursor: pointer; }
+      .btn-submit:hover { background: #1E40AF; }
+      @@media (max-width: 860px) {
+        .contact-wrapper, .form-row { grid-template-columns: 1fr; }
+      }
+    </style>
   }
 }
 
 @section Scripts {
   @if (User.Identity?.IsAuthenticated == true)
   {
-    <script src="~/assets/js/main.js" asp-append-version="true" defer></script>
+    <script>
+      document.querySelector(".contact-form")?.addEventListener("submit", event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const btn = form.querySelector(".btn-submit");
+        if (!btn) return;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "Message Sent";
+        btn.disabled = true;
+        form.reset();
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }, 1400);
+      });
+    </script>
   }
 }
 
@@ -86,4 +130,3 @@
 </section>
 
 <!-- ══════════════ FOOTER ══════════════ -->
-

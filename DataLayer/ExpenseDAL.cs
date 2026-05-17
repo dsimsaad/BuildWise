@@ -172,7 +172,7 @@ ORDER BY e.ExpenseDate DESC";
         /// <summary>
         /// Returns total expenses grouped by category
         /// </summary>
-        public List<BudgetItem> GetExpensesByCategory(int? projectId = null)
+        public List<BudgetItem> GetExpensesByCategory(int? projectId = null, int? userId = null)
         {
             List<BudgetItem> list = new List<BudgetItem>();
 
@@ -180,13 +180,16 @@ ORDER BY e.ExpenseDate DESC";
             {
                 conn.Open();
                 string query = @"
-SELECT Category, SUM(Amount) AS Amount
-FROM ExpenseItems
-WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)
-GROUP BY Category
-ORDER BY Category";
+SELECT e.Category, SUM(e.Amount) AS Amount
+FROM ExpenseItems e
+INNER JOIN Projects p ON e.ProjectId = p.ProjectId
+WHERE (@ProjectId IS NULL OR e.ProjectId = @ProjectId)
+  AND (@UserId IS NULL OR p.UserId = @UserId)
+GROUP BY e.Category
+ORDER BY e.Category";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ProjectId", (object?)projectId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())

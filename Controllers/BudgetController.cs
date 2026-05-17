@@ -50,7 +50,7 @@ namespace BuildWise.Controllers
                 ? _expenseBll.GetTotalSpent(selectedProjectId) 
                 : _expenseBll.GetTotalSpentForUser(userId);
             
-            var categoryExpenses = _expenseBll.GetExpensesByCategory(selectedProjectId); // Needs user filtering too if null
+            var categoryExpenses = _expenseBll.GetExpensesByCategory(selectedProjectId, userId);
 
             var project = selectedProjectId.HasValue ? _context.Projects.Find(selectedProjectId.Value) : null;
             var projectTotalBudget = project?.TotalBudget ?? 0;

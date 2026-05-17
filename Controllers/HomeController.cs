@@ -83,7 +83,7 @@ public class HomeController : Controller
     }
 
     [Authorize]
-    public async Task<IActionResult> Dashboard()
+    public async Task<IActionResult> Dashboard(bool overall = false)
     {
         // 1. Get current User ID from claims
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
@@ -91,7 +91,11 @@ public class HomeController : Controller
         int userId = int.Parse(userIdClaim.Value);
 
         // 2. Fetch Selected Project and Verify Ownership
-        int? selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
+        int? selectedProjectId = overall ? null : HttpContext.Session.GetInt32("SelectedProjectId");
+        if (overall)
+        {
+            HttpContext.Session.Remove("SelectedProjectId");
+        }
         if (selectedProjectId.HasValue)
         {
             bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == selectedProjectId && p.UserId == userId);
@@ -102,7 +106,7 @@ public class HomeController : Controller
             }
         }
 
-        if (!selectedProjectId.HasValue)
+        if (!overall && !selectedProjectId.HasValue)
         {
             selectedProjectId = await _context.Projects
                 .Where(p => p.UserId == userId)
@@ -136,8 +140,10 @@ public class HomeController : Controller
             ? taskQuery.Where(t => t.Phase.ProjectId == selectedProjectId.Value)
             : taskQuery;
 
-        var budgetBll = new BudgetBLL(_configuration.GetConnectionString("BuildWise") ?? "");
-        var expenseBll = new ExpenseBLL(_configuration.GetConnectionString("BuildWise") ?? "");
+        var connectionString = _configuration.GetConnectionString("BuildWise") ?? "";
+        var budgetBll = new BudgetBLL(connectionString);
+        var expenseBll = new ExpenseBLL(connectionString);
+        var transactionBll = new TransactionBLL(connectionString);
 
         // 4. Populate Stats
         if (selectedProjectId.HasValue)
@@ -146,17 +152,16 @@ public class HomeController : Controller
             
             ViewBag.TotalProjects   = 1;
             ViewBag.ActiveProjects  = (activeStats?.IsCompleted == false) ? 1 : 0;
-            ViewBag.TotalBudget     = budgetBll.GetTotalBudget(selectedProjectId);
+            var selectedProject = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId);
+            var allocatedBudget = budgetBll.GetTotalBudget(selectedProjectId);
+            ViewBag.TotalBudget     = selectedProject?.TotalBudget > 0 ? selectedProject.TotalBudget : allocatedBudget;
             ViewBag.TotalExpenses   = expenseBll.GetTotalSpent(selectedProjectId);
             ViewBag.ActiveProjectName = activeStats?.ProjectName;
 
-            ViewBag.TotalWorkers = await _context.Attendances
-                .Where(a => a.ProjectId == selectedProjectId && a.Project.UserId == userId)
-                .Select(a => a.WorkerId).Distinct().CountAsync();
+            ViewBag.TotalWorkers = await _context.Workers
+                .CountAsync(w => (w.UserId == userId || w.UserId == null) && w.IsActive);
 
-            ViewBag.WorkersOnSite = await _context.Attendances
-                .Where(a => a.ProjectId == selectedProjectId && a.Project.UserId == userId && a.AttendanceDate == DateOnly.FromDateTime(DateTime.Today) && a.StatusId == 1)
-                .CountAsync();
+            ViewBag.WorkersOnSite = ViewBag.TotalWorkers;
 
             ViewBag.TotalTasks      = activeStats?.TotalTasks ?? 0;
             ViewBag.TasksToDo       = await scopedTaskQuery.CountAsync(t => t.StatusId == 1);
@@ -174,12 +179,14 @@ public class HomeController : Controller
             var allStats = await vwDashQuery.ToListAsync();
             ViewBag.TotalProjects   = allStats.Count;
             ViewBag.ActiveProjects  = allStats.Count(s => !s.IsCompleted);
-            ViewBag.TotalWorkers    = await _context.Workers.CountAsync(w => w.UserId == userId);
-            ViewBag.WorkersOnSite   = await _context.Attendances
-                .Where(a => a.Project.UserId == userId && a.AttendanceDate == DateOnly.FromDateTime(DateTime.Today) && a.StatusId == 1)
-                .CountAsync();
+            ViewBag.TotalWorkers    = await _context.Workers.CountAsync(w => (w.UserId == userId || w.UserId == null) && w.IsActive);
+            ViewBag.WorkersOnSite   = ViewBag.TotalWorkers;
             
-            ViewBag.TotalBudget     = budgetBll.GetTotalBudgetForUser(userId);
+            var approvedBudget = await _context.Projects
+                .Where(p => p.UserId == userId)
+                .SumAsync(p => p.TotalBudget);
+            var allocatedBudget = budgetBll.GetTotalBudgetForUser(userId);
+            ViewBag.TotalBudget     = approvedBudget > 0 ? approvedBudget : allocatedBudget;
             ViewBag.TotalExpenses   = expenseBll.GetTotalSpentForUser(userId);
 
             ViewBag.TotalTasks      = await taskQuery.CountAsync();
@@ -196,13 +203,13 @@ public class HomeController : Controller
         }
 
         // 5. Common Data
-        ViewBag.RecentExpensesList = await scopedExpQuery
-            .OrderByDescending(e => e.ExpenseDate).Take(5).ToListAsync();
+        ViewBag.RecentExpensesList = transactionBll
+            .GetFilteredTransactions("", "", null, null, selectedProjectId, userId)
+            .Where(t => !string.Equals(t.Category, "Project Budget", StringComparison.OrdinalIgnoreCase))
+            .Take(5)
+            .ToList();
 
-        ViewBag.CategoryExpenses = await scopedExpQuery
-            .GroupBy(e => e.CategoryName)
-            .Select(g => new { Category = g.Key, Total = g.Sum(e => e.Amount) })
-            .ToListAsync();
+        ViewBag.CategoryExpenses = expenseBll.GetExpensesByCategory(selectedProjectId, userId);
 
         ViewBag.MonthlyExpenses = await scopedExpQuery
             .GroupBy(e => new { e.ExpenseDate.Year, e.ExpenseDate.Month })
@@ -223,5 +230,75 @@ public class HomeController : Controller
         ViewBag.WorkersOnLeave  = 0;
 
         return View();
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> DashboardData(bool overall = false)
+    {
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+        if (userIdClaim == null) return Unauthorized();
+        int userId = int.Parse(userIdClaim.Value);
+
+        int? selectedProjectId = overall ? null : HttpContext.Session.GetInt32("SelectedProjectId");
+        if (selectedProjectId.HasValue)
+        {
+            bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId);
+            if (!ownsProject) selectedProjectId = null;
+        }
+
+        var expenseQuery = from v in _context.VwExpenseHistories
+                           join p in _context.Projects on v.ProjectId equals p.ProjectId
+                           where p.UserId == userId
+                           select v;
+
+        if (selectedProjectId.HasValue)
+        {
+            expenseQuery = expenseQuery.Where(v => v.ProjectId == selectedProjectId.Value);
+        }
+
+        var connectionString = _configuration.GetConnectionString("BuildWise") ?? "";
+        var budgetBll = new BudgetBLL(connectionString);
+        var expenseBll = new ExpenseBLL(connectionString);
+        var transactionBll = new TransactionBLL(connectionString);
+
+        decimal allocatedBudget = selectedProjectId.HasValue
+            ? budgetBll.GetTotalBudget(selectedProjectId)
+            : budgetBll.GetTotalBudgetForUser(userId);
+        decimal approvedBudget = selectedProjectId.HasValue
+            ? await _context.Projects
+                .Where(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId)
+                .Select(p => p.TotalBudget)
+                .FirstOrDefaultAsync()
+            : await _context.Projects
+                .Where(p => p.UserId == userId)
+                .SumAsync(p => p.TotalBudget);
+        decimal totalBudget = approvedBudget > 0 ? approvedBudget : allocatedBudget;
+        decimal totalExpenses = selectedProjectId.HasValue
+            ? expenseBll.GetTotalSpent(selectedProjectId)
+            : expenseBll.GetTotalSpentForUser(userId);
+
+        int totalWorkers = await _context.Workers
+            .CountAsync(w => (w.UserId == userId || w.UserId == null) && w.IsActive);
+        int workersOnSite = totalWorkers;
+
+        var categoryExpenses = expenseBll.GetExpensesByCategory(selectedProjectId, userId);
+
+        var recentExpenses = transactionBll
+            .GetFilteredTransactions("", "", null, null, selectedProjectId, userId)
+            .Where(t => !string.Equals(t.Category, "Project Budget", StringComparison.OrdinalIgnoreCase))
+            .Take(5)
+            .Select(t => new { t.TransactionDate, t.Category, t.Amount })
+            .ToList();
+
+        return Json(new
+        {
+            totalBudget,
+            totalExpenses,
+            totalWorkers,
+            workersOnSite,
+            categoryExpenses,
+            recentExpenses
+        });
     }
 }
