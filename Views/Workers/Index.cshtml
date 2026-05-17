@@ -43,7 +43,7 @@
         .workers-actions {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
             flex-wrap: wrap;
             margin: 0;
         }
@@ -100,44 +100,82 @@
         }
 
         .btn-soft {
-            border: 1px solid #C9D9EE;
-            border-radius: 4px;
-            padding: 9px 12px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            padding: 0 18px;
             background: #FFFFFF;
-            color: #334155;
+            color: #0F172A;
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
-            font-size: 0.76rem;
+            font-size: 0.875rem;
+            letter-spacing: 0;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            min-height: 38px;
-            transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.15s;
+            justify-content: center;
+            gap: 9px;
+            min-width: 132px;
+            min-height: 48px;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+            transition: background 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
         }
 
         .btn-soft svg {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             flex-shrink: 0;
+            stroke: currentColor;
         }
 
         .btn-soft:hover {
-            border-color: #1D4ED8;
-            background: #EFF6FF;
-            color: #1D4ED8;
-            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.13);
+            transform: translateY(-2px);
+        }
+
+        .btn-soft:disabled {
+            cursor: not-allowed;
+            opacity: 0.62;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-soft:disabled:hover {
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-soft.is-success {
+            background: #ECFDF5;
+            color: #047857;
+            border-color: #A7F3D0;
         }
 
         .btn-soft.is-danger {
-            color: #991B1B;
+            background: #FEF2F2;
+            color: #B91C1C;
             border-color: #FECACA;
-            background: #FFF7F7;
         }
 
         .btn-soft.is-warning {
-            color: #1E40AF;
+            background: #EFF6FF;
+            color: #1D4ED8;
             border-color: #BFDBFE;
-            background: #F8FBFF;
+        }
+
+        .btn-soft.is-success:hover {
+            background: #D1FAE5;
+        }
+
+        .btn-soft.is-danger:hover {
+            background: #FEE2E2;
+        }
+
+        .btn-soft.is-warning:hover {
+            background: #DBEAFE;
+        }
+
+        .btn-soft-label {
+            white-space: nowrap;
         }
 
         .worker-detail-panel {
@@ -527,9 +565,9 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="active" value="true" />
                 <input type="hidden" name="skill" value="@selectedSkill" />
-                <button type="submit" class="btn-soft">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    Make Everyone Active
+                <button type="submit" class="btn-soft is-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span class="btn-soft-label">Active</span>
                 </button>
             </form>
             <form asp-action="SetAllStatus" method="post">
@@ -537,8 +575,8 @@
                 <input type="hidden" name="active" value="false" />
                 <input type="hidden" name="skill" value="@selectedSkill" />
                 <button type="submit" class="btn-soft is-danger">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.3"><circle cx="12" cy="12" r="9"></circle><path d="M15 9l-6 6"></path><path d="M9 9l6 6"></path></svg>
-                    Make Everyone Inactive
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.3" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15 9l-6 6"></path><path d="M9 9l6 6"></path></svg>
+                    <span class="btn-soft-label">Inactive</span>
                 </button>
             </form>
             <div id="stagedBonusInputs"></div>
@@ -548,8 +586,8 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="skill" value="@selectedSkill" />
                     <button type="submit" class="btn-soft is-warning">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
-                        Record Today's Wages
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.3" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
+                        <span class="btn-soft-label">Record</span>
                     </button>
                 </form>
             }
@@ -559,8 +597,8 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="skill" value="@selectedSkill" />
                     <button type="submit" class="btn-soft is-warning">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
-                        Undo Today's Wages
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.3" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
+                        <span class="btn-soft-label">Undo</span>
                     </button>
                 </form>
             }
@@ -570,8 +608,8 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="skill" value="@selectedSkill" />
                     <button type="submit" class="btn-soft is-warning" disabled title="Select a project first">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
-                        Record Today's Wages
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.3" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
+                        <span class="btn-soft-label">Record</span>
                     </button>
                 </form>
             }
