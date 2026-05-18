@@ -129,13 +129,6 @@ public class HomeController : Controller
                           join p in _context.Projects on v.ProjectId equals p.ProjectId
                           where p.UserId == userId
                           select v;
-        var vwExpQuery   = from v in _context.VwExpenseHistories
-                          join p in _context.Projects on v.ProjectId equals p.ProjectId
-                          where p.UserId == userId
-                          select v;
-        var scopedExpQuery = selectedProjectId.HasValue
-            ? vwExpQuery.Where(v => v.ProjectId == selectedProjectId.Value)
-            : vwExpQuery;
         var scopedTaskQuery = selectedProjectId.HasValue
             ? taskQuery.Where(t => t.Phase.ProjectId == selectedProjectId.Value)
             : taskQuery;
@@ -211,12 +204,7 @@ public class HomeController : Controller
 
         ViewBag.CategoryExpenses = expenseBll.GetExpensesByCategory(selectedProjectId, userId);
 
-        ViewBag.MonthlyExpenses = await scopedExpQuery
-            .GroupBy(e => new { e.ExpenseDate.Year, e.ExpenseDate.Month })
-            .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
-            .Select(g => new { Month = g.Key.Month, Total = g.Sum(e => e.Amount) })
-            .Take(12)
-            .ToListAsync();
+        ViewBag.MonthlyExpenses = BuildMonthlyExpenseTrend(expenseBll, selectedProjectId, userId);
 
         ViewBag.ToDoTasks = await scopedTaskQuery
             .Include(t => t.Phase)
@@ -245,16 +233,6 @@ public class HomeController : Controller
         {
             bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId);
             if (!ownsProject) selectedProjectId = null;
-        }
-
-        var expenseQuery = from v in _context.VwExpenseHistories
-                           join p in _context.Projects on v.ProjectId equals p.ProjectId
-                           where p.UserId == userId
-                           select v;
-
-        if (selectedProjectId.HasValue)
-        {
-            expenseQuery = expenseQuery.Where(v => v.ProjectId == selectedProjectId.Value);
         }
 
         var connectionString = _configuration.GetConnectionString("BuildWise") ?? "";
@@ -291,6 +269,8 @@ public class HomeController : Controller
             .Select(t => new { t.TransactionDate, t.Category, t.Amount })
             .ToList();
 
+        var monthlyExpenses = BuildMonthlyExpenseTrend(expenseBll, selectedProjectId, userId);
+
         return Json(new
         {
             totalBudget,
@@ -298,7 +278,20 @@ public class HomeController : Controller
             totalWorkers,
             workersOnSite,
             categoryExpenses,
-            recentExpenses
+            recentExpenses,
+            monthlyExpenses
         });
     }
+
+    private static List<MonthlyExpensePoint> BuildMonthlyExpenseTrend(ExpenseBLL expenseBll, int? projectId, int userId)
+    {
+        return expenseBll.GetAllExpenses(projectId, userId)
+            .GroupBy(e => new DateTime(e.ExpenseDate.Year, e.ExpenseDate.Month, 1))
+            .OrderBy(g => g.Key)
+            .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(e => e.Amount)))
+            .TakeLast(12)
+            .ToList();
+    }
+
+    private sealed record MonthlyExpensePoint(int Year, int Month, decimal Total);
 }

@@ -180,7 +180,7 @@
             <div class="db-donut-wrap">
                 <canvas id="expenseCategoryChart"></canvas>
                 <div class="db-donut-center">
-                    <span class="db-donut-sublabel" id="dashPieCenterLabel">TOTAL EXPENSED</span>
+                    <span class="db-donut-sublabel" id="dashPieCenterLabel">TOTAL EXPENSES</span>
                     <strong class="db-donut-value" id="dashPieCenterValue">@FormatMoney(totalExpenses)</strong>
                     <small class="db-donut-meta" id="dashPieCenterMeta">0 categories</small>
                 </div>
@@ -332,6 +332,9 @@
     function sumCategories(items) {
         return items.reduce((s, i) => s + Number(i.total || 0), 0);
     }
+    function formatPKR(value) {
+        return `PKR ${Number(value || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
+    }
 
     // ─────────────────────────────────────────────
     // PIE CENTER
@@ -346,7 +349,7 @@
 
     function setPieCenter(idx) {
         if (idx === null || idx < 0 || !catData[idx]) {
-            pieCenterLabel.textContent = 'TOTAL EXPENSED';
+            pieCenterLabel.textContent = 'TOTAL EXPENSES';
             pieCenterValue.textContent = formatPKR(totalCatExp);
             pieCenterMeta.textContent  = `${catData.length} ${catData.length === 1 ? 'category' : 'categories'}`;
             return;
@@ -372,8 +375,8 @@
                 backgroundColor: catData.map((_, i) => PALETTE[i % PALETTE.length]),
                 borderColor: '#FFFFFF',
                 borderWidth: 3,
-                hoverBorderWidth: 5,
-                hoverOffset: 14,
+                hoverBorderWidth: 4,
+                hoverOffset: 7,
                 spacing: 2
             }]
         },
@@ -383,18 +386,7 @@
             animation: { animateRotate: true, duration: 900 },
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#0F172A',
-                    padding: 12,
-                    cornerRadius: 8,
-                    callbacks: {
-                        label: ctx => {
-                            const amt = Number(ctx.parsed || 0);
-                            const pct = totalCatExp > 0 ? (amt / totalCatExp * 100).toFixed(1) : '0.0';
-                            return `  ${ctx.label}: ${formatPKR(amt)} (${pct}%)`;
-                        }
-                    }
-                }
+                tooltip: { enabled: false }
             },
             onHover: (e, els) => activatePie(els.length ? els[0].index : null),
             onLeave: () => resetPie()
@@ -404,19 +396,22 @@
     // Always reset to total — called on mouse-out from both chart and category boxes
     function resetPie() {
         activePieIdx = null;
-        document.querySelectorAll('.db-cat-box').forEach(b => b.classList.remove('is-active'));
+        syncCategoryBoxes(null);
         pieChart.setActiveElements([]);
         setPieCenter(null);
         pieChart.update('none'); // 'none' skips animation for instant reset
     }
 
-    function activatePie(idx) {
-        if (idx === null) { resetPie(); return; }
-        if (activePieIdx === idx) return;
-        activePieIdx = idx;
-        document.querySelectorAll('.db-cat-box').forEach((b, i) => {
-            b.classList.toggle('is-active', i === idx);
+    function syncCategoryBoxes(idx) {
+        document.querySelectorAll('.db-cat-box').forEach(b => {
+            b.classList.toggle('is-active', idx !== null && Number(b.dataset.idx) === idx);
         });
+    }
+
+    function activatePie(idx) {
+        if (idx === null || idx === undefined) { resetPie(); return; }
+        activePieIdx = idx;
+        syncCategoryBoxes(idx);
         pieChart.setActiveElements([{ datasetIndex: 0, index: idx }]);
         setPieCenter(idx);
         pieChart.update();
@@ -440,11 +435,11 @@
             const col  = PALETTE[i % PALETTE.length];
             return `
                 <button class="db-cat-box" data-idx="${i}" type="button">
-                    <span class="db-cat-pill" style="background:${col}">${pct}%</span>
-                    <span class="db-cat-info">
-                        <strong>${it.category}</strong>
-                        <small>${formatPKR(amt)}</small>
+                    <span class="db-cat-top">
+                        <span class="db-cat-pill" style="background:${col}">${pct}%</span>
+                        <strong class="db-cat-name">${it.category}</strong>
                     </span>
+                    <span class="db-cat-amount">${formatPKR(amt)}</span>
                 </button>`;
         }).join('');
 
@@ -460,15 +455,35 @@
     // ─────────────────────────────────────────────
     // MONTHLY TREND CHART
     // ─────────────────────────────────────────────
-    const rawMonthly = @Html.Raw(Json.Serialize(ViewBag.MonthlyExpenses));
+    let rawMonthly = @Html.Raw(Json.Serialize(ViewBag.MonthlyExpenses));
 
     function buildMonthlyDataset(raw, periods) {
-        let items = (raw || []).map(m => ({
-            label: new Date(2000, (m.month ?? m.Month) - 1, 1).toLocaleString('default', { month: 'short' }),
-            value: Number(m.total ?? m.Total ?? 0)
-        }));
-        if (periods && items.length > periods) items = items.slice(-periods);
-        return items;
+        const normalized = (raw || [])
+            .map(m => ({
+                year: Number(m.year ?? m.Year ?? new Date().getFullYear()),
+                month: Number(m.month ?? m.Month ?? 1),
+                value: Number(m.total ?? m.Total ?? 0)
+            }))
+            .filter(m => m.month >= 1 && m.month <= 12)
+            .sort((a, b) => (a.year - b.year) || (a.month - b.month));
+
+        const byMonth = new Map(normalized.map(m => [`${m.year}-${m.month}`, m.value]));
+        const end = normalized.length
+            ? new Date(normalized[normalized.length - 1].year, normalized[normalized.length - 1].month - 1, 1)
+            : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        const start = normalized.length
+            ? new Date(normalized[0].year, normalized[0].month - 1, 1)
+            : new Date(end.getFullYear(), end.getMonth(), 1);
+        const monthSpan = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+        const timelineLength = periods || Math.max(6, monthSpan);
+
+        return Array.from({ length: timelineLength }, (_, index) => {
+            const date = new Date(end.getFullYear(), end.getMonth() - (timelineLength - 1 - index), 1);
+            return {
+                label: date.toLocaleString('default', { month: 'short' }),
+                value: byMonth.get(`${date.getFullYear()}-${date.getMonth() + 1}`) || 0
+            };
+        });
     }
 
     let monthlyPeriod = null;
@@ -480,21 +495,27 @@
     gradient.addColorStop(1, 'rgba(37,99,235,0)');
 
     const trendChart = new Chart(trendCtx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: monthlyItems.map(m => m.label),
             datasets: [{
                 label: 'Spending (PKR)',
                 data: monthlyItems.map(m => m.value),
-                backgroundColor: monthlyItems.map((_, i) =>
-                    i === monthlyItems.length - 1 ? '#2563EB' : 'rgba(37,99,235,0.18)'),
-                borderRadius: 6,
-                borderSkipped: false,
-                hoverBackgroundColor: '#2563EB'
+                borderColor: '#2563EB',
+                backgroundColor: gradient,
+                fill: monthlyItems.length > 1,
+                tension: 0.35,
+                borderWidth: 3,
+                pointBackgroundColor: '#2563EB',
+                pointBorderColor: '#FFFFFF',
+                pointBorderWidth: 2,
+                pointRadius: monthlyItems.length === 1 ? 5 : 4,
+                pointHoverRadius: 6
             }]
         },
         options: {
             maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: { display: false },
                 tooltip: {
@@ -507,6 +528,7 @@
             scales: {
                 x: { grid: { display: false }, border: { display: false } },
                 y: {
+                    beginAtZero: true,
                     grid: { color: '#F1F5F9', drawBorder: false },
                     border: { display: false, dash: [4,4] },
                     ticks: { callback: v => v >= 1000 ? `${(v/1000).toFixed(0)}K` : v }
@@ -516,12 +538,19 @@
     });
 
     function updateTrendChart(periods) {
+        monthlyPeriod = periods;
         const items = buildMonthlyDataset(rawMonthly, periods);
+        monthlyItems = items;
         trendChart.data.labels = items.map(m => m.label);
         trendChart.data.datasets[0].data = items.map(m => m.value);
-        trendChart.data.datasets[0].backgroundColor = items.map((_, i) =>
-            i === items.length - 1 ? '#2563EB' : 'rgba(37,99,235,0.18)');
+        trendChart.data.datasets[0].fill = items.length > 1;
+        trendChart.data.datasets[0].pointRadius = items.length === 1 ? 5 : 4;
         trendChart.update();
+    }
+
+    function updateMonthlyTrend(items) {
+        rawMonthly = items || [];
+        updateTrendChart(monthlyPeriod);
     }
 
     document.querySelectorAll('.db-trend-tab').forEach(btn => {
@@ -604,6 +633,7 @@
             if (apiCats.length > 0) {
                 updateExpenseChart(apiCats);
             }
+            updateMonthlyTrend(data.monthlyExpenses || []);
             updateRecentExpenses(data.recentExpenses || []);
         } catch {}
     }

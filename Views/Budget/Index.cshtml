@@ -51,11 +51,28 @@
 
         .chart-wrapper {
             position: relative;
-            height: 280px;
+            height: 320px;
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .chart-wrapper--budget {
+            align-items: stretch;
+        }
+
+        .chart-empty-state {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #64748B;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-align: center;
+            background: #FFFFFF;
         }
 
         .budget-chart-card {
@@ -363,7 +380,10 @@
                 <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A;">Budget vs Actual</h2>
             </div>
             <div class="card-body" style="padding: 24px;">
-                <div class="chart-wrapper"><canvas id="barChart"></canvas></div>
+                <div class="chart-wrapper chart-wrapper--budget">
+                    <canvas id="barChart"></canvas>
+                    <div class="chart-empty-state" id="budgetActualEmpty">Add a budget or expense to compare planned vs actual spending.</div>
+                </div>
             </div>
         </div>
         <div class="module-card budget-chart-card">
@@ -528,6 +548,41 @@
             if (select.value === 'custom') input.focus();
         }
 
+        function normalizeCategoryName(value) {
+            return String(value || 'Uncategorized').trim() || 'Uncategorized';
+        }
+
+        function formatAxisPKR(value) {
+            const amount = Number(value || 0);
+            if (amount === 0) return 'PKR 0';
+            if (Math.abs(amount) >= 10000000) return `PKR ${(amount / 10000000).toFixed(amount % 10000000 === 0 ? 0 : 1)}Cr`;
+            if (Math.abs(amount) >= 100000) return `PKR ${(amount / 100000).toFixed(amount % 100000 === 0 ? 0 : 1)}L`;
+            if (Math.abs(amount) >= 1000) return `PKR ${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}K`;
+            return `PKR ${amount.toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
+        }
+
+        function buildBudgetActualRows(budgets, categoryExpenses) {
+            const rows = new Map();
+            const ensureRow = category => {
+                const name = normalizeCategoryName(category);
+                const key = name.toLowerCase();
+                if (!rows.has(key)) rows.set(key, { category: name, budgeted: 0, actual: 0 });
+                return rows.get(key);
+            };
+
+            (budgets || []).forEach(item => {
+                ensureRow(item.category ?? item.Category).budgeted += Number(item.amount ?? item.Amount ?? 0);
+            });
+
+            (categoryExpenses || []).forEach(item => {
+                ensureRow(item.category ?? item.Category).actual += Number(item.amount ?? item.Amount ?? 0);
+            });
+
+            return Array.from(rows.values())
+                .filter(row => row.budgeted > 0 || row.actual > 0)
+                .sort((a, b) => Math.max(b.budgeted, b.actual) - Math.max(a.budgeted, a.actual));
+        }
+
         function resetBudgetForm() {
             document.getElementById('budget-id').value = '';
             document.getElementById('budget-form-title').innerText = 'Allocate Budget';
@@ -644,12 +699,14 @@
             const budgetPieCenterValue = document.getElementById('budgetPieCenterValue');
             const budgetPieCenterMeta = document.getElementById('budgetPieCenterMeta');
 
-            const labels = data.budgets.map(b => b.category);
-            const budgetData = data.budgets.map(b => b.amount);
-            const expenseData = labels.map(label => {
-                const ex = data.categoryExpenses.find(e => e.category === label);
-                return ex ? ex.amount : 0;
-            });
+            const budgetActualRows = buildBudgetActualRows(data.budgets, data.categoryExpenses);
+            const labels = budgetActualRows.map(row => row.category);
+            const budgetData = budgetActualRows.map(row => row.budgeted);
+            const expenseData = budgetActualRows.map(row => row.actual);
+            const budgetActualEmpty = document.getElementById('budgetActualEmpty');
+            if (budgetActualEmpty) {
+                budgetActualEmpty.style.display = budgetActualRows.length ? 'none' : 'flex';
+            }
 
             function setBudgetPieCenter(index = null) {
                 if (index === null || index < 0 || !data.categoryExpenses[index]) {
@@ -679,9 +736,10 @@
                             backgroundColor: '#CBD5E1',
                             borderRadius: 3,
                             borderSkipped: false,
-                            maxBarThickness: 16,
-                            barPercentage: 0.98,
-                            categoryPercentage: 0.52
+                            maxBarThickness: 20,
+                            minBarLength: 3,
+                            barPercentage: 0.88,
+                            categoryPercentage: 0.68
                         },
                         {
                             label: 'Actual Spent',
@@ -689,26 +747,28 @@
                             backgroundColor: '#2563EB',
                             borderRadius: 3,
                             borderSkipped: false,
-                            maxBarThickness: 16,
-                            barPercentage: 0.98,
-                            categoryPercentage: 0.52
+                            maxBarThickness: 20,
+                            minBarLength: 3,
+                            barPercentage: 0.88,
+                            categoryPercentage: 0.68
                         }
                     ]
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
+                    indexAxis: 'y',
                     scales: { 
-                        y: {
+                        x: {
                             beginAtZero: true,
                             grid: { color: '#EEF2F7', drawTicks: false },
                             border: { display: false },
-                            ticks: { padding: 10, color: '#64748B', callback: v => formatPKR(v) }
+                            ticks: { padding: 10, color: '#64748B', callback: v => formatAxisPKR(v) }
                         },
-                        x: {
+                        y: {
                             grid: { display: false },
                             border: { display: false },
-                            ticks: { color: '#64748B', maxRotation: 0, autoSkip: false }
+                            ticks: { color: '#64748B', autoSkip: false }
                         }
                     },
                     plugins: {
@@ -721,7 +781,14 @@
                             backgroundColor: '#0F172A',
                             padding: 12,
                             displayColors: true,
-                            callbacks: { label: context => `${context.dataset.label}: ${formatPKR(context.parsed.y)}` }
+                            callbacks: {
+                                label: context => {
+                                    const value = context.parsed.x;
+                                    const row = budgetActualRows[context.dataIndex];
+                                    const remaining = row ? row.budgeted - row.actual : 0;
+                                    return `${context.dataset.label}: ${formatPKR(value)}${context.datasetIndex === 1 ? ` | Remaining: ${formatPKR(remaining)}` : ''}`;
+                                }
+                            }
                         }
                     }
                 }
