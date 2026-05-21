@@ -22,6 +22,7 @@ builder.Services.AddScoped<BuildWise.DataLayer.PropertyDAL>();
 builder.Services.AddScoped<BuildWise.BusinessLayer.PropertyBLL>();
 builder.Services.AddScoped<BuildWise.DataLayer.MaterialDAL>();
 builder.Services.AddScoped<BuildWise.BusinessLayer.MaterialBLL>();
+builder.Services.AddScoped<WorkerProjectSchemaService>();
 builder.Services.AddHostedService<DatabaseWarmupService>();
 
 // Configure Cookie Authentication

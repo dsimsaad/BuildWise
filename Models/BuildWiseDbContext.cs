@@ -50,6 +50,7 @@ public partial class BuildWiseDbContext : DbContext
     public virtual DbSet<VwWorkerWageSummary> VwWorkerWageSummaries { get; set; } = null!;
     public virtual DbSet<WagePayment> WagePayments { get; set; } = null!;
     public virtual DbSet<Worker> Workers { get; set; } = null!;
+    public virtual DbSet<WorkerProjectAssignment> WorkerProjectAssignments { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=BuildWise");
@@ -914,10 +915,12 @@ public partial class BuildWiseDbContext : DbContext
             entity.HasKey(e => e.WorkerId).HasName("PK__Workers__077C8806AAB344EE");
 
             entity.HasIndex(e => e.Cnic, "UQ__Workers__AA570FD4566FD91A").IsUnique();
+            entity.HasIndex(e => e.ProjectId, "IX_Workers_ProjectID");
 
             entity.Property(e => e.WorkerId)
                 .HasComment("Auto-increment PK")
                 .HasColumnName("WorkerID");
+            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.Cnic)
                 .HasMaxLength(15)
@@ -944,6 +947,34 @@ public partial class BuildWiseDbContext : DbContext
             entity.HasOne(d => d.Contractor).WithMany(p => p.Workers)
                 .HasForeignKey(d => d.ContractorId)
                 .HasConstraintName("FK__Workers__Contrac__72C60C4A");
+
+            entity.HasOne(d => d.Project).WithMany()
+                .HasForeignKey(d => d.ProjectId)
+                .HasConstraintName("FK_Workers_Projects");
+        });
+
+        modelBuilder.Entity<WorkerProjectAssignment>(entity =>
+        {
+            entity.ToTable("WorkerProjectAssignments");
+
+            entity.HasKey(e => e.WorkerProjectAssignmentId);
+
+            entity.HasIndex(e => new { e.WorkerId, e.ProjectId }, "UQ_WorkerProjectAssignments").IsUnique();
+
+            entity.Property(e => e.WorkerProjectAssignmentId).HasColumnName("WorkerProjectAssignmentID");
+            entity.Property(e => e.WorkerId).HasColumnName("WorkerID");
+            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
+            entity.Property(e => e.AssignedAt).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Worker).WithMany(p => p.WorkerProjectAssignments)
+                .HasForeignKey(d => d.WorkerId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_WorkerProjectAssignments_Workers");
+
+            entity.HasOne(d => d.Project).WithMany()
+                .HasForeignKey(d => d.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_WorkerProjectAssignments_Projects");
         });
 
         OnModelCreatingPartial(modelBuilder);

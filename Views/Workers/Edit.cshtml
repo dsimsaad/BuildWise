@@ -21,9 +21,11 @@
         <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
         <input type="hidden" asp-for="WorkerId" />
         <div class="form-group">
-            <label asp-for="ContractorId">Contractor</label>
-            <select asp-for="ContractorId" class="form-control" asp-items="ViewBag.ContractorId"></select>
-            <span asp-validation-for="ContractorId" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+            <label asp-for="ProjectId">Project</label>
+            <select asp-for="ProjectId" class="form-control" asp-items="ViewBag.ProjectId" required>
+                <option value="">Select project</option>
+            </select>
+            <span asp-validation-for="ProjectId" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
         </div>
         <div class="form-group">
             <label asp-for="FullName">Full Name</label>

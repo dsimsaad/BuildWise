@@ -32,8 +32,8 @@ namespace BuildWise.DataLayer
                     PhaseTask item = new PhaseTask();
                     item.TaskId = Convert.ToInt32(reader["TaskId"]);
                     item.PhaseId = Convert.ToInt32(reader["PhaseId"]);
-                    item.TaskName = reader["TaskName"].ToString();
-                    item.Status = reader["Status"].ToString();
+                    item.TaskName = reader["TaskName"]?.ToString() ?? "";
+                    item.Status = reader["Status"]?.ToString() ?? "";
                     item.StartDate = reader["StartDate"] != DBNull.Value ? Convert.ToDateTime(reader["StartDate"]) : null;
                     item.EndDate = reader["EndDate"] != DBNull.Value ? Convert.ToDateTime(reader["EndDate"]) : null;
                     item.Weight = Convert.ToDecimal(reader["Weight"]);
@@ -68,8 +68,8 @@ ORDER BY t.PhaseId, t.CreatedAt";
                     PhaseTask item = new PhaseTask();
                     item.TaskId = Convert.ToInt32(reader["TaskId"]);
                     item.PhaseId = Convert.ToInt32(reader["PhaseId"]);
-                    item.TaskName = reader["TaskName"].ToString();
-                    item.Status = reader["Status"].ToString();
+                    item.TaskName = reader["TaskName"]?.ToString() ?? "";
+                    item.Status = reader["Status"]?.ToString() ?? "";
                     item.StartDate = reader["StartDate"] != DBNull.Value ? Convert.ToDateTime(reader["StartDate"]) : null;
                     item.EndDate = reader["EndDate"] != DBNull.Value ? Convert.ToDateTime(reader["EndDate"]) : null;
                     item.Weight = Convert.ToDecimal(reader["Weight"]);
@@ -91,8 +91,8 @@ ORDER BY t.PhaseId, t.CreatedAt";
                 cmd.Parameters.AddWithValue("@PhaseId", item.PhaseId);
                 cmd.Parameters.AddWithValue("@TaskName", item.TaskName);
                 cmd.Parameters.AddWithValue("@Status", item.Status);
-                cmd.Parameters.AddWithValue("@StartDate", (object)item.StartDate ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@EndDate", (object)item.EndDate ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@StartDate", (object?)item.StartDate ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@EndDate", (object?)item.EndDate ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Weight", item.Weight);
                 return cmd.ExecuteNonQuery() > 0;
             }
@@ -108,8 +108,8 @@ ORDER BY t.PhaseId, t.CreatedAt";
                 cmd.Parameters.AddWithValue("@Id", item.TaskId);
                 cmd.Parameters.AddWithValue("@TaskName", item.TaskName);
                 cmd.Parameters.AddWithValue("@Status", item.Status);
-                cmd.Parameters.AddWithValue("@StartDate", (object)item.StartDate ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@EndDate", (object)item.EndDate ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@StartDate", (object?)item.StartDate ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@EndDate", (object?)item.EndDate ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Weight", item.Weight);
                 return cmd.ExecuteNonQuery() > 0;
             }
@@ -124,6 +124,24 @@ ORDER BY t.PhaseId, t.CreatedAt";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@Id", id);
                 return cmd.ExecuteNonQuery() > 0;
+            }
+        }
+
+        public bool BelongsToUser(int taskId, int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = @"
+SELECT COUNT(1)
+FROM PhaseTasks t
+INNER JOIN ConstructionPhases cp ON t.PhaseId = cp.PhaseId
+INNER JOIN Projects p ON cp.ProjectId = p.ProjectId
+WHERE t.TaskId = @TaskId AND p.UserId = @UserId";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@TaskId", taskId);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
             }
         }
     }

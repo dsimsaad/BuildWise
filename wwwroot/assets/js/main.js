@@ -53,17 +53,49 @@ if (revealElements.length && "IntersectionObserver" in window) {
     revealElements.forEach(el => el.classList.add("active"));
 }
 
+// === LAZY LOAD ANIMATED ICON RUNTIME ===
+const lordIcons = document.querySelectorAll("lord-icon");
+if (lordIcons.length) {
+    const loadLordIconRuntime = () => {
+        if (document.querySelector("script[data-lordicon-runtime]")) return;
+
+        const script = document.createElement("script");
+        script.src = "https://cdn.lordicon.com/lordicon.js";
+        script.defer = true;
+        script.dataset.lordiconRuntime = "true";
+        document.head.appendChild(script);
+    };
+
+    if ("IntersectionObserver" in window) {
+        const iconObserver = new IntersectionObserver(entries => {
+            if (entries.some(entry => entry.isIntersecting)) {
+                loadLordIconRuntime();
+                iconObserver.disconnect();
+            }
+        }, { rootMargin: "300px 0px" });
+
+        lordIcons.forEach(icon => iconObserver.observe(icon));
+    } else {
+        if ("requestIdleCallback" in window) {
+            window.requestIdleCallback(loadLordIconRuntime, { timeout: 1200 });
+        } else {
+            window.setTimeout(loadLordIconRuntime, 600);
+        }
+    }
+}
+
 // === BACK TO TOP BUTTON ===
 const backToTopBtn = document.getElementById("backToTop");
 
 if (backToTopBtn) {
+    let backToTopFrame = 0;
     window.addEventListener("scroll", () => {
-        if (window.scrollY > 400) {
-            backToTopBtn.classList.add("show");
-        } else {
-            backToTopBtn.classList.remove("show");
-        }
-    });
+        if (backToTopFrame) return;
+        backToTopFrame = requestAnimationFrame(() => {
+            backToTopBtn.classList.toggle("show", window.scrollY > 400);
+            backToTopFrame = 0;
+        });
+    }, { passive: true });
 
     backToTopBtn.addEventListener("click", () => {
         window.scrollTo({
@@ -72,65 +104,6 @@ if (backToTopBtn) {
         });
     });
 }
-
-// === FAQ ACCORDION ===
-const faqList = document.getElementById("faq-list");
-const faqItems = faqList ? Array.from(faqList.querySelectorAll(".faq-item")) : [];
-
-function setFaqOpen(item, shouldOpen) {
-    const answer = item.querySelector(".faq-answer");
-    if (!answer) return;
-
-    item.classList.toggle("open", shouldOpen);
-    answer.style.height = shouldOpen ? `${answer.scrollHeight}px` : "0px";
-}
-
-if (faqList) {
-    faqList.addEventListener("click", (event) => {
-        const question = event.target.closest(".faq-question");
-        if (!question) return;
-
-        const item = question.closest(".faq-item");
-        const willOpen = item && !item.classList.contains("open");
-
-        faqItems.forEach(otherItem => setFaqOpen(otherItem, false));
-        if (item && willOpen) setFaqOpen(item, true);
-    });
-
-    window.addEventListener("resize", () => {
-        faqItems.forEach(item => {
-            if (item.classList.contains("open")) setFaqOpen(item, true);
-        });
-    }, { passive: true });
-}
-
-document.fonts?.ready.then(() => {
-    faqItems.forEach(item => {
-        if (item.classList.contains("open")) setFaqOpen(item, true);
-    });
-});
-
-// === FAQ FILTER BUTTONS ===
-const filterBtns = document.querySelectorAll(".filter-btn");
-let currentFilter = "all";
-
-function applyFaqFilter(activeFilter) {
-    faqItems.forEach(item => {
-        const category = item.getAttribute("data-category") || "";
-        const isVisible = activeFilter === "all" || category === activeFilter;
-        item.hidden = !isVisible;
-        if (!isVisible) setFaqOpen(item, false);
-    });
-}
-
-filterBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-        filterBtns.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        currentFilter = btn.getAttribute("data-filter") || "all";
-        applyFaqFilter(currentFilter);
-    });
-});
 
 // === DASHBOARD SCROLL ANIMATION (index.html) ===
 const scrollContainer = document.getElementById('scroll-container');
@@ -169,8 +142,17 @@ if (scrollContainer && scrollWrapper) {
         }
     };
 
-    window.addEventListener('scroll', () => requestAnimationFrame(updateScrollAnimation));
-    window.addEventListener('resize', () => requestAnimationFrame(updateScrollAnimation));
+    let scrollAnimationFrame = 0;
+    const scheduleScrollAnimation = () => {
+        if (scrollAnimationFrame) return;
+        scrollAnimationFrame = requestAnimationFrame(() => {
+            updateScrollAnimation();
+            scrollAnimationFrame = 0;
+        });
+    };
+
+    window.addEventListener('scroll', scheduleScrollAnimation, { passive: true });
+    window.addEventListener('resize', scheduleScrollAnimation, { passive: true });
     updateScrollAnimation();
 }
 
@@ -179,32 +161,11 @@ const navLinks = document.querySelectorAll(".nav-links a, .mobile-nav-overlay a"
 const currentPath = window.location.pathname.split("/").pop() || "index.html";
 
 navLinks.forEach(link => {
-    const linkPath = link.getAttribute("href");
+    const href = link.getAttribute("href") || "";
+    const linkPath = href.split("/").filter(Boolean).pop() || "index.html";
     if (linkPath === currentPath) {
         link.classList.add("active");
     } else {
         link.classList.remove("active");
     }
 });
-
-// === CONTACT FORM SUBMISSION ===
-const contactForm = document.querySelector(".contact-form");
-if (contactForm) {
-    contactForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const btn = contactForm.querySelector(".btn-submit");
-        if (btn) {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "Message Sent!";
-            btn.disabled = true;
-            btn.style.background = "#059669";
-            contactForm.reset();
-
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = "";
-                btn.disabled = false;
-            }, 1800);
-        }
-    });
-}

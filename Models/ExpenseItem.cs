@@ -1,8 +1,5 @@
 namespace BuildWise.Models
 {
-    /// <summary>
-    /// Represents a single expense entry
-    /// </summary>
     public class ExpenseItem
     {
         public int ExpenseId { get; set; }

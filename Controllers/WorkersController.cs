@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using BuildWise.Services;
 
 namespace BuildWise.Controllers
 {
@@ -15,12 +16,14 @@ namespace BuildWise.Controllers
     {
         private readonly BuildWiseDbContext _context;
         private readonly ExpenseBLL _expenseBll;
+        private readonly WorkerProjectSchemaService _workerProjectSchema;
         private static readonly string[] CommonSkills = { "Mason", "Electrician", "Plumber", "Helper" };
 
-        public WorkersController(BuildWiseDbContext context, IConfiguration configuration)
+        public WorkersController(BuildWiseDbContext context, IConfiguration configuration, WorkerProjectSchemaService workerProjectSchema)
         {
             _context = context;
             _expenseBll = new ExpenseBLL(configuration.GetConnectionString("BuildWise") ?? "");
+            _workerProjectSchema = workerProjectSchema;
         }
 
         private int GetUserId()
@@ -32,6 +35,8 @@ namespace BuildWise.Controllers
         // GET: Workers
         public async Task<IActionResult> Index(string? skill)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             int userId = GetUserId();
             var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
 
@@ -56,6 +61,7 @@ namespace BuildWise.Controllers
             ViewBag.TodayWagesRecorded = selectedProjectId.HasValue && await HasRecordedWagesForToday(userId, selectedProjectId.Value);
             ViewBag.WorkerTotals = await _context.WagePayments
                 .Where(wp => wp.Worker.UserId == userId || wp.Worker.UserId == null)
+                .Where(wp => !selectedProjectId.HasValue || wp.ProjectId == selectedProjectId.Value)
                 .GroupBy(wp => wp.WorkerId)
                 .Select(g => new { WorkerId = g.Key, Total = g.Sum(wp => wp.AmountPaid) })
                 .ToDictionaryAsync(x => x.WorkerId, x => x.Total);
@@ -69,11 +75,14 @@ namespace BuildWise.Controllers
         // GET: Workers/Details/5
         public async Task<IActionResult> Details(int? id)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             if (id == null) return NotFound();
             int userId = GetUserId();
 
             var worker = await _context.Workers
                 .Include(w => w.Contractor)
+                .Include(w => w.Project)
                 .FirstOrDefaultAsync(m => m.WorkerId == id && (m.UserId == userId || m.UserId == null));
 
             if (worker == null) return NotFound();
@@ -81,20 +90,30 @@ namespace BuildWise.Controllers
         }
 
         // GET: Workers/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
+            int userId = GetUserId();
             ViewBag.CommonSkills = CommonSkills;
+            var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
+            ViewBag.SelectedProjectId = selectedProjectId;
+            PopulateProjectSelectList(userId, selectedProjectId);
+            await PopulateExistingWorkerSelectList(userId, selectedProjectId);
             return View();
         }
 
         // POST: Workers/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("WorkerId,FullName,Phone,Cnic,DailyWage")] Worker worker, string? SkillChoice, string? CustomSkill)
+        public async Task<IActionResult> Create([Bind("WorkerId,ProjectId,FullName,Phone,Cnic,DailyWage")] Worker worker, string? SkillChoice, string? CustomSkill)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             int userId = GetUserId();
             ModelState.Remove(nameof(worker.DailyWage));
 
+            worker.ProjectId ??= HttpContext.Session.GetInt32("SelectedProjectId");
             worker.SkillType = SkillChoice == "Custom" ? CustomSkill?.Trim() : SkillChoice?.Trim();
             worker.FullName = worker.FullName?.Trim() ?? string.Empty;
             worker.ContractorId = null;
@@ -111,6 +130,11 @@ namespace BuildWise.Controllers
                 ModelState.AddModelError(nameof(worker.SkillType), "Skill type is required.");
             }
 
+            if (!worker.ProjectId.HasValue || !UserOwnsProject(worker.ProjectId.Value, userId))
+            {
+                ModelState.AddModelError(nameof(worker.ProjectId), "Select a valid project for this worker.");
+            }
+
             if (ModelState.IsValid)
             {
                 worker.UserId = userId;
@@ -120,6 +144,14 @@ namespace BuildWise.Controllers
                 {
                     _context.Add(worker);
                     await _context.SaveChangesAsync();
+                    _context.WorkerProjectAssignments.Add(new WorkerProjectAssignment
+                    {
+                        WorkerId = worker.WorkerId,
+                        ProjectId = worker.ProjectId!.Value,
+                        AssignedAt = DateTime.Now
+                    });
+                    await _context.SaveChangesAsync();
+                    HttpContext.Session.SetInt32("SelectedProjectId", worker.ProjectId!.Value);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateException)
@@ -131,7 +163,53 @@ namespace BuildWise.Controllers
             ViewBag.CommonSkills = CommonSkills;
             ViewBag.SelectedSkillChoice = SkillChoice;
             ViewBag.CustomSkill = CustomSkill;
+            ViewBag.SelectedProjectId = worker.ProjectId;
+            PopulateProjectSelectList(userId, worker.ProjectId);
+            await PopulateExistingWorkerSelectList(userId, worker.ProjectId);
             return View(worker);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddExistingToProject(int workerId, int? projectId, string? skill)
+        {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
+            int userId = GetUserId();
+            var targetProjectId = projectId ?? HttpContext.Session.GetInt32("SelectedProjectId");
+            if (!targetProjectId.HasValue)
+            {
+                TempData["WorkersMessage"] = "Select a project before adding an existing worker.";
+                return RedirectToAction(nameof(Create));
+            }
+
+            var worker = await _context.Workers.FirstOrDefaultAsync(w => w.WorkerId == workerId && w.UserId == userId);
+            if (worker == null || !UserOwnsProject(targetProjectId.Value, userId))
+            {
+                return Forbid();
+            }
+
+            var alreadyAssigned = worker.ProjectId == targetProjectId.Value ||
+                await _context.WorkerProjectAssignments.AnyAsync(a => a.WorkerId == workerId && a.ProjectId == targetProjectId.Value);
+
+            if (!alreadyAssigned)
+            {
+                _context.WorkerProjectAssignments.Add(new WorkerProjectAssignment
+                {
+                    WorkerId = workerId,
+                    ProjectId = targetProjectId.Value,
+                    AssignedAt = DateTime.Now
+                });
+                await _context.SaveChangesAsync();
+                TempData["WorkersMessage"] = $"{worker.FullName} was added to this project.";
+            }
+            else
+            {
+                TempData["WorkersMessage"] = $"{worker.FullName} is already assigned to this project.";
+            }
+
+            HttpContext.Session.SetInt32("SelectedProjectId", targetProjectId.Value);
+            return RedirectToAction(nameof(Index), new { skill });
         }
 
         // POST: Workers/ToggleStatus/5
@@ -139,6 +217,8 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(int id, string? skill)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             int userId = GetUserId();
             var worker = await _context.Workers.FirstOrDefaultAsync(w => w.WorkerId == id && (w.UserId == userId || w.UserId == null));
 
@@ -155,6 +235,8 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetAllStatus(bool active, string? skill)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             int userId = GetUserId();
             var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
             var workers = await GetScopedWorkersQuery(userId, selectedProjectId)
@@ -175,6 +257,8 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RecordDailyWages(IFormCollection form, string? skill)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             int userId = GetUserId();
             var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
             if (!selectedProjectId.HasValue)
@@ -261,6 +345,8 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UndoDailyWages(string? skill)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             int userId = GetUserId();
             var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
             if (!selectedProjectId.HasValue)
@@ -309,32 +395,61 @@ namespace BuildWise.Controllers
         // GET: Workers/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             if (id == null) return NotFound();
             int userId = GetUserId();
 
             var worker = await _context.Workers.FirstOrDefaultAsync(w => w.WorkerId == id && (w.UserId == userId || w.UserId == null));
             if (worker == null) return NotFound();
 
-            ViewData["ContractorId"] = new SelectList(_context.Contractors.Where(c => c.UserId == userId || c.UserId == null), "ContractorId", "FullName", worker.ContractorId);
+            PopulateProjectSelectList(userId, worker.ProjectId);
             return View(worker);
         }
 
         // POST: Workers/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("WorkerId,ContractorId,FullName,Phone,Cnic,DailyWage,SkillType,IsActive,CreatedAt,UserId")] Worker worker)
+        public async Task<IActionResult> Edit(int id, [Bind("WorkerId,ProjectId,FullName,Phone,Cnic,DailyWage,SkillType,IsActive")] Worker worker)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             if (id != worker.WorkerId) return NotFound();
             int userId = GetUserId();
             ApplyWorkerContactRules(worker, userId, worker.WorkerId);
 
+            var existingWorker = await _context.Workers.FirstOrDefaultAsync(w => w.WorkerId == id && (w.UserId == userId || w.UserId == null));
+            if (existingWorker == null) return NotFound();
+
+            if (!worker.ProjectId.HasValue || !UserOwnsProject(worker.ProjectId.Value, userId))
+            {
+                ModelState.AddModelError(nameof(worker.ProjectId), "Select a valid project for this worker.");
+            }
+
             if (ModelState.IsValid)
             {
-                if (worker.UserId != userId && worker.UserId != null) return Unauthorized();
-
                 try
                 {
-                    _context.Update(worker);
+                    var targetProjectId = worker.ProjectId.GetValueOrDefault();
+                    existingWorker.ProjectId = targetProjectId;
+                    existingWorker.FullName = worker.FullName?.Trim() ?? string.Empty;
+                    existingWorker.Phone = worker.Phone;
+                    existingWorker.Cnic = worker.Cnic;
+                    existingWorker.DailyWage = worker.DailyWage;
+                    existingWorker.SkillType = worker.SkillType?.Trim();
+                    existingWorker.IsActive = worker.IsActive;
+                    existingWorker.UserId ??= userId;
+                    var alreadyAssigned = await _context.WorkerProjectAssignments
+                        .AnyAsync(a => a.WorkerId == existingWorker.WorkerId && a.ProjectId == targetProjectId);
+                    if (!alreadyAssigned)
+                    {
+                        _context.WorkerProjectAssignments.Add(new WorkerProjectAssignment
+                        {
+                            WorkerId = existingWorker.WorkerId,
+                            ProjectId = targetProjectId,
+                            AssignedAt = DateTime.Now
+                        });
+                    }
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -345,18 +460,20 @@ namespace BuildWise.Controllers
                 catch (DbUpdateException)
                 {
                     ModelState.AddModelError(nameof(worker.Cnic), "A worker with this CNIC already exists.");
-                    ViewData["ContractorId"] = new SelectList(_context.Contractors.Where(c => c.UserId == userId || c.UserId == null), "ContractorId", "FullName", worker.ContractorId);
+                    PopulateProjectSelectList(userId, worker.ProjectId);
                     return View(worker);
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ContractorId"] = new SelectList(_context.Contractors.Where(c => c.UserId == userId || c.UserId == null), "ContractorId", "FullName", worker.ContractorId);
+            PopulateProjectSelectList(userId, worker.ProjectId);
             return View(worker);
         }
 
         // GET: Workers/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             if (id == null) return NotFound();
             int userId = GetUserId();
 
@@ -373,6 +490,8 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
             int userId = GetUserId();
             var worker = await _context.Workers.FirstOrDefaultAsync(w => w.WorkerId == id && (w.UserId == userId || w.UserId == null));
             if (worker != null)
@@ -387,9 +506,55 @@ namespace BuildWise.Controllers
 
         private IQueryable<Worker> GetScopedWorkersQuery(int userId, int? selectedProjectId)
         {
-            return _context.Workers
-                .Where(w => w.UserId == userId || w.UserId == null)
-                .AsQueryable();
+            var query = _context.Workers
+                .Where(w => w.UserId == userId || w.UserId == null);
+
+            if (selectedProjectId.HasValue)
+            {
+                query = query.Where(w =>
+                    w.ProjectId == selectedProjectId.Value ||
+                    w.WorkerProjectAssignments.Any(a => a.ProjectId == selectedProjectId.Value));
+            }
+
+            return query.AsQueryable();
+        }
+
+        private bool UserOwnsProject(int projectId, int userId)
+        {
+            return _context.Projects.Any(p => p.ProjectId == projectId && p.UserId == userId);
+        }
+
+        private void PopulateProjectSelectList(int userId, int? selectedProjectId)
+        {
+            ViewData["ProjectId"] = new SelectList(
+                _context.Projects
+                    .Where(p => p.UserId == userId)
+                    .OrderBy(p => p.ProjectName),
+                "ProjectId",
+                "ProjectName",
+                selectedProjectId);
+        }
+
+        private async System.Threading.Tasks.Task PopulateExistingWorkerSelectList(int userId, int? selectedProjectId)
+        {
+            if (!selectedProjectId.HasValue)
+            {
+                ViewBag.ExistingWorkers = new List<SelectListItem>();
+                return;
+            }
+
+            ViewBag.ExistingWorkers = await _context.Workers
+                .Where(w => w.UserId == userId)
+                .Where(w => w.ProjectId != selectedProjectId.Value)
+                .Where(w => w.WorkerProjectAssignments.Any(a => a.ProjectId != selectedProjectId.Value))
+                .Where(w => !w.WorkerProjectAssignments.Any(a => a.ProjectId == selectedProjectId.Value))
+                .OrderBy(w => w.FullName)
+                .Select(w => new SelectListItem
+                {
+                    Value = w.WorkerId.ToString(),
+                    Text = w.FullName + (string.IsNullOrWhiteSpace(w.SkillType) ? "" : $" ({w.SkillType})")
+                })
+                .ToListAsync();
         }
 
         private static decimal ParseBonus(string? rawValue)

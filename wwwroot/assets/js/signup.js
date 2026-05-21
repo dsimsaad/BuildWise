@@ -75,7 +75,6 @@ const submitBtn = document.getElementById('submitBtn');
 const googleBtn = document.querySelector('.glass-btn-google');
 
 async function sendTokenToBackend(idToken, fullName = null) {
-    console.log("Sending token to backend...");
     try {
         const response = await fetch('/Account/FirebaseLogin', {
             method: 'POST',
@@ -90,10 +89,8 @@ async function sendTokenToBackend(idToken, fullName = null) {
         });
         
         const data = await response.json();
-        console.log("Backend response:", data);
 
         if (data.success) {
-            console.log("Success! Redirecting to:", data.redirectUrl);
             submitBtn.innerHTML = '<span>Redirecting...</span>';
             window.location.assign(data.redirectUrl);
         } else {

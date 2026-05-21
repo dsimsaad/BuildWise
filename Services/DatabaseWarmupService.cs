@@ -31,6 +31,8 @@ public sealed class DatabaseWarmupService : BackgroundService
         {
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<BuildWiseDbContext>();
+            var workerProjectSchema = scope.ServiceProvider.GetRequiredService<WorkerProjectSchemaService>();
+            await workerProjectSchema.EnsureAsync(stoppingToken);
             await context.Database.ExecuteSqlRawAsync("SELECT 1", stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -41,4 +43,5 @@ public sealed class DatabaseWarmupService : BackgroundService
             _logger.LogDebug(ex, "Database warmup skipped.");
         }
     }
+
 }

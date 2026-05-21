@@ -53,7 +53,7 @@ ORDER BY cp.SortOrder";
                     ConstructionPhase item = new ConstructionPhase();
                     item.PhaseId = Convert.ToInt32(reader["PhaseId"]);
                     item.ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null;
-                    item.PhaseName = reader["PhaseName"].ToString();
+                    item.PhaseName = reader["PhaseName"]?.ToString() ?? "";
                     item.Weight = Convert.ToDecimal(reader["Weight"]);
                     item.SortOrder = Convert.ToInt32(reader["SortOrder"]);
                     item.CreatedAt = Convert.ToDateTime(reader["CreatedAt"]);
@@ -104,6 +104,23 @@ ORDER BY cp.SortOrder";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@Id", id);
                 return cmd.ExecuteNonQuery() > 0;
+            }
+        }
+
+        public bool BelongsToUser(int phaseId, int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = @"
+SELECT COUNT(1)
+FROM ConstructionPhases cp
+INNER JOIN Projects p ON cp.ProjectId = p.ProjectId
+WHERE cp.PhaseId = @PhaseId AND p.UserId = @UserId";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@PhaseId", phaseId);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
             }
         }
     }

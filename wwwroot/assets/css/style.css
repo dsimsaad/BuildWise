@@ -33,6 +33,27 @@ body {
 .reveal:nth-child(3) { transition-delay: 0.16s; }
 .reveal:nth-child(4) { transition-delay: 0.24s; }
 
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal,
+  .reveal.active,
+  .faq-answer,
+  .faq-chevron,
+  .feature-card,
+  .feat-card,
+  .btn-nav,
+  .btn-primary,
+  .btn-outline,
+  .btn-hero-primary,
+  .btn-hero-outline,
+  .cta-primary,
+  .cta-outline,
+  .btn-submit {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
 /* Dashboard Mockup Float */
 @keyframes float-mockup {
   0% { transform: translateY(0); box-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.15); }
@@ -121,6 +142,17 @@ nav {
 .btn-nav:hover { background: #1E40AF !important; transform: translateY(-1px); }
 
 .mobile-menu-btn, .mobile-nav-overlay { display: none; }
+
+.logos-section,
+.features-section,
+.cta-section,
+.feat-section,
+.feat-cta,
+.faq-body,
+.contact-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
+}
 
 @media (max-width: 768px) {
   .nav-inner { grid-template-columns: 1fr auto; height: 70px; padding: 0 20px; }

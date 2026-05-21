@@ -47,7 +47,6 @@ namespace BuildWise.BusinessLayer
 
             purchase.ProjectId = projectId;
             
-            // Note: TotalCost is calculated in DAL
             await _materialDal.AddPurchaseAsync(purchase);
         }
 

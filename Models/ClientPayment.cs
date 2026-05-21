@@ -5,16 +5,9 @@ namespace BuildWise.Models;
 
 public partial class ClientPayment
 {
-    /// <summary>
-    /// Auto-increment PK
-    /// </summary>
     public int PaymentId { get; set; }
 
     public int ProjectId { get; set; }
-
-    /// <summary>
-    /// Money received from client in PKR
-    /// </summary>
     public decimal Amount { get; set; }
 
     public DateOnly PaymentDate { get; set; }

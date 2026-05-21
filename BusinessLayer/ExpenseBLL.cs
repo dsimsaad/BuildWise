@@ -24,7 +24,7 @@ namespace BuildWise.BusinessLayer
             return expenseDal.GetAll(projectId, userId);
         }
 
-        public ExpenseItem GetExpenseById(int id)
+        public ExpenseItem? GetExpenseById(int id)
         {
             return expenseDal.GetById(id);
         }
@@ -65,7 +65,7 @@ namespace BuildWise.BusinessLayer
         {
             if (id <= 0) return false;
 
-            ExpenseItem item = expenseDal.GetById(id);
+            ExpenseItem? item = expenseDal.GetById(id);
             if (item == null) return false;
 
             bool success = expenseDal.Delete(id);

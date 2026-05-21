@@ -63,10 +63,12 @@ namespace BuildWise.BusinessLayer
         public bool AddPhase(ConstructionPhase phase) => phaseDal.Add(phase);
         public bool UpdatePhase(ConstructionPhase phase) => phaseDal.Update(phase);
         public bool DeletePhase(int id) => phaseDal.Delete(id);
+        public bool PhaseBelongsToUser(int phaseId, int userId) => phaseDal.BelongsToUser(phaseId, userId);
 
         // Task CRUD
         public bool AddTask(PhaseTask task) => taskDal.Add(task);
         public bool UpdateTask(PhaseTask task) => taskDal.Update(task);
         public bool DeleteTask(int id) => taskDal.Delete(id);
+        public bool TaskBelongsToUser(int taskId, int userId) => taskDal.BelongsToUser(taskId, userId);
     }
 }

@@ -1,14 +1,12 @@
 namespace BuildWise.Models
 {
-    /// <summary>
-    /// Represents an advisor rule result shown on the Cost Advisor page
-    /// </summary>
+
     public class AdvisorResult
     {
         public string RuleName { get; set; }
-        public string Severity { get; set; }   // Warning, Alert, Caution, Info, Success
+        public string Severity { get; set; }   
         public string Message { get; set; }
-        public string Category { get; set; }   // which category it relates to (or "General")
+        public string Category { get; set; }   
 
         public AdvisorResult()
         {

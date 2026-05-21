@@ -3,9 +3,6 @@ using BuildWise.DataLayer;
 
 namespace BuildWise.BusinessLayer
 {
-    /// <summary>
-    /// Cost Advisor - Rule-based expert system logic
-    /// </summary>
     public class AdvisorBLL
     {
         private BudgetDAL budgetDal;
@@ -32,7 +29,6 @@ namespace BuildWise.BusinessLayer
             List<BudgetItem> budgetItems = budgetDal.GetAll(projectId, userId);
             List<BudgetItem> expenseItems = expenseDal.GetExpensesByCategory(projectId);
 
-            // 1. Total Budget vs Total Spent Rules
             if (totalBudget == 0)
             {
                 results.Add(new AdvisorResult("No Budget Set", "Warning", "No budget has been set. Please set a budget to track expenses.", "General"));
@@ -62,7 +58,6 @@ namespace BuildWise.BusinessLayer
                 results.Add(new AdvisorResult("No Expenses", "Info", "No expenses recorded yet. Start adding expenses to get insights.", "General"));
             }
 
-            // 2. Category specific rules
             foreach (var b in budgetItems)
             {
                 var expense = expenseItems.FirstOrDefault(e => e.Category == b.Category);
@@ -78,7 +73,6 @@ namespace BuildWise.BusinessLayer
                 }
             }
 
-            // 3. Labour & Miscellaneous Ratio Rules
             decimal labourSpent = expenseItems.FirstOrDefault(e => e.Category == "Labour")?.Amount ?? 0;
             if (totalSpent > 0 && (labourSpent / totalSpent) > 0.40m)
             {

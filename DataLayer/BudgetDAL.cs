@@ -53,7 +53,7 @@ ORDER BY b.Category";
                     BudgetItem item = new BudgetItem();
                     item.BudgetId = Convert.ToInt32(reader["BudgetId"]);
                     item.ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null;
-                    item.Category = reader["Category"].ToString();
+                    item.Category = reader["Category"]?.ToString() ?? "";
                     item.Amount = Convert.ToDecimal(reader["Amount"]);
                     item.CreatedAt = Convert.ToDateTime(reader["CreatedAt"]);
                     item.UpdatedAt = Convert.ToDateTime(reader["UpdatedAt"]);
@@ -64,9 +64,9 @@ ORDER BY b.Category";
             return list;
         }
 
-        public BudgetItem GetById(int id)
+        public BudgetItem? GetById(int id)
         {
-            BudgetItem item = null;
+            BudgetItem? item = null;
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
@@ -81,7 +81,7 @@ ORDER BY b.Category";
                     item = new BudgetItem();
                     item.BudgetId = Convert.ToInt32(reader["BudgetId"]);
                     item.ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null;
-                    item.Category = reader["Category"].ToString();
+                    item.Category = reader["Category"]?.ToString() ?? "";
                     item.Amount = Convert.ToDecimal(reader["Amount"]);
                     item.CreatedAt = Convert.ToDateTime(reader["CreatedAt"]);
                     item.UpdatedAt = Convert.ToDateTime(reader["UpdatedAt"]);

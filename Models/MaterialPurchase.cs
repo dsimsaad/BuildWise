@@ -5,9 +5,6 @@ namespace BuildWise.Models;
 
 public partial class MaterialPurchase
 {
-    /// <summary>
-    /// Auto-increment PK
-    /// </summary>
     public int PurchaseId { get; set; }
 
     public int ProjectId { get; set; }
@@ -21,17 +18,10 @@ public partial class MaterialPurchase
     public byte UnitId { get; set; }
 
     public decimal UnitPrice { get; set; }
-
-    /// <summary>
-    /// Computed column: Quantity × UnitPrice, persisted
-    /// </summary>
     public decimal? TotalCost { get; set; }
 
     public DateOnly PurchaseDate { get; set; }
 
-    /// <summary>
-    /// Supplier invoice reference for audit trail
-    /// </summary>
     public string? InvoiceNumber { get; set; }
 
     public string? Notes { get; set; }

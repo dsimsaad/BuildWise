@@ -3,9 +3,7 @@ using BuildWise.DataLayer;
 
 namespace BuildWise.BusinessLayer
 {
-    /// <summary>
-    /// Business Logic Layer for Transaction Log viewing and filtering
-    /// </summary>
+   
     public class TransactionBLL
     {
         private TransactionDAL dal;

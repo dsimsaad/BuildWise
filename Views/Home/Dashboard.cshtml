@@ -6,8 +6,9 @@
 
     decimal totalBudget   = ViewBag.TotalBudget   ?? 0m;
     decimal totalExpenses = ViewBag.TotalExpenses  ?? 0m;
-    int totalWorkers      = ViewBag.TotalWorkers   ?? 0;
-    int workersOnSite     = ViewBag.WorkersOnSite  ?? 0;
+    int totalWorkers      = Convert.ToInt32(ViewBag.TotalWorkers ?? 0);
+    int workersOnSite     = Convert.ToInt32(ViewBag.WorkersOnSite ?? 0);
+    int workersInactive   = Convert.ToInt32(ViewBag.WorkersInactive ?? Math.Max(0, totalWorkers - workersOnSite));
 
     var recentExpenses  = ViewBag.RecentExpensesList as List<TransactionLog> ?? new();
     var monthlyExpenses = ViewBag.MonthlyExpenses as System.Collections.IEnumerable;
@@ -56,6 +57,7 @@
                 <div class="db-kpi-value-row">
                     <span class="db-kpi-value" id="statTotalWorkers">@totalWorkers</span>
                     <span class="db-kpi-badge db-kpi-badge--green" id="statWorkersOnSite">@workersOnSite Active</span>
+                    <span class="db-kpi-badge db-kpi-badge--red" id="statWorkersInactive">@workersInactive Inactive</span>
                 </div>
             </div>
             <div class="db-kpi-more-wrap">
@@ -570,10 +572,12 @@
         const te  = Number(data.totalExpenses  || 0);
         const tw  = Number(data.totalWorkers   || 0);
         const ws  = Number(data.workersOnSite  || 0);
+        const wi  = Number(data.workersInactive ?? Math.max(0, tw - ws));
         const pct = tb > 0 ? te / tb * 100 : 0;
 
         document.getElementById('statTotalWorkers').textContent  = tw;
         document.getElementById('statWorkersOnSite').textContent = `${ws} Active`;
+        document.getElementById('statWorkersInactive').textContent = `${wi} Inactive`;
         document.getElementById('workersProgressBar').style.width = `${tw > 0 ? Math.min(100, ws * 100 / tw) : 0}%`;
         document.getElementById('statTotalBudget').textContent   = formatPKR(tb);
         document.getElementById('statTotalExpenses').textContent = formatPKR(te);

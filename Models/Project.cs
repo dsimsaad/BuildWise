@@ -5,14 +5,8 @@ namespace BuildWise.Models;
 
 public partial class Project
 {
-    /// <summary>
-    /// Auto-increment PK
-    /// </summary>
-    public int ProjectId { get; set; }
 
-    /// <summary>
-    /// FK to Properties — which property this project is on
-    /// </summary>
+    public int ProjectId { get; set; }
     public int PropertyId { get; set; }
 
     public int UserId { get; set; }
@@ -24,20 +18,8 @@ public partial class Project
     public DateOnly StartDate { get; set; }
 
     public DateOnly? ExpectedEndDate { get; set; }
-
-    /// <summary>
-    /// Filled when project is marked complete
-    /// </summary>
     public DateOnly? ActualEndDate { get; set; }
-
-    /// <summary>
-    /// Overall approved budget in PKR
-    /// </summary>
     public decimal TotalBudget { get; set; }
-
-    /// <summary>
-    /// 1 = project closed, 0 = ongoing
-    /// </summary>
     public bool IsCompleted { get; set; }
 
     public DateTime CreatedAt { get; set; }

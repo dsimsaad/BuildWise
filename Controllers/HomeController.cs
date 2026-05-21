@@ -5,6 +5,7 @@ using BuildWise.BusinessLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using BuildWise.Services;
 
 namespace BuildWise.Controllers;
 
@@ -12,11 +13,13 @@ public class HomeController : Controller
 {
     private readonly BuildWiseDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly WorkerProjectSchemaService _workerProjectSchema;
 
-    public HomeController(BuildWiseDbContext context, IConfiguration configuration)
+    public HomeController(BuildWiseDbContext context, IConfiguration configuration, WorkerProjectSchemaService workerProjectSchema)
     {
         _context = context;
         _configuration = configuration;
+        _workerProjectSchema = workerProjectSchema;
     }
 
     public IActionResult Index()
@@ -41,7 +44,7 @@ public class HomeController : Controller
 
     public IActionResult Features()
     {
-        return View();
+        return View("features");
     }
 
     public IActionResult Pricing()
@@ -61,7 +64,7 @@ public class HomeController : Controller
 
     public IActionResult FAQ()
     {
-        return View();
+        return View("faq");
     }
 
     public IActionResult Login()
@@ -85,6 +88,8 @@ public class HomeController : Controller
     [Authorize]
     public async Task<IActionResult> Dashboard(bool overall = false)
     {
+        await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
         // 1. Get current User ID from claims
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
         if (userIdClaim == null) return RedirectToAction("Index", "Account");
@@ -151,10 +156,12 @@ public class HomeController : Controller
             ViewBag.TotalExpenses   = expenseBll.GetTotalSpent(selectedProjectId);
             ViewBag.ActiveProjectName = activeStats?.ProjectName;
 
-            ViewBag.TotalWorkers = await _context.Workers
-                .CountAsync(w => (w.UserId == userId || w.UserId == null) && w.IsActive);
-
-            ViewBag.WorkersOnSite = ViewBag.TotalWorkers;
+            var totalWorkers = await GetProjectWorkersQuery(userId, selectedProjectId.Value).CountAsync();
+            var workersOnSite = await GetProjectWorkersQuery(userId, selectedProjectId.Value)
+                .CountAsync(w => w.IsActive);
+            ViewBag.TotalWorkers = totalWorkers;
+            ViewBag.WorkersOnSite = workersOnSite;
+            ViewBag.WorkersInactive = Math.Max(0, totalWorkers - workersOnSite);
 
             ViewBag.TotalTasks      = activeStats?.TotalTasks ?? 0;
             ViewBag.TasksToDo       = await scopedTaskQuery.CountAsync(t => t.StatusId == 1);
@@ -172,8 +179,11 @@ public class HomeController : Controller
             var allStats = await vwDashQuery.ToListAsync();
             ViewBag.TotalProjects   = allStats.Count;
             ViewBag.ActiveProjects  = allStats.Count(s => !s.IsCompleted);
-            ViewBag.TotalWorkers    = await _context.Workers.CountAsync(w => (w.UserId == userId || w.UserId == null) && w.IsActive);
-            ViewBag.WorkersOnSite   = ViewBag.TotalWorkers;
+            var totalWorkers = await _context.Workers.CountAsync(w => w.UserId == userId);
+            var workersOnSite = await _context.Workers.CountAsync(w => w.UserId == userId && w.IsActive);
+            ViewBag.TotalWorkers = totalWorkers;
+            ViewBag.WorkersOnSite = workersOnSite;
+            ViewBag.WorkersInactive = Math.Max(0, totalWorkers - workersOnSite);
             
             var approvedBudget = await _context.Projects
                 .Where(p => p.UserId == userId)
@@ -224,6 +234,8 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<IActionResult> DashboardData(bool overall = false)
     {
+        await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
         if (userIdClaim == null) return Unauthorized();
         int userId = int.Parse(userIdClaim.Value);
@@ -256,9 +268,13 @@ public class HomeController : Controller
             ? expenseBll.GetTotalSpent(selectedProjectId)
             : expenseBll.GetTotalSpentForUser(userId);
 
-        int totalWorkers = await _context.Workers
-            .CountAsync(w => (w.UserId == userId || w.UserId == null) && w.IsActive);
-        int workersOnSite = totalWorkers;
+        int totalWorkers = selectedProjectId.HasValue
+            ? await GetProjectWorkersQuery(userId, selectedProjectId.Value).CountAsync()
+            : await _context.Workers.CountAsync(w => w.UserId == userId);
+        int workersOnSite = selectedProjectId.HasValue
+            ? await GetProjectWorkersQuery(userId, selectedProjectId.Value).CountAsync(w => w.IsActive)
+            : await _context.Workers.CountAsync(w => w.UserId == userId && w.IsActive);
+        int workersInactive = Math.Max(0, totalWorkers - workersOnSite);
 
         var categoryExpenses = expenseBll.GetExpensesByCategory(selectedProjectId, userId);
 
@@ -277,6 +293,7 @@ public class HomeController : Controller
             totalExpenses,
             totalWorkers,
             workersOnSite,
+            workersInactive,
             categoryExpenses,
             recentExpenses,
             monthlyExpenses
@@ -291,6 +308,13 @@ public class HomeController : Controller
             .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(e => e.Amount)))
             .TakeLast(12)
             .ToList();
+    }
+
+    private IQueryable<Worker> GetProjectWorkersQuery(int userId, int projectId)
+    {
+        return _context.Workers.Where(w =>
+            w.UserId == userId &&
+            (w.ProjectId == projectId || w.WorkerProjectAssignments.Any(a => a.ProjectId == projectId)));
     }
 
     private sealed record MonthlyExpensePoint(int Year, int Month, decimal Total);

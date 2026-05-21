@@ -1,8 +1,5 @@
 namespace BuildWise.Models
 {
-    /// <summary>
-    /// Represents a budget allocation for a specific category
-    /// </summary>
     public class BudgetItem
     {
         public int BudgetId { get; set; }

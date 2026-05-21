@@ -8,8 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In | BuildWise</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="~/assets/css/style.css">
-    <link rel="icon" type="image/png" href="~/logo.png" />
+    <link rel="stylesheet" href="~/assets/css/style.css" asp-append-version="true">
+    <link rel="icon" type="image/png" href="~/assets/images/logo-72.png" asp-append-version="true" />
 </head>
 <body class="login-body">
 
@@ -25,7 +25,7 @@
         <div class="glass-card" id="glassCard">
             <div class="login-header">
                 <div class="logo-box">
-                    <img src="~/logo.png" alt="Logo" style="width:24px;height:24px;object-fit:contain;" />
+                    <img src="~/assets/images/logo-72.png" alt="Logo" width="24" height="24" style="width:24px;height:24px;object-fit:contain;" decoding="async" asp-append-version="true" />
                 </div>
                 <h1>Welcome Back</h1>
                 <p>Please enter your details to sign in</p>
@@ -124,7 +124,6 @@
         </div>
     </div>
 
-    <script src="~/assets/js/main.js"></script>
-    <script type="module" src="~/assets/js/login.js"></script>
+    <script type="module" src="~/assets/js/login.js" asp-append-version="true"></script>
 </body>
 </html>

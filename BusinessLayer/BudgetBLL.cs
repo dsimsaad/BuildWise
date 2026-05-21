@@ -22,7 +22,7 @@ namespace BuildWise.BusinessLayer
             return dal.GetAll(projectId, userId);
         }
 
-        public BudgetItem GetBudgetById(int id)
+        public BudgetItem? GetBudgetById(int id)
         {
             return dal.GetById(id);
         }

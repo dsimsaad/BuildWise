@@ -65,8 +65,8 @@ ORDER BY t.TransactionDate DESC";
                         TransactionId = Convert.ToInt32(reader["TransactionId"]),
                         ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null,
                         TransactionDate = Convert.ToDateTime(reader["TransactionDate"]),
-                        TransactionType = reader["TransactionType"].ToString(),
-                        Category = reader["Category"].ToString(),
+                        TransactionType = reader["TransactionType"]?.ToString() ?? "",
+                        Category = reader["Category"]?.ToString() ?? "",
                         Description = reader["Description"]?.ToString() ?? "",
                         Amount = Convert.ToDecimal(reader["Amount"]),
                         BudgetEffect = reader["BudgetEffect"] != DBNull.Value ? Convert.ToDecimal(reader["BudgetEffect"]) : 0
@@ -112,8 +112,8 @@ WHERE (@ProjectId IS NULL OR t.ProjectId = @ProjectId)
                         TransactionId = Convert.ToInt32(reader["TransactionId"]),
                         ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null,
                         TransactionDate = Convert.ToDateTime(reader["TransactionDate"]),
-                        TransactionType = reader["TransactionType"].ToString(),
-                        Category = reader["Category"].ToString(),
+                        TransactionType = reader["TransactionType"]?.ToString() ?? "",
+                        Category = reader["Category"]?.ToString() ?? "",
                         Description = reader["Description"]?.ToString() ?? "",
                         Amount = Convert.ToDecimal(reader["Amount"]),
                         BudgetEffect = reader["BudgetEffect"] != DBNull.Value ? Convert.ToDecimal(reader["BudgetEffect"]) : 0

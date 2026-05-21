@@ -53,8 +53,8 @@ ORDER BY e.ExpenseDate DESC";
                     ExpenseItem item = new ExpenseItem();
                     item.ExpenseId = Convert.ToInt32(reader["ExpenseId"]);
                     item.ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null;
-                    item.Category = reader["Category"].ToString();
-                    item.Description = reader["Description"] != DBNull.Value ? reader["Description"].ToString() : "";
+                    item.Category = reader["Category"]?.ToString() ?? "";
+                    item.Description = reader["Description"] != DBNull.Value ? reader["Description"]?.ToString() ?? "" : "";
                     item.Amount = Convert.ToDecimal(reader["Amount"]);
                     item.ExpenseDate = Convert.ToDateTime(reader["ExpenseDate"]);
                     item.CreatedAt = Convert.ToDateTime(reader["CreatedAt"]);
@@ -66,9 +66,9 @@ ORDER BY e.ExpenseDate DESC";
             return list;
         }
 
-        public ExpenseItem GetById(int id)
+        public ExpenseItem? GetById(int id)
         {
-            ExpenseItem item = null;
+            ExpenseItem? item = null;
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
@@ -83,8 +83,8 @@ ORDER BY e.ExpenseDate DESC";
                     item = new ExpenseItem();
                     item.ExpenseId = Convert.ToInt32(reader["ExpenseId"]);
                     item.ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null;
-                    item.Category = reader["Category"].ToString();
-                    item.Description = reader["Description"] != DBNull.Value ? reader["Description"].ToString() : "";
+                    item.Category = reader["Category"]?.ToString() ?? "";
+                    item.Description = reader["Description"] != DBNull.Value ? reader["Description"]?.ToString() ?? "" : "";
                     item.Amount = Convert.ToDecimal(reader["Amount"]);
                     item.ExpenseDate = Convert.ToDateTime(reader["ExpenseDate"]);
                     item.CreatedAt = Convert.ToDateTime(reader["CreatedAt"]);
@@ -104,7 +104,7 @@ ORDER BY e.ExpenseDate DESC";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ProjectId", (object?)item.ProjectId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Category", item.Category);
-                cmd.Parameters.AddWithValue("@Description", (object)item.Description ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Description", (object?)item.Description ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Amount", item.Amount);
                 cmd.Parameters.AddWithValue("@ExpenseDate", item.ExpenseDate);
                 return cmd.ExecuteNonQuery() > 0;
@@ -120,7 +120,7 @@ ORDER BY e.ExpenseDate DESC";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@Id", item.ExpenseId);
                 cmd.Parameters.AddWithValue("@Category", item.Category);
-                cmd.Parameters.AddWithValue("@Description", (object)item.Description ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Description", (object?)item.Description ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Amount", item.Amount);
                 cmd.Parameters.AddWithValue("@ExpenseDate", item.ExpenseDate);
                 return cmd.ExecuteNonQuery() > 0;
@@ -195,7 +195,7 @@ ORDER BY e.Category";
                 while (reader.Read())
                 {
                     BudgetItem item = new BudgetItem();
-                    item.Category = reader["Category"].ToString();
+                    item.Category = reader["Category"]?.ToString() ?? "";
                     item.Amount = Convert.ToDecimal(reader["Amount"]);
                     list.Add(item);
                 }

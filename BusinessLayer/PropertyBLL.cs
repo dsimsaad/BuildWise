@@ -38,12 +38,10 @@ namespace BuildWise.BusinessLayer
 
         public async Task UpdatePropertyAsync(Property property, int currentUserId)
         {
-            // Security check: ensure property belongs to user before update
             var existing = await _propertyDal.GetPropertyByIdAsync(property.PropertyId, currentUserId);
             if (existing == null)
                 throw new UnauthorizedAccessException("Property not found or access denied.");
 
-            // Update allowed fields
             existing.PropertyName = property.PropertyName;
             existing.TypeId = property.TypeId;
             existing.StatusId = property.StatusId;

@@ -6,10 +6,61 @@
     var commonSkills = ViewBag.CommonSkills as IEnumerable<string> ?? Enumerable.Empty<string>();
     var selectedSkillChoice = ViewBag.SelectedSkillChoice as string;
     var customSkill = ViewBag.CustomSkill as string;
+    var existingWorkers = ViewBag.ExistingWorkers as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/modules.css">
+    <style>
+        .worker-create-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .cross-project-btn {
+            border: 1px solid #BFDBFE;
+            border-radius: 999px;
+            padding: 11px 18px;
+            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+            color: #1D4ED8;
+            font-weight: 800;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(29, 78, 216, 0.12);
+            transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+        }
+
+        .cross-project-btn:hover {
+            transform: translateY(-1px);
+            border-color: #1D4ED8;
+            box-shadow: 0 12px 26px rgba(29, 78, 216, 0.18);
+        }
+
+        .cross-project-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+        }
+
+        .existing-worker-panel {
+            display: none;
+            margin-bottom: 24px;
+            padding: 18px;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+        }
+
+        .existing-worker-panel.is-open {
+            display: block;
+        }
+    </style>
 }
 
 <div class="module-header">
@@ -20,8 +71,51 @@
 </div>
 
 <div class="scaffold-form-card">
+    @if (existingWorkers.Any())
+    {
+        <div class="worker-create-actions">
+            <button type="button" class="cross-project-btn" id="showExistingWorkerBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M16 3h5v5"></path>
+                    <path d="M21 3l-7 7"></path>
+                    <path d="M8 21H3v-5"></path>
+                    <path d="M3 21l7-7"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Add Worker from Another Project
+            </button>
+        </div>
+        <div>
+            <div class="existing-worker-panel" id="existingWorkerPanel">
+                <form asp-action="AddExistingToProject" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="existingProjectId" name="projectId" value="@(Model?.ProjectId ?? ViewBag.SelectedProjectId)" />
+                    <div class="form-group">
+                        <label for="workerId">Choose Worker</label>
+                        <select id="workerId" name="workerId" class="form-control" required>
+                            <option value="">Select worker from another project</option>
+                            @foreach (var worker in existingWorkers)
+                            {
+                                <option value="@worker.Value">@worker.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Add to Project</button>
+                </form>
+            </div>
+        </div>
+    }
+
     <form asp-action="Create">
+        <h3 style="font-size: 1rem; margin: 0 0 14px; color: #0F172A;">Create New Worker</h3>
         <div asp-validation-summary="ModelOnly" class="text-danger" style="color: #EF4444; font-size: 0.8125rem; margin-bottom: 16px;"></div>
+        <div class="form-group">
+            <label asp-for="ProjectId">Project</label>
+            <select asp-for="ProjectId" class="form-control" asp-items="ViewBag.ProjectId" required>
+                <option value="">Select project</option>
+            </select>
+            <span asp-validation-for="ProjectId" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
+        </div>
         <div class="form-group">
             <label asp-for="FullName">Full Name</label>
             <input asp-for="FullName" class="form-control" placeholder="Worker's full name" required />
@@ -59,7 +153,7 @@
             <span asp-validation-for="DailyWage" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
         </div>
         <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button type="submit" class="btn-primary">Add Worker</button>
+            <button type="submit" class="btn-primary">Create Worker</button>
             <a asp-action="Index" class="back-link">← Back to List</a>
         </div>
     </form>
@@ -70,6 +164,10 @@
     <script>
         const skillChoice = document.getElementById('SkillChoice');
         const customSkillGroup = document.getElementById('customSkillGroup');
+        const projectSelect = document.getElementById('ProjectId');
+        const existingProjectInput = document.getElementById('existingProjectId');
+        const showExistingWorkerBtn = document.getElementById('showExistingWorkerBtn');
+        const existingWorkerPanel = document.getElementById('existingWorkerPanel');
 
         function toggleCustomSkill() {
             const customSelected = skillChoice.value === 'Custom';
@@ -79,5 +177,13 @@
 
         skillChoice.addEventListener('change', toggleCustomSkill);
         toggleCustomSkill();
+
+        projectSelect?.addEventListener('change', () => {
+            if (existingProjectInput) existingProjectInput.value = projectSelect.value;
+        });
+
+        showExistingWorkerBtn?.addEventListener('click', () => {
+            existingWorkerPanel?.classList.toggle('is-open');
+        });
     </script>
 }
