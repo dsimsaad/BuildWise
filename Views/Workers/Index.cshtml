@@ -23,6 +23,7 @@
     var selectedProjectId = ViewBag.SelectedProjectId as int?;
     var todayWagesRecorded = ViewBag.TodayWagesRecorded as bool? ?? false;
     var workersMessage = TempData["WorkersMessage"] as string;
+    var averageDailyWage = Model.Any() ? Model.Average(w => w.DailyWage) : 0m;
 }
 
 @section Styles {
@@ -389,6 +390,15 @@
         <div class="sum-info">
             <h3>Inactive</h3>
             <p>@Model.Count(w => !w.IsActive)</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#EFF6FF; color:#1D4ED8;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Average Wage</h3>
+            <p>@FormatPkr(averageDailyWage)</p>
         </div>
     </div>
 </div>

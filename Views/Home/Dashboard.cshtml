@@ -29,6 +29,7 @@
         $"PKR {val.ToString("N0", new CultureInfo("en-IN"))}";
 
     double budgetUsedPct = totalBudget > 0 ? (double)(totalExpenses / totalBudget * 100) : 0;
+    bool isOverallDashboard = ViewBag.IsOverallDashboard == true;
 }
 
 <!-- ══════════════════════════════════════════════
@@ -39,13 +40,52 @@
         <h1 id="dashboardProjectTitle">@(ViewBag.ActiveProjectName ?? "Global Dashboard")</h1>
         <p class="db-subtitle">Overview of @(ViewBag.ActiveProjectName ?? "your projects and business performance")</p>
     </div>
-    <a asp-controller="Home" asp-action="Dashboard" asp-route-overall="true"
-       class="db-overall-btn">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>
-        Overall Stats
-    </a>
+    <div class="db-header-actions">
+        <button type="button" class="db-report-btn" id="openReportModal">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="M12 18v-6"/>
+                <path d="m9 15 3 3 3-3"/>
+            </svg>
+            Download Report
+        </button>
+        <a asp-controller="Home" asp-action="Dashboard" asp-route-overall="@(isOverallDashboard ? null : "true")"
+           class="db-overall-btn @(isOverallDashboard ? "is-active" : "")"
+           aria-pressed="@(isOverallDashboard.ToString().ToLowerInvariant())">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Overall Stats
+        </a>
+    </div>
+</div>
+
+<div class="db-report-modal" id="reportModal" aria-hidden="true">
+    <div class="db-report-backdrop" data-report-close></div>
+    <form asp-controller="Home" asp-action="DownloadDashboardReport" method="post" class="db-report-dialog">
+        <input type="hidden" name="Overall" value="@isOverallDashboard.ToString().ToLowerInvariant()" />
+        <div class="db-report-dialog-head">
+            <div>
+                <strong>Download Project Report</strong>
+                <span>Select the sections to include in the PDF.</span>
+            </div>
+            <button type="button" class="db-report-close" data-report-close aria-label="Close report dialog">×</button>
+        </div>
+        <div class="db-report-options">
+            <label><input type="checkbox" name="IncludeProperty" value="true" checked /><input type="hidden" name="IncludeProperty" value="false" /><span>Property & project details</span></label>
+            <label><input type="checkbox" name="IncludeWorkforce" value="true" checked /><input type="hidden" name="IncludeWorkforce" value="false" /><span>Workforce</span></label>
+            <label><input type="checkbox" name="IncludeBudget" value="true" checked /><input type="hidden" name="IncludeBudget" value="false" /><span>Budget</span></label>
+            <label><input type="checkbox" name="IncludeExpenses" value="true" checked /><input type="hidden" name="IncludeExpenses" value="false" /><span>Expenses</span></label>
+            <label><input type="checkbox" name="IncludeUsed" value="true" checked /><input type="hidden" name="IncludeUsed" value="false" /><span>Progress & usage</span></label>
+            <label><input type="checkbox" name="IncludeCharts" value="true" checked /><input type="hidden" name="IncludeCharts" value="false" /><span>Charts</span></label>
+            <label><input type="checkbox" name="IncludeMaterials" value="true" checked /><input type="hidden" name="IncludeMaterials" value="false" /><span>Materials</span></label>
+        </div>
+        <div class="db-report-dialog-actions">
+            <button type="button" class="db-report-secondary" data-report-close>Cancel</button>
+            <button type="submit" class="db-report-primary">Download PDF</button>
+        </div>
+    </form>
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -187,7 +227,7 @@
     <div class="db-card db-card--distribution">
         <div class="db-card-header">
             <span class="db-card-title">Expense Distribution</span>
-            <a href="/Budget" class="db-card-link">Manage Budget →</a>
+            <a href="/Budget" class="db-card-link">Manage Expenses →</a>
         </div>
         <div class="db-dist-body">
             <!-- Donut -->
@@ -218,7 +258,6 @@
                     <th>Date</th>
                     <th>Category</th>
                     <th>Amount</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody id="recentExpensesBody">
@@ -230,18 +269,13 @@
                             <td class="db-table-date">@exp.TransactionDate.ToString("MMM dd")</td>
                             <td class="db-table-cat">@exp.Category</td>
                             <td class="db-table-amount"><strong>@FormatMoney(exp.Amount)</strong></td>
-                            <td class="db-table-chevron">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#CBD5E1" stroke-width="2">
-                                    <polyline points="9 18 15 12 9 6"/>
-                                </svg>
-                            </td>
                         </tr>
                     }
                 }
                 else
                 {
                     <tr>
-                        <td colspan="4" class="db-table-empty">No expenses recorded yet.</td>
+                        <td colspan="3" class="db-table-empty">No expenses recorded yet.</td>
                     </tr>
                 }
             </tbody>
@@ -436,6 +470,15 @@
     }
     function formatPKR(value) {
         return `PKR ${Number(value || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
+    }
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[ch]));
     }
 
     // ─────────────────────────────────────────────
@@ -703,7 +746,7 @@
     function updateRecentExpenses(items) {
         const tbody = document.getElementById('recentExpensesBody');
         if (!items || !items.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="db-table-empty">No expenses recorded yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="db-table-empty">No expenses recorded yet.</td></tr>';
             return;
         }
         tbody.innerHTML = items.map(it => {
@@ -713,9 +756,8 @@
             const dt  = new Date(dv).toLocaleDateString(undefined, { month: 'short', day: '2-digit' });
             return `<tr class="db-table-row">
                 <td class="db-table-date">${dt}</td>
-                <td class="db-table-cat">${cat}</td>
+                <td class="db-table-cat">${escapeHtml(cat)}</td>
                 <td class="db-table-amount"><strong>${formatPKR(amt)}</strong></td>
-                <td class="db-table-chevron"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#CBD5E1" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></td>
             </tr>`;
         }).join('');
     }
@@ -766,6 +808,27 @@
     document.addEventListener('click', () => {
         document.querySelectorAll('.db-kpi-dropdown').forEach(m => m.classList.remove('is-open'));
         document.querySelectorAll('.db-kpi-more').forEach(b => b.classList.remove('is-active'));
+    });
+
+    // ─────────────────────────────────────────────
+    // REPORT DOWNLOAD MODAL
+    // ─────────────────────────────────────────────
+    const reportModal = document.getElementById('reportModal');
+    document.getElementById('openReportModal')?.addEventListener('click', () => {
+        reportModal.classList.add('is-open');
+        reportModal.setAttribute('aria-hidden', 'false');
+    });
+    document.querySelectorAll('[data-report-close]').forEach(el => {
+        el.addEventListener('click', () => {
+            reportModal.classList.remove('is-open');
+            reportModal.setAttribute('aria-hidden', 'true');
+        });
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && reportModal.classList.contains('is-open')) {
+            reportModal.classList.remove('is-open');
+            reportModal.setAttribute('aria-hidden', 'true');
+        }
     });
 
     // ─────────────────────────────────────────────

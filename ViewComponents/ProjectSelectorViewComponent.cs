@@ -42,8 +42,9 @@ public class ProjectSelectorViewComponent : ViewComponent
                 .ToListAsync();
         }) ?? new List<Project>();
 
-        var selectedProjectId = HttpContext.Session.GetInt32("SelectedProjectId");
-        if (!selectedProjectId.HasValue && projects.Count > 0)
+        bool isOverallMode = string.Equals(HttpContext.Request.Query["overall"], "true", StringComparison.OrdinalIgnoreCase);
+        var selectedProjectId = isOverallMode ? null : HttpContext.Session.GetInt32("SelectedProjectId");
+        if (!isOverallMode && !selectedProjectId.HasValue && projects.Count > 0)
         {
             selectedProjectId = projects[0].ProjectId;
             HttpContext.Session.SetInt32("SelectedProjectId", selectedProjectId.Value);
@@ -54,7 +55,10 @@ public class ProjectSelectorViewComponent : ViewComponent
             : null;
 
         ViewBag.SelectedProjectId = selectedProjectId;
-        ViewBag.ActiveProjectTag = activeProject == null
+        ViewBag.IsOverallMode = isOverallMode;
+        ViewBag.ActiveProjectTag = isOverallMode
+            ? "All Projects"
+            : activeProject == null
             ? "No Project"
             : activeProject.IsCompleted ? "Completed" : "Active";
 

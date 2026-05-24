@@ -147,6 +147,25 @@
             }).join('');
         }
 
+        function applyFiltersFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const category = params.get('category');
+            const type = params.get('type');
+            const fromDate = params.get('fromDate');
+            const toDate = params.get('toDate');
+
+            if (category) {
+                const categorySelect = document.getElementById('filter-category');
+                if (![...categorySelect.options].some(option => option.value === category)) {
+                    categorySelect.add(new Option(category, category));
+                }
+                categorySelect.value = category;
+            }
+            if (type) document.getElementById('filter-type').value = type;
+            if (fromDate) document.getElementById('filter-from').value = fromDate;
+            if (toDate) document.getElementById('filter-to').value = toDate;
+        }
+
         function resetFilters() {
             document.getElementById('filter-category').value = "";
             document.getElementById('filter-type').value = "";
@@ -155,6 +174,7 @@
             loadTransactions();
         }
 
+        applyFiltersFromQuery();
         loadTransactions();
     </script>
 }

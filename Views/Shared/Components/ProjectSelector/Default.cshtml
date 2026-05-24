@@ -1,6 +1,7 @@
 @model IEnumerable<BuildWise.Models.Project>
 @{
     int? selectedId = ViewBag.SelectedProjectId;
+    bool isOverallMode = ViewBag.IsOverallMode == true;
     var activeProject = Model.FirstOrDefault(p => p.ProjectId == selectedId);
     var activeTag = (string?)ViewBag.ActiveProjectTag ?? "Default";
 }
@@ -8,7 +9,7 @@
 <div class="project-selector-wrapper">
     <div class="project-selector-trigger" onclick="toggleProjectDropdown()">
         <div class="project-selector-info">
-            <span class="value">@(activeProject?.ProjectName ?? "No Project")</span>
+            <span class="value">@(isOverallMode ? "Overall Stats" : activeProject?.ProjectName ?? "No Project")</span>
             <span class="project-tag">@activeTag</span>
         </div>
         <svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>

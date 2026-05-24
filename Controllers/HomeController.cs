@@ -5,6 +5,7 @@ using BuildWise.BusinessLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.Globalization;
 using BuildWise.Services;
 
 namespace BuildWise.Controllers;
@@ -101,6 +102,7 @@ public class HomeController : Controller
         {
             HttpContext.Session.Remove("SelectedProjectId");
         }
+        ViewBag.IsOverallDashboard = overall;
         if (selectedProjectId.HasValue)
         {
             bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == selectedProjectId && p.UserId == userId);
@@ -309,6 +311,41 @@ public class HomeController : Controller
         });
     }
 
+    [Authorize]
+    [HttpPost]
+    public async Task<IActionResult> DownloadDashboardReport(DashboardReportOptions options)
+    {
+        await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+        if (userIdClaim == null) return Unauthorized();
+        int userId = int.Parse(userIdClaim.Value);
+
+        int? selectedProjectId = options.Overall ? null : HttpContext.Session.GetInt32("SelectedProjectId");
+        if (selectedProjectId.HasValue)
+        {
+            bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId);
+            if (!ownsProject) selectedProjectId = null;
+        }
+
+        if (!selectedProjectId.HasValue && !options.Overall)
+        {
+            selectedProjectId = await _context.Projects
+                .Where(p => p.UserId == userId)
+                .OrderBy(p => p.ProjectName == "main" ? 0 : 1)
+                .ThenBy(p => p.ProjectName)
+                .Select(p => (int?)p.ProjectId)
+                .FirstOrDefaultAsync();
+        }
+
+        var reportData = await BuildDashboardReportDataAsync(userId, selectedProjectId);
+        var pdf = new DashboardReportPdfBuilder(reportData, options).Build();
+        var fileScope = selectedProjectId.HasValue ? reportData.ScopeName : "Overall";
+        var fileName = $"BuildWise-{SanitizeFileName(fileScope)}-Report-{DateTime.Now:yyyyMMdd}.pdf";
+
+        return File(pdf, "application/pdf", fileName);
+    }
+
     private async Task<List<MonthlyExpensePoint>> BuildMonthlySpendingTrendAsync(ExpenseBLL expenseBll, int? projectId, int userId)
     {
         var monthly = expenseBll.GetAllExpenses(projectId, userId)
@@ -316,12 +353,27 @@ public class HomeController : Controller
             .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(e => e.Amount)))
             .ToList();
 
-        var materialPurchases = await _context.MaterialPurchases
+        var mirroredMaterialExpenseDescriptions = expenseBll.GetAllExpenses(projectId, userId)
+            .Where(e => string.Equals(e.Category, "Material", StringComparison.OrdinalIgnoreCase)
+                && e.Description.StartsWith("Material purchase #", StringComparison.OrdinalIgnoreCase))
+            .Select(e => e.Description)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var materialPurchaseRows = await _context.MaterialPurchases
             .AsNoTracking()
             .Where(m => m.Project.UserId == userId && (!projectId.HasValue || m.ProjectId == projectId.Value))
-            .GroupBy(m => new { m.PurchaseDate.Year, m.PurchaseDate.Month })
-            .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(m => m.TotalCost ?? 0)))
+            .Select(m => new
+            {
+                m.PurchaseId,
+                m.PurchaseDate,
+                Total = m.TotalCost ?? 0
+            })
             .ToListAsync();
+        var materialPurchases = materialPurchaseRows
+            .Where(m => !mirroredMaterialExpenseDescriptions.Any(d => d.StartsWith($"Material purchase #{m.PurchaseId}", StringComparison.OrdinalIgnoreCase)))
+            .GroupBy(m => new { m.PurchaseDate.Year, m.PurchaseDate.Month })
+            .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(m => m.Total)))
+            .ToList();
         monthly.AddRange(materialPurchases);
 
         var wagePayments = await _context.WagePayments
@@ -346,6 +398,152 @@ public class HomeController : Controller
         return _context.Workers.AsNoTracking().Where(w =>
             w.UserId == userId &&
             (w.ProjectId == projectId || w.WorkerProjectAssignments.Any(a => a.ProjectId == projectId)));
+    }
+
+    private async Task<DashboardReportData> BuildDashboardReportDataAsync(int userId, int? projectId)
+    {
+        var connectionString = _configuration.GetConnectionString("BuildWise") ?? "";
+        var budgetBll = new BudgetBLL(connectionString);
+        var expenseBll = new ExpenseBLL(connectionString);
+        var transactionBll = new TransactionBLL(connectionString);
+
+        var projectQuery = _context.Projects.AsNoTracking().Where(p => p.UserId == userId);
+        if (projectId.HasValue)
+            projectQuery = projectQuery.Where(p => p.ProjectId == projectId.Value);
+
+        var projectIds = await projectQuery.Select(p => p.ProjectId).ToListAsync();
+        var scopeName = projectId.HasValue
+            ? await _context.Projects.AsNoTracking()
+                .Where(p => p.ProjectId == projectId.Value && p.UserId == userId)
+                .Select(p => p.ProjectName)
+                .FirstOrDefaultAsync() ?? "Project"
+            : "Overall Stats";
+
+        decimal allocatedBudget = projectId.HasValue
+            ? budgetBll.GetTotalBudget(projectId)
+            : budgetBll.GetTotalBudgetForUser(userId);
+        decimal approvedBudget = projectId.HasValue
+            ? await _context.Projects
+                .Where(p => p.ProjectId == projectId.Value && p.UserId == userId)
+                .Select(p => p.TotalBudget)
+                .FirstOrDefaultAsync()
+            : await _context.Projects
+                .Where(p => p.UserId == userId)
+                .SumAsync(p => p.TotalBudget);
+        decimal totalBudget = approvedBudget > 0 ? approvedBudget : allocatedBudget;
+        decimal totalExpenses = projectId.HasValue
+            ? expenseBll.GetTotalSpent(projectId)
+            : expenseBll.GetTotalSpentForUser(userId);
+
+        var workersQuery = projectId.HasValue
+            ? GetProjectWorkersQuery(userId, projectId.Value)
+            : _context.Workers.AsNoTracking().Where(w => w.UserId == userId);
+        var totalWorkers = await workersQuery.CountAsync();
+        var activeWorkers = await workersQuery.CountAsync(w => w.IsActive);
+        var averageDailyWage = totalWorkers > 0 ? await workersQuery.AverageAsync(w => w.DailyWage) : 0m;
+        var workerSkillValues = await workersQuery
+            .Select(w => w.SkillType)
+            .ToListAsync();
+        var workerSkills = workerSkillValues
+            .GroupBy(skill => string.IsNullOrWhiteSpace(skill) ? "Unspecified" : skill)
+            .Select(g => new NameCount(g.Key!, g.Count()))
+            .OrderByDescending(g => g.Count)
+            .ThenBy(g => g.Name)
+            .ToList();
+
+        var propertyRows = await projectQuery
+            .Include(p => p.Property).ThenInclude(p => p.Type)
+            .Include(p => p.Property).ThenInclude(p => p.Status)
+            .Include(p => p.Property).ThenInclude(p => p.AreaUnit)
+            .ToListAsync();
+        var properties = propertyRows
+            .Select(p => new PropertyReportRow(
+                p.Property.PropertyName,
+                p.Property.Type.TypeName,
+                string.IsNullOrWhiteSpace(p.Property.City) ? p.Property.Location : p.Property.Location + ", " + p.Property.City,
+                p.Property.AreaSize.ToString("0.##") + " " + p.Property.AreaUnit.UnitName,
+                p.Property.Status.StatusName))
+            .Distinct()
+            .ToList();
+
+        var expenseCategories = expenseBll.GetExpensesByCategory(projectId, userId)
+            .OrderByDescending(e => e.Amount)
+            .Select(e => new NameAmount(e.Category, e.Amount))
+            .ToList();
+
+        var recentExpenses = transactionBll
+            .GetFilteredTransactions("", "", null, null, projectId, userId)
+            .Where(t => !string.Equals(t.Category, "Project Budget", StringComparison.OrdinalIgnoreCase))
+            .Take(10)
+            .Select(t => new RecentExpenseReportRow(t.TransactionDate.ToString("MMM dd, yyyy"), t.Category, t.Amount))
+            .ToList();
+
+        var materialRows = await _context.MaterialPurchases
+            .AsNoTracking()
+            .Where(m => m.Project.UserId == userId && (!projectId.HasValue || m.ProjectId == projectId.Value))
+            .Select(m => new
+            {
+                m.Material.MaterialName,
+                m.Unit.UnitName,
+                Purchased = m.Quantity,
+                Used = m.MaterialUsages.Sum(u => (decimal?)u.QuantityUsed) ?? 0m,
+                Cost = m.TotalCost ?? 0m
+            })
+            .ToListAsync();
+        var materials = materialRows
+            .GroupBy(m => new { m.MaterialName, m.UnitName })
+            .Select(g =>
+            {
+                var purchased = g.Sum(x => x.Purchased);
+                var used = g.Sum(x => x.Used);
+                return new MaterialReportRow(g.Key.MaterialName, g.Key.UnitName, purchased, used, purchased - used, g.Sum(x => x.Cost));
+            })
+            .OrderByDescending(m => m.Cost)
+            .ToList();
+
+        var phases = await _context.Phases
+            .AsNoTracking()
+            .Include(p => p.Tasks)
+            .Where(p => p.Project.UserId == userId && (!projectId.HasValue || p.ProjectId == projectId.Value))
+            .ToListAsync();
+        decimal constructionProgress = phases.Any()
+            ? Math.Round(phases.Average(p =>
+            {
+                if (p.Tasks.Count == 0)
+                    return p.IsCompleted ? 100m : 0m;
+                return p.Tasks.Count(t => t.StatusId == 3) * 100m / p.Tasks.Count;
+            }), 0)
+            : 0m;
+
+        var monthlyTrend = (await BuildMonthlySpendingTrendAsync(expenseBll, projectId, userId))
+            .Select(m => new NameAmount($"{CultureInfo.InvariantCulture.DateTimeFormat.AbbreviatedMonthNames[m.Month - 1]} {m.Year}", m.Total))
+            .ToList();
+
+        return new DashboardReportData
+        {
+            ScopeName = scopeName,
+            TotalBudget = totalBudget,
+            TotalExpenses = totalExpenses,
+            TotalWorkers = totalWorkers,
+            ActiveWorkers = activeWorkers,
+            AverageDailyWage = averageDailyWage,
+            ConstructionProgress = constructionProgress,
+            TotalMaterialPurchased = materials.Sum(m => m.Purchased),
+            TotalMaterialUsed = materials.Sum(m => m.Used),
+            Properties = properties,
+            WorkerSkills = workerSkills,
+            ExpenseCategories = expenseCategories,
+            RecentExpenses = recentExpenses,
+            Materials = materials,
+            MonthlyTrend = monthlyTrend
+        };
+    }
+
+    private static string SanitizeFileName(string value)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var clean = new string(value.Select(ch => invalid.Contains(ch) ? '-' : ch).ToArray());
+        return string.IsNullOrWhiteSpace(clean) ? "Dashboard" : clean.Replace(' ', '-');
     }
 
     private async Task<List<DashboardAdvisorTrigger>> BuildDashboardAdvisorTriggersAsync(

@@ -12,7 +12,7 @@
 <div class="module-header">
     <div class="module-title">
         <h1>Log Material Purchase</h1>
-        <p>Record quantity, supplier, invoice, and cost for the active project.</p>
+        <p>Record material quantity, date, and cost for the active project.</p>
     </div>
     <a asp-action="Index" class="btn-secondary">Back to Purchases</a>
 </div>
@@ -32,14 +32,6 @@
                         <option value="">Select material</option>
                     </select>
                     <span asp-validation-for="MaterialId" class="text-danger"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="SupplierId">Supplier</label>
-                    <select asp-for="SupplierId" class="form-control" asp-items="ViewBag.SupplierId">
-                        <option value="">No supplier selected</option>
-                    </select>
-                    <span asp-validation-for="SupplierId" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">
@@ -64,12 +56,6 @@
                     <label asp-for="PurchaseDate">Purchase Date</label>
                     <input asp-for="PurchaseDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                     <span asp-validation-for="PurchaseDate" class="text-danger"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="InvoiceNumber">Invoice Number</label>
-                    <input asp-for="InvoiceNumber" class="form-control" />
-                    <span asp-validation-for="InvoiceNumber" class="text-danger"></span>
                 </div>
 
                 <div class="form-group full-width">

@@ -41,7 +41,7 @@ public class ProjectContextController : Controller
         {
             return RedirectToAction("Dashboard", "Home");
         }
-        return Redirect(returnUrl);
+        return Redirect(RemoveOverallQuery(returnUrl));
     }
 
     [HttpPost]
@@ -54,6 +54,25 @@ public class ProjectContextController : Controller
         {
             return RedirectToAction("Dashboard", "Home");
         }
-        return Redirect(returnUrl);
+        return Redirect(RemoveOverallQuery(returnUrl));
+    }
+
+    private static string RemoveOverallQuery(string returnUrl)
+    {
+        if (!Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri))
+            return returnUrl.Replace("?overall=true", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("&overall=true", "", StringComparison.OrdinalIgnoreCase);
+
+        var queryParts = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query)
+            .Where(kvp => !string.Equals(kvp.Key, "overall", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(kvp => kvp.Value.Select(value =>
+                $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(value ?? "")}"));
+
+        var builder = new UriBuilder(uri)
+        {
+            Query = string.Join("&", queryParts)
+        };
+
+        return builder.Uri.PathAndQuery;
     }
 }

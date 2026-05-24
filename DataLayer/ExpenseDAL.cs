@@ -147,7 +147,18 @@ ORDER BY e.ExpenseDate DESC";
                 string query = @"
 SELECT
     ISNULL((SELECT SUM(Amount) FROM ExpenseItems WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)), 0)
-  + ISNULL((SELECT SUM(TotalCost) FROM MaterialPurchases WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)), 0)
+  + ISNULL((
+        SELECT SUM(mp.TotalCost)
+        FROM MaterialPurchases mp
+        WHERE (@ProjectId IS NULL OR mp.ProjectId = @ProjectId)
+          AND NOT EXISTS (
+              SELECT 1
+              FROM ExpenseItems e
+              WHERE e.ProjectId = mp.ProjectId
+                AND e.Category = 'Material'
+                AND e.Description LIKE CONCAT('Material purchase #', mp.PurchaseId, '%')
+          )
+    ), 0)
   + ISNULL((SELECT SUM(AmountPaid) FROM WagePayments WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)), 0)";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ProjectId", (object?)projectId ?? DBNull.Value);
@@ -174,6 +185,13 @@ SELECT
         FROM MaterialPurchases mp
         INNER JOIN Projects p ON mp.ProjectId = p.ProjectId
         WHERE p.UserId = @UserId
+          AND NOT EXISTS (
+              SELECT 1
+              FROM ExpenseItems e
+              WHERE e.ProjectId = mp.ProjectId
+                AND e.Category = 'Material'
+                AND e.Description LIKE CONCAT('Material purchase #', mp.PurchaseId, '%')
+          )
     ), 0)
   + ISNULL((
         SELECT SUM(wp.AmountPaid)
@@ -214,6 +232,13 @@ FROM (
     INNER JOIN Projects p ON mp.ProjectId = p.ProjectId
     WHERE (@ProjectId IS NULL OR mp.ProjectId = @ProjectId)
       AND (@UserId IS NULL OR p.UserId = @UserId)
+      AND NOT EXISTS (
+          SELECT 1
+          FROM ExpenseItems e
+          WHERE e.ProjectId = mp.ProjectId
+            AND e.Category = 'Material'
+            AND e.Description LIKE CONCAT('Material purchase #', mp.PurchaseId, '%')
+      )
 
     UNION ALL
 

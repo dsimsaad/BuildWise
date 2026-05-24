@@ -5,9 +5,8 @@
     ViewData["Title"] = "Material Purchases";
     Layout = "_ModuleLayout";
     var totalCost = Model.Sum(m => m.TotalCost ?? 0);
-    var totalQuantity = Model.Sum(m => m.Quantity);
-    var totalUsed = Model.Sum(m => m.MaterialUsages?.Sum(u => u.QuantityUsed) ?? 0);
-    var totalRemaining = totalQuantity - totalUsed;
+    var materialTypeCount = Model.Select(m => m.MaterialId).Distinct().Count();
+    var avgUnitPrice = Model.Any() ? Model.Average(m => m.UnitPrice) : 0;
     var inventory = Model
         .GroupBy(m => new
         {
@@ -20,32 +19,11 @@
             g.Key.MaterialName,
             g.Key.UnitName,
             Purchased = g.Sum(x => x.Quantity),
-            Used = g.Sum(x => x.MaterialUsages?.Sum(u => u.QuantityUsed) ?? 0),
-            Remaining = g.Sum(x => x.Quantity) - g.Sum(x => x.MaterialUsages?.Sum(u => u.QuantityUsed) ?? 0),
+            AverageUnitPrice = g.Average(x => x.UnitPrice),
             Cost = g.Sum(x => x.TotalCost ?? 0),
             Purchases = g.Count()
         })
         .OrderBy(x => x.MaterialName)
-        .ToList();
-    var usageByPhase = Model
-        .SelectMany(p => (p.MaterialUsages ?? new List<BuildWise.Models.MaterialUsage>()).Select(u => new { Purchase = p, Usage = u }))
-        .GroupBy(x => new
-        {
-            x.Usage.PhaseId,
-            PhaseName = x.Usage.Phase == null
-                ? "Unassigned Phase"
-                : (string.IsNullOrWhiteSpace(x.Usage.Phase.CustomPhaseName)
-                    ? x.Usage.Phase.PhaseType.PhaseName
-                    : x.Usage.Phase.CustomPhaseName)
-        })
-        .Select(g => new
-        {
-            g.Key.PhaseName,
-            QuantityUsed = g.Sum(x => x.Usage.QuantityUsed),
-            MaterialCost = g.Sum(x => x.Purchase.UnitPrice * x.Usage.QuantityUsed),
-            UsageCount = g.Count()
-        })
-        .OrderByDescending(x => x.MaterialCost)
         .ToList();
     var pkrCulture = new CultureInfo("en-IN");
     string FormatPkr(decimal value) => $"PKR {value.ToString("N0", pkrCulture)}";
@@ -77,7 +55,7 @@
 <div class="module-header">
     <div class="module-title">
         <h1>Material Purchases</h1>
-        <p>Track project material purchases, costs, and usage.</p>
+        <p>Track project material purchases, quantities, and costs.</p>
     </div>
     <div class="entity-actions">
         <a asp-action="Catalog" class="btn-secondary">Material Catalog</a>
@@ -112,8 +90,8 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
         </div>
         <div class="sum-info">
-            <h3>Used / Purchased</h3>
-            <p>@totalUsed.ToString("N0") / @totalQuantity.ToString("N0")</p>
+            <h3>Material Types</h3>
+            <p>@materialTypeCount</p>
         </div>
     </div>
     <div class="sum-card">
@@ -121,8 +99,8 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7l8 4 8-4Z"></path><path d="M4 7v10l8 4 8-4V7"></path></svg>
         </div>
         <div class="sum-info">
-            <h3>Remaining Stock</h3>
-            <p>@totalRemaining.ToString("N0")</p>
+            <h3>Avg Unit Price</h3>
+            <p>@FormatPkr(avgUnitPrice)</p>
         </div>
     </div>
 </div>
@@ -136,7 +114,7 @@
         @if (!inventory.Any())
         {
             <div class="empty-state" style="border:none; box-shadow:none; border-radius:0;">
-                <h2>No stock available</h2>
+                <h2>No materials logged</h2>
                 <p>Log purchases to build project inventory.</p>
             </div>
         }
@@ -148,8 +126,7 @@
                         <tr>
                             <th>Material</th>
                             <th>Purchased</th>
-                            <th>Used</th>
-                            <th>Remaining</th>
+                            <th>Avg Unit Price</th>
                             <th>Total Cost</th>
                             <th>Purchases</th>
                         </tr>
@@ -160,8 +137,7 @@
                             <tr>
                                 <td><strong>@item.MaterialName</strong></td>
                                 <td>@item.Purchased.ToString("N2") @item.UnitName</td>
-                                <td>@item.Used.ToString("N2") @item.UnitName</td>
-                                <td><span class="badge @(item.Remaining > 0 ? "badge-success" : "badge-warning")">@item.Remaining.ToString("N2") @item.UnitName</span></td>
+                                <td>@FormatPkr(item.AverageUnitPrice)</td>
                                 <td><strong>@FormatPkr(item.Cost)</strong></td>
                                 <td>@item.Purchases</td>
                             </tr>
@@ -172,41 +148,6 @@
         }
     </div>
 </div>
-
-@if (usageByPhase.Any())
-{
-    <div class="module-card" style="margin-bottom:24px;">
-        <div class="card-header">
-            <h2>Usage by Construction Phase</h2>
-            <span class="badge badge-info">@usageByPhase.Count phases</span>
-        </div>
-        <div class="card-body" style="padding:0;">
-            <div class="table-responsive">
-                <table class="modern-table">
-                    <thead>
-                        <tr>
-                            <th>Phase</th>
-                            <th>Usage Entries</th>
-                            <th>Quantity Used</th>
-                            <th>Estimated Material Cost</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in usageByPhase)
-                        {
-                            <tr>
-                                <td><strong>@item.PhaseName</strong></td>
-                                <td>@item.UsageCount</td>
-                                <td>@item.QuantityUsed.ToString("N2")</td>
-                                <td><strong>@FormatPkr(item.MaterialCost)</strong></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-}
 
 <div class="module-card material-table-card">
     <div class="card-header">
@@ -231,36 +172,25 @@
                         <tr>
                             <th>Date</th>
                             <th>Material</th>
-                            <th>Supplier</th>
                             <th>Quantity</th>
-                            <th>Used</th>
-                            <th>Remaining</th>
                             <th>Unit Price</th>
                             <th>Total Cost</th>
-                            <th>Invoice</th>
+                            <th>Notes</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model)
                         {
-                            var used = item.MaterialUsages?.Sum(u => u.QuantityUsed) ?? 0;
-                            var remaining = item.Quantity - used;
                             <tr>
                                 <td>@item.PurchaseDate.ToString("MMM dd, yyyy")</td>
                                 <td><strong>@item.Material?.MaterialName</strong></td>
-                                <td>@(item.Supplier?.SupplierName ?? "-")</td>
                                 <td>@item.Quantity @item.Unit?.UnitName</td>
-                                <td>@used @item.Unit?.UnitName</td>
-                                <td><span class="badge @(remaining > 0 ? "badge-success" : "badge-warning")">@remaining @item.Unit?.UnitName</span></td>
                                 <td>@FormatPkr(item.UnitPrice)</td>
                                 <td><strong>@FormatPkr(item.TotalCost ?? 0)</strong></td>
-                                <td>@(string.IsNullOrWhiteSpace(item.InvoiceNumber) ? "-" : item.InvoiceNumber)</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Notes) ? "-" : item.Notes)</td>
                                 <td>
                                     <div class="action-btns">
-                                        <a asp-action="LogUsage" asp-route-purchaseId="@item.PurchaseId" class="btn-icon btn-edit" title="Log Usage">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
-                                        </a>
                                         <form asp-action="DeletePurchase" method="post" class="inline-delete-form" onsubmit="return confirm('Delete this purchase? This affects project costs.');">
                                             <input type="hidden" name="id" value="@item.PurchaseId" />
                                             <button type="submit" class="btn-icon btn-delete" title="Delete">

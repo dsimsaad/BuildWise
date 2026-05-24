@@ -15,14 +15,15 @@ namespace BuildWise.Controllers
     public class MaterialsController : Controller
     {
         private readonly MaterialBLL _materialBll;
-        private readonly TransactionBLL _transactionBll;
+        private readonly ExpenseBLL _expenseBll;
         private readonly BuildWiseDbContext _context;
 
         public MaterialsController(MaterialBLL materialBll, BuildWiseDbContext context, IConfiguration configuration)
         {
             _materialBll = materialBll;
             _context = context;
-            _transactionBll = new TransactionBLL(configuration.GetConnectionString("BuildWise") ?? "");
+            var connectionString = configuration.GetConnectionString("BuildWise") ?? "";
+            _expenseBll = new ExpenseBLL(connectionString);
         }
 
         private int GetCurrentUserId()
@@ -69,7 +70,7 @@ namespace BuildWise.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreatePurchase([Bind("MaterialId,SupplierId,Quantity,UnitId,UnitPrice,PurchaseDate,InvoiceNumber,Notes")] MaterialPurchase purchase)
+        public async Task<IActionResult> CreatePurchase([Bind("MaterialId,Quantity,UnitId,UnitPrice,PurchaseDate,Notes")] MaterialPurchase purchase)
         {
             var userId = GetCurrentUserId();
             var projectId = GetSelectedProjectId();
@@ -99,8 +100,10 @@ namespace BuildWise.Controllers
             {
                 try
                 {
+                    purchase.SupplierId = null;
+                    purchase.InvoiceNumber = null;
                     await _materialBll.AddPurchaseAsync(purchase, projectId.Value);
-                    LogMaterialTransaction("Added", purchase, "Material purchase logged.");
+                    AddMaterialExpense(purchase);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -130,96 +133,12 @@ namespace BuildWise.Controllers
                 .AsNoTracking()
                 .Include(p => p.Material)
                 .FirstOrDefaultAsync(p => p.PurchaseId == id && p.ProjectId == projectId.Value);
-            await _materialBll.DeletePurchaseAsync(id, projectId.Value);
             if (purchase != null)
             {
-                LogMaterialTransaction("Deleted", purchase, "Material purchase deleted.");
+                DeleteMaterialExpense(purchase);
             }
+            await _materialBll.DeletePurchaseAsync(id, projectId.Value);
             return RedirectToAction(nameof(Index));
-        }
-
-        // Material Usage
-        public async Task<IActionResult> LogUsage(int purchaseId)
-        {
-            var userId = GetCurrentUserId();
-            var projectId = GetSelectedProjectId();
-            if (projectId == null) return RedirectToAction("Index", "Projects");
-
-            if (!await UserOwnsProjectAsync(projectId.Value, userId))
-            {
-                HttpContext.Session.Remove("SelectedProjectId");
-                return RedirectToAction("Index", "Projects");
-            }
-
-            var purchase = await _materialBll.GetProjectPurchasesAsync(projectId.Value);
-            var selectedPurchase = purchase.FirstOrDefault(p => p.PurchaseId == purchaseId);
-            
-            if (selectedPurchase == null) return NotFound();
-
-            var usage = new MaterialUsage { PurchaseId = purchaseId };
-            
-            // Populate phases for the dropdown
-            PopulatePhaseDropdown(projectId.Value);
-            
-            var used = selectedPurchase.MaterialUsages.Sum(u => u.QuantityUsed);
-            ViewBag.PurchaseDetails = $"{selectedPurchase.Material.MaterialName} ({selectedPurchase.Quantity - used} {selectedPurchase.Unit.UnitName} remaining)";
-            return View(usage);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> LogUsage([Bind("PurchaseId,PhaseId,QuantityUsed,UsageDate,Notes")] MaterialUsage usage)
-        {
-            var userId = GetCurrentUserId();
-            var projectId = GetSelectedProjectId();
-            if (projectId == null) return RedirectToAction("Index", "Projects");
-
-            if (!await UserOwnsProjectAsync(projectId.Value, userId))
-            {
-                HttpContext.Session.Remove("SelectedProjectId");
-                return RedirectToAction("Index", "Projects");
-            }
-
-            ModelState.Remove("Phase");
-            ModelState.Remove("Purchase");
-
-            var purchase = await _context.MaterialPurchases
-                .Include(p => p.MaterialUsages)
-                .FirstOrDefaultAsync(p => p.PurchaseId == usage.PurchaseId && p.ProjectId == projectId.Value);
-            if (purchase == null)
-            {
-                return NotFound();
-            }
-
-            bool phaseBelongsToProject = await _context.Phases
-                .AnyAsync(p => p.PhaseId == usage.PhaseId && p.ProjectId == projectId.Value);
-            if (!phaseBelongsToProject)
-            {
-                ModelState.AddModelError(nameof(MaterialUsage.PhaseId), "Please select a valid project phase.");
-            }
-
-            var alreadyUsed = purchase.MaterialUsages.Sum(u => u.QuantityUsed);
-            var remaining = purchase.Quantity - alreadyUsed;
-            if (usage.QuantityUsed <= 0)
-            {
-                ModelState.AddModelError(nameof(MaterialUsage.QuantityUsed), "Quantity used must be greater than zero.");
-            }
-            else if (usage.QuantityUsed > remaining)
-            {
-                ModelState.AddModelError(nameof(MaterialUsage.QuantityUsed), $"Only {remaining} is remaining from this purchase.");
-            }
-
-            if (ModelState.IsValid)
-            {
-                _context.MaterialUsages.Add(usage);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-
-            PopulatePhaseDropdown(projectId.Value, usage.PhaseId);
-            var used = purchase.MaterialUsages.Sum(u => u.QuantityUsed);
-            ViewBag.PurchaseDetails = $"Only {purchase.Quantity - used} remaining from this purchase";
-            return View(usage);
         }
 
         // Catalog Management
@@ -262,26 +181,7 @@ namespace BuildWise.Controllers
                 .OrderBy(m => m.MaterialName)
                 .ToList();
             ViewData["MaterialId"] = new SelectList(materials, "MaterialId", "MaterialName", purchase?.MaterialId);
-            
             ViewData["UnitId"] = new SelectList(_context.Set<MaterialUnit>(), "UnitId", "UnitName", purchase?.UnitId);
-            ViewData["SupplierId"] = new SelectList(_context.Set<Supplier>(), "SupplierId", "SupplierName", purchase?.SupplierId);
-        }
-
-        private void PopulatePhaseDropdown(int projectId, int? selectedPhaseId = null)
-        {
-            var phases = _context.Phases
-                .AsNoTracking()
-                .Include(p => p.PhaseType)
-                .Where(p => p.ProjectId == projectId)
-                .OrderBy(p => p.Sequence)
-                .Select(p => new
-                {
-                    p.PhaseId,
-                    PhaseName = string.IsNullOrWhiteSpace(p.CustomPhaseName) ? p.PhaseType.PhaseName : p.CustomPhaseName
-                })
-                .ToList();
-
-            ViewData["PhaseId"] = new SelectList(phases, "PhaseId", "PhaseName", selectedPhaseId);
         }
 
         private async Task<bool> UserOwnsProjectAsync(int projectId, int userId)
@@ -289,27 +189,42 @@ namespace BuildWise.Controllers
             return await _context.Projects.AnyAsync(p => p.ProjectId == projectId && p.UserId == userId);
         }
 
-        private void LogMaterialTransaction(string type, MaterialPurchase purchase, string description)
+        private void AddMaterialExpense(MaterialPurchase purchase)
         {
-            var materialName = purchase.Material?.MaterialName;
-            if (string.IsNullOrWhiteSpace(materialName) && purchase.MaterialId > 0)
-            {
-                materialName = _context.Materials
-                    .AsNoTracking()
-                    .Where(m => m.MaterialId == purchase.MaterialId)
-                    .Select(m => m.MaterialName)
-                    .FirstOrDefault();
-            }
-
-            _transactionBll.AddTransaction(new TransactionLog
+            _expenseBll.AddExpense(new ExpenseItem
             {
                 ProjectId = purchase.ProjectId,
-                TransactionType = type,
                 Category = "Material",
-                Description = $"{description} {materialName}".Trim(),
+                Description = BuildMaterialExpenseDescription(purchase),
                 Amount = purchase.TotalCost ?? purchase.Quantity * purchase.UnitPrice,
-                BudgetEffect = 0
+                ExpenseDate = purchase.PurchaseDate.ToDateTime(TimeOnly.MinValue)
             });
+        }
+
+        private void DeleteMaterialExpense(MaterialPurchase purchase)
+        {
+            var description = BuildMaterialExpenseDescription(purchase);
+            var amount = purchase.TotalCost ?? purchase.Quantity * purchase.UnitPrice;
+            var expenseDate = purchase.PurchaseDate.ToDateTime(TimeOnly.MinValue).Date;
+            var matchingExpense = _expenseBll
+                .GetAllExpenses(purchase.ProjectId)
+                .FirstOrDefault(e =>
+                    e.ProjectId == purchase.ProjectId &&
+                    string.Equals(e.Category, "Material", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(e.Description, description, StringComparison.OrdinalIgnoreCase) &&
+                    e.ExpenseDate.Date == expenseDate &&
+                    e.Amount == amount);
+
+            if (matchingExpense != null)
+            {
+                _expenseBll.DeleteExpense(matchingExpense.ExpenseId);
+            }
+        }
+
+        private static string BuildMaterialExpenseDescription(MaterialPurchase purchase)
+        {
+            var materialName = purchase.Material?.MaterialName;
+            return $"Material purchase #{purchase.PurchaseId}" + (string.IsNullOrWhiteSpace(materialName) ? "" : $": {materialName}");
         }
     }
 }
