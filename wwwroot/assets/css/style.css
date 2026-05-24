@@ -596,15 +596,12 @@ footer {
     position: fixed;
     inset: 0;
     z-index: 1000;
-    background: rgba(15, 37, 87, 0.35);
-    backdrop-filter: blur(4px);
+    background: rgba(15, 37, 87, 0.32);
     align-items: center;
     justify-content: center;
     padding: 20px;
-    animation: fadeIn 0.2s ease;
 }
 .forgot-modal-overlay.active { display: flex; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .forgot-modal-card {
     background: #fff;
@@ -614,10 +611,8 @@ footer {
     max-width: 380px;
     box-shadow: 0 20px 60px rgba(15, 37, 87, 0.18);
     position: relative;
-    animation: slideUp 0.25s ease;
     text-align: center;
 }
-@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
 .forgot-modal-close {
     position: absolute;

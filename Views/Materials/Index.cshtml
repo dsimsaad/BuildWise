@@ -261,7 +261,6 @@
                         <tr>
                             <th>Material</th>
                             <th>Purchased</th>
-                            <th>Used</th>
                             <th>Available</th>
                             <th>Avg Unit Price</th>
                             <th>Total Cost</th>
@@ -274,7 +273,6 @@
                             <tr>
                                 <td><strong>@item.MaterialName</strong></td>
                                 <td>@item.Purchased.ToString("N2") @item.UnitName</td>
-                                <td>@item.Used.ToString("N2") @item.UnitName</td>
                                 <td><strong>@item.Available.ToString("N2") @item.UnitName</strong></td>
                                 <td>@FormatPkr(item.AverageUnitPrice)</td>
                                 <td><strong>@FormatPkr(item.Cost)</strong></td>
@@ -312,7 +310,6 @@
                             <th>Date</th>
                             <th>Material</th>
                             <th>Quantity</th>
-                            <th>Used</th>
                             <th>Available</th>
                             <th>Unit Price</th>
                             <th>Total Cost</th>
@@ -330,7 +327,6 @@
                                 <td>@item.PurchaseDate.ToString("MMM dd, yyyy")</td>
                                 <td><strong>@item.Material?.MaterialName</strong></td>
                                 <td>@item.Quantity @item.Unit?.UnitName</td>
-                                <td>@usedQuantity.ToString("N2") @item.Unit?.UnitName</td>
                                 <td><strong>@availableQuantity.ToString("N2") @item.Unit?.UnitName</strong></td>
                                 <td>@FormatPkr(item.UnitPrice)</td>
                                 <td><strong>@FormatPkr(item.TotalCost ?? 0)</strong></td>
