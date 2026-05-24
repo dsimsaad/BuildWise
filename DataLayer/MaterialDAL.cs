@@ -19,6 +19,7 @@ namespace BuildWise.DataLayer
         public async Task<List<Material>> GetMaterialsByUserIdAsync(int userId)
         {
             return await _context.Materials
+                .AsNoTracking()
                 .Include(m => m.DefaultUnit)
                 .Where(m => (m.UserId == userId || m.UserId == 1) && m.IsActive)
                 .OrderBy(m => m.MaterialName)
@@ -34,10 +35,13 @@ namespace BuildWise.DataLayer
         public async Task<List<MaterialPurchase>> GetPurchasesByProjectIdAsync(int projectId)
         {
             return await _context.MaterialPurchases
+                .AsNoTracking()
                 .Include(mp => mp.Material)
                 .Include(mp => mp.Unit)
                 .Include(mp => mp.Supplier)
                 .Include(mp => mp.MaterialUsages)
+                    .ThenInclude(mu => mu.Phase)
+                        .ThenInclude(p => p.PhaseType)
                 .Where(mp => mp.ProjectId == projectId)
                 .OrderByDescending(mp => mp.PurchaseDate)
                 .ToListAsync();
@@ -49,6 +53,7 @@ namespace BuildWise.DataLayer
                 .Include(mp => mp.Material)
                 .Include(mp => mp.Unit)
                 .Include(mp => mp.Supplier)
+                .Include(mp => mp.MaterialUsages)
                 .FirstOrDefaultAsync(mp => mp.PurchaseId == purchaseId && mp.ProjectId == projectId);
         }
 
@@ -65,6 +70,7 @@ namespace BuildWise.DataLayer
             var purchase = await GetPurchaseByIdAsync(purchaseId, projectId);
             if (purchase != null)
             {
+                _context.MaterialUsages.RemoveRange(purchase.MaterialUsages);
                 _context.MaterialPurchases.Remove(purchase);
                 await _context.SaveChangesAsync();
             }

@@ -144,7 +144,11 @@ ORDER BY e.ExpenseDate DESC";
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT ISNULL(SUM(Amount), 0) FROM ExpenseItems WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)";
+                string query = @"
+SELECT
+    ISNULL((SELECT SUM(Amount) FROM ExpenseItems WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)), 0)
+  + ISNULL((SELECT SUM(TotalCost) FROM MaterialPurchases WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)), 0)
+  + ISNULL((SELECT SUM(AmountPaid) FROM WagePayments WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)), 0)";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ProjectId", (object?)projectId ?? DBNull.Value);
                 object result = cmd.ExecuteScalar();
@@ -158,10 +162,25 @@ ORDER BY e.ExpenseDate DESC";
             {
                 conn.Open();
                 string query = @"
-                    SELECT ISNULL(SUM(e.Amount), 0) 
-                    FROM ExpenseItems e
-                    INNER JOIN Projects p ON e.ProjectId = p.ProjectId
-                    WHERE p.UserId = @UserId";
+SELECT
+    ISNULL((
+        SELECT SUM(e.Amount)
+        FROM ExpenseItems e
+        INNER JOIN Projects p ON e.ProjectId = p.ProjectId
+        WHERE p.UserId = @UserId
+    ), 0)
+  + ISNULL((
+        SELECT SUM(mp.TotalCost)
+        FROM MaterialPurchases mp
+        INNER JOIN Projects p ON mp.ProjectId = p.ProjectId
+        WHERE p.UserId = @UserId
+    ), 0)
+  + ISNULL((
+        SELECT SUM(wp.AmountPaid)
+        FROM WagePayments wp
+        INNER JOIN Projects p ON wp.ProjectId = p.ProjectId
+        WHERE p.UserId = @UserId
+    ), 0)";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@UserId", userId);
                 object result = cmd.ExecuteScalar();
@@ -180,13 +199,32 @@ ORDER BY e.ExpenseDate DESC";
             {
                 conn.Open();
                 string query = @"
-SELECT e.Category, SUM(e.Amount) AS Amount
-FROM ExpenseItems e
-INNER JOIN Projects p ON e.ProjectId = p.ProjectId
-WHERE (@ProjectId IS NULL OR e.ProjectId = @ProjectId)
-  AND (@UserId IS NULL OR p.UserId = @UserId)
-GROUP BY e.Category
-ORDER BY e.Category";
+SELECT Category, SUM(Amount) AS Amount
+FROM (
+    SELECT e.Category, e.Amount
+    FROM ExpenseItems e
+    INNER JOIN Projects p ON e.ProjectId = p.ProjectId
+    WHERE (@ProjectId IS NULL OR e.ProjectId = @ProjectId)
+      AND (@UserId IS NULL OR p.UserId = @UserId)
+
+    UNION ALL
+
+    SELECT 'Material' AS Category, CAST(mp.TotalCost AS DECIMAL(18,2)) AS Amount
+    FROM MaterialPurchases mp
+    INNER JOIN Projects p ON mp.ProjectId = p.ProjectId
+    WHERE (@ProjectId IS NULL OR mp.ProjectId = @ProjectId)
+      AND (@UserId IS NULL OR p.UserId = @UserId)
+
+    UNION ALL
+
+    SELECT 'Labor' AS Category, CAST(wp.AmountPaid AS DECIMAL(18,2)) AS Amount
+    FROM WagePayments wp
+    INNER JOIN Projects p ON wp.ProjectId = p.ProjectId
+    WHERE (@ProjectId IS NULL OR wp.ProjectId = @ProjectId)
+      AND (@UserId IS NULL OR p.UserId = @UserId)
+) spending
+GROUP BY Category
+ORDER BY Category";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ProjectId", (object?)projectId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);

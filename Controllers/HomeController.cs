@@ -128,10 +128,10 @@ public class HomeController : Controller
         ViewBag.SelectedProjectId = selectedProjectId;
 
         // 3. Base Queries Filtered by User
-        var projectQuery = _context.Projects.Where(p => p.UserId == userId);
-        var taskQuery    = _context.Tasks.Where(t => t.Phase.Project.UserId == userId);
-        var vwDashQuery  = from v in _context.VwProjectDashboards
-                          join p in _context.Projects on v.ProjectId equals p.ProjectId
+        var projectQuery = _context.Projects.AsNoTracking().Where(p => p.UserId == userId);
+        var taskQuery    = _context.Tasks.AsNoTracking().Where(t => t.Phase.Project.UserId == userId);
+        var vwDashQuery  = from v in _context.VwProjectDashboards.AsNoTracking()
+                          join p in _context.Projects.AsNoTracking() on v.ProjectId equals p.ProjectId
                           where p.UserId == userId
                           select v;
         var scopedTaskQuery = selectedProjectId.HasValue
@@ -142,6 +142,7 @@ public class HomeController : Controller
         var budgetBll = new BudgetBLL(connectionString);
         var expenseBll = new ExpenseBLL(connectionString);
         var transactionBll = new TransactionBLL(connectionString);
+        var advisorBll = new AdvisorBLL(connectionString);
 
         // 4. Populate Stats
         if (selectedProjectId.HasValue)
@@ -150,7 +151,7 @@ public class HomeController : Controller
             
             ViewBag.TotalProjects   = 1;
             ViewBag.ActiveProjects  = (activeStats?.IsCompleted == false) ? 1 : 0;
-            var selectedProject = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId);
+            var selectedProject = await _context.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId);
             var allocatedBudget = budgetBll.GetTotalBudget(selectedProjectId);
             ViewBag.TotalBudget     = selectedProject?.TotalBudget > 0 ? selectedProject.TotalBudget : allocatedBudget;
             ViewBag.TotalExpenses   = expenseBll.GetTotalSpent(selectedProjectId);
@@ -170,6 +171,7 @@ public class HomeController : Controller
             ViewBag.TasksOverdue    = await scopedTaskQuery.CountAsync(t => t.StatusId == 1 && t.CreatedAt < DateTime.Now.AddDays(-7));
             
             ViewBag.Phases = await _context.Phases
+                .AsNoTracking()
                 .Include(p => p.PhaseType).Include(p => p.Tasks)
                 .Where(p => p.ProjectId == selectedProjectId)
                 .OrderBy(p => p.Sequence).ToListAsync();
@@ -214,9 +216,16 @@ public class HomeController : Controller
 
         ViewBag.CategoryExpenses = expenseBll.GetExpensesByCategory(selectedProjectId, userId);
 
-        ViewBag.MonthlyExpenses = BuildMonthlyExpenseTrend(expenseBll, selectedProjectId, userId);
+        ViewBag.MonthlyExpenses = await BuildMonthlySpendingTrendAsync(expenseBll, selectedProjectId, userId);
+        ViewBag.AdvisorTriggers = await BuildDashboardAdvisorTriggersAsync(
+            advisorBll,
+            selectedProjectId,
+            userId,
+            ViewBag.TotalBudget is decimal totalBudgetValue ? totalBudgetValue : 0m,
+            ViewBag.TotalExpenses is decimal totalExpenseValue ? totalExpenseValue : 0m);
 
         ViewBag.ToDoTasks = await scopedTaskQuery
+            .AsNoTracking()
             .Include(t => t.Phase)
                 .ThenInclude(p => p.PhaseType)
             .Where(t => t.StatusId == 1)
@@ -285,7 +294,7 @@ public class HomeController : Controller
             .Select(t => new { t.TransactionDate, t.Category, t.Amount })
             .ToList();
 
-        var monthlyExpenses = BuildMonthlyExpenseTrend(expenseBll, selectedProjectId, userId);
+        var monthlyExpenses = await BuildMonthlySpendingTrendAsync(expenseBll, selectedProjectId, userId);
 
         return Json(new
         {
@@ -300,21 +309,136 @@ public class HomeController : Controller
         });
     }
 
-    private static List<MonthlyExpensePoint> BuildMonthlyExpenseTrend(ExpenseBLL expenseBll, int? projectId, int userId)
+    private async Task<List<MonthlyExpensePoint>> BuildMonthlySpendingTrendAsync(ExpenseBLL expenseBll, int? projectId, int userId)
     {
-        return expenseBll.GetAllExpenses(projectId, userId)
+        var monthly = expenseBll.GetAllExpenses(projectId, userId)
             .GroupBy(e => new DateTime(e.ExpenseDate.Year, e.ExpenseDate.Month, 1))
-            .OrderBy(g => g.Key)
             .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(e => e.Amount)))
+            .ToList();
+
+        var materialPurchases = await _context.MaterialPurchases
+            .AsNoTracking()
+            .Where(m => m.Project.UserId == userId && (!projectId.HasValue || m.ProjectId == projectId.Value))
+            .GroupBy(m => new { m.PurchaseDate.Year, m.PurchaseDate.Month })
+            .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(m => m.TotalCost ?? 0)))
+            .ToListAsync();
+        monthly.AddRange(materialPurchases);
+
+        var wagePayments = await _context.WagePayments
+            .AsNoTracking()
+            .Where(w => w.Project.UserId == userId && (!projectId.HasValue || w.ProjectId == projectId.Value))
+            .GroupBy(w => new { w.PaymentDate.Year, w.PaymentDate.Month })
+            .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(w => w.AmountPaid)))
+            .ToListAsync();
+        monthly.AddRange(wagePayments);
+
+        return monthly
+            .GroupBy(e => new { e.Year, e.Month })
+            .OrderBy(g => g.Key.Year)
+            .ThenBy(g => g.Key.Month)
+            .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(e => e.Total)))
             .TakeLast(12)
             .ToList();
     }
 
     private IQueryable<Worker> GetProjectWorkersQuery(int userId, int projectId)
     {
-        return _context.Workers.Where(w =>
+        return _context.Workers.AsNoTracking().Where(w =>
             w.UserId == userId &&
             (w.ProjectId == projectId || w.WorkerProjectAssignments.Any(a => a.ProjectId == projectId)));
+    }
+
+    private async Task<List<DashboardAdvisorTrigger>> BuildDashboardAdvisorTriggersAsync(
+        AdvisorBLL advisorBll,
+        int? projectId,
+        int userId,
+        decimal totalBudget,
+        decimal totalSpent)
+    {
+        var triggers = advisorBll.GetAnalysis(projectId, userId)
+            .Where(r => !string.Equals(r.Severity, "Info", StringComparison.OrdinalIgnoreCase))
+            .Take(4)
+            .Select(r => new DashboardAdvisorTrigger(r.RuleName, r.Severity, r.Message, r.Category, "/Advisor"))
+            .ToList();
+
+        if (projectId.HasValue && totalBudget > 0)
+        {
+            var progress = await GetProjectProgressPercentAsync(projectId.Value);
+            var budgetUsed = totalSpent / totalBudget * 100m;
+            if (budgetUsed >= progress + 20m && totalSpent > 0)
+            {
+                triggers.Insert(0, new DashboardAdvisorTrigger(
+                    "Cost Ahead of Progress",
+                    budgetUsed >= progress + 35m ? "Warning" : "Caution",
+                    $"Budget usage is {budgetUsed:0}% while construction progress is {progress:0}%. Review spending before releasing more purchases or expenses.",
+                    "Progress",
+                    "/Advisor"));
+            }
+        }
+
+        if (projectId.HasValue)
+        {
+            var materialBalances = await _context.MaterialPurchases
+                .AsNoTracking()
+                .Where(p => p.ProjectId == projectId.Value)
+                .Select(g => new
+                {
+                    g.MaterialId,
+                    g.Material.MaterialName,
+                    Purchased = g.Quantity,
+                    Used = g.MaterialUsages.Sum(u => (decimal?)u.QuantityUsed) ?? 0m
+                })
+                .ToListAsync();
+
+            var depletedMaterials = materialBalances
+                .GroupBy(m => new { m.MaterialId, m.MaterialName })
+                .Select(g => new
+                {
+                    g.Key.MaterialName,
+                    Purchased = g.Sum(m => m.Purchased),
+                    Used = g.Sum(m => m.Used)
+                })
+                .Where(x => x.Purchased > 0 && x.Used >= x.Purchased)
+                .OrderBy(x => x.MaterialName)
+                .Take(2)
+                .ToList();
+
+            foreach (var material in depletedMaterials)
+            {
+                triggers.Add(new DashboardAdvisorTrigger(
+                    "Material Stock Depleted",
+                    "Alert",
+                    $"{material.MaterialName} stock is fully used. Check site demand before the next phase continues.",
+                    "Materials",
+                    "/Materials"));
+            }
+        }
+
+        return triggers
+            .GroupBy(t => new { t.Title, t.Category })
+            .Select(g => g.First())
+            .Take(5)
+            .ToList();
+    }
+
+    private async Task<decimal> GetProjectProgressPercentAsync(int projectId)
+    {
+        var phases = await _context.Phases
+            .AsNoTracking()
+            .Include(p => p.Tasks)
+            .Where(p => p.ProjectId == projectId)
+            .ToListAsync();
+
+        if (!phases.Any())
+            return 0m;
+
+        return Math.Round(phases.Average(p =>
+        {
+            if (p.Tasks.Count == 0)
+                return p.IsCompleted ? 100m : 0m;
+
+            return p.Tasks.Count(t => t.StatusId == 3) * 100m / p.Tasks.Count;
+        }), 0);
     }
 
     private sealed record MonthlyExpensePoint(int Year, int Month, decimal Total);

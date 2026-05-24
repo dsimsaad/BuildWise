@@ -149,7 +149,7 @@
         </div>
         <div class="form-group">
             <label asp-for="DailyWage">Daily Wage (PKR)</label>
-            <input asp-for="DailyWage" class="form-control" placeholder="0.00" />
+            <input asp-for="DailyWage" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
             <span asp-validation-for="DailyWage" class="text-danger" style="font-size: 0.75rem; color: #EF4444;"></span>
         </div>
         <div style="display: flex; gap: 12px; margin-top: 24px;">

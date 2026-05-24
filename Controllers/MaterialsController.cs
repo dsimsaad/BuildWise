@@ -15,12 +15,14 @@ namespace BuildWise.Controllers
     public class MaterialsController : Controller
     {
         private readonly MaterialBLL _materialBll;
+        private readonly TransactionBLL _transactionBll;
         private readonly BuildWiseDbContext _context;
 
-        public MaterialsController(MaterialBLL materialBll, BuildWiseDbContext context)
+        public MaterialsController(MaterialBLL materialBll, BuildWiseDbContext context, IConfiguration configuration)
         {
             _materialBll = materialBll;
             _context = context;
+            _transactionBll = new TransactionBLL(configuration.GetConnectionString("BuildWise") ?? "");
         }
 
         private int GetCurrentUserId()
@@ -86,6 +88,7 @@ namespace BuildWise.Controllers
             ModelState.Remove("MaterialUsages");
 
             bool materialAllowed = await _context.Materials
+                .AsNoTracking()
                 .AnyAsync(m => m.MaterialId == purchase.MaterialId && m.IsActive && (m.UserId == userId || m.UserId == 1));
             if (!materialAllowed)
             {
@@ -97,6 +100,7 @@ namespace BuildWise.Controllers
                 try
                 {
                     await _materialBll.AddPurchaseAsync(purchase, projectId.Value);
+                    LogMaterialTransaction("Added", purchase, "Material purchase logged.");
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -122,7 +126,15 @@ namespace BuildWise.Controllers
                 return RedirectToAction("Index", "Projects");
             }
 
+            var purchase = await _context.MaterialPurchases
+                .AsNoTracking()
+                .Include(p => p.Material)
+                .FirstOrDefaultAsync(p => p.PurchaseId == id && p.ProjectId == projectId.Value);
             await _materialBll.DeletePurchaseAsync(id, projectId.Value);
+            if (purchase != null)
+            {
+                LogMaterialTransaction("Deleted", purchase, "Material purchase deleted.");
+            }
             return RedirectToAction(nameof(Index));
         }
 
@@ -147,8 +159,7 @@ namespace BuildWise.Controllers
             var usage = new MaterialUsage { PurchaseId = purchaseId };
             
             // Populate phases for the dropdown
-            var phases = _context.Phases.Where(p => p.ProjectId == projectId.Value).ToList();
-            ViewData["PhaseId"] = new SelectList(phases, "PhaseId", "PhaseName");
+            PopulatePhaseDropdown(projectId.Value);
             
             var used = selectedPurchase.MaterialUsages.Sum(u => u.QuantityUsed);
             ViewBag.PurchaseDetails = $"{selectedPurchase.Material.MaterialName} ({selectedPurchase.Quantity - used} {selectedPurchase.Unit.UnitName} remaining)";
@@ -205,8 +216,9 @@ namespace BuildWise.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var phases = _context.Phases.Where(p => p.ProjectId == projectId.Value).ToList();
-            ViewData["PhaseId"] = new SelectList(phases, "PhaseId", "PhaseName", usage.PhaseId);
+            PopulatePhaseDropdown(projectId.Value, usage.PhaseId);
+            var used = purchase.MaterialUsages.Sum(u => u.QuantityUsed);
+            ViewBag.PurchaseDetails = $"Only {purchase.Quantity - used} remaining from this purchase";
             return View(usage);
         }
 
@@ -255,9 +267,49 @@ namespace BuildWise.Controllers
             ViewData["SupplierId"] = new SelectList(_context.Set<Supplier>(), "SupplierId", "SupplierName", purchase?.SupplierId);
         }
 
+        private void PopulatePhaseDropdown(int projectId, int? selectedPhaseId = null)
+        {
+            var phases = _context.Phases
+                .AsNoTracking()
+                .Include(p => p.PhaseType)
+                .Where(p => p.ProjectId == projectId)
+                .OrderBy(p => p.Sequence)
+                .Select(p => new
+                {
+                    p.PhaseId,
+                    PhaseName = string.IsNullOrWhiteSpace(p.CustomPhaseName) ? p.PhaseType.PhaseName : p.CustomPhaseName
+                })
+                .ToList();
+
+            ViewData["PhaseId"] = new SelectList(phases, "PhaseId", "PhaseName", selectedPhaseId);
+        }
+
         private async Task<bool> UserOwnsProjectAsync(int projectId, int userId)
         {
             return await _context.Projects.AnyAsync(p => p.ProjectId == projectId && p.UserId == userId);
+        }
+
+        private void LogMaterialTransaction(string type, MaterialPurchase purchase, string description)
+        {
+            var materialName = purchase.Material?.MaterialName;
+            if (string.IsNullOrWhiteSpace(materialName) && purchase.MaterialId > 0)
+            {
+                materialName = _context.Materials
+                    .AsNoTracking()
+                    .Where(m => m.MaterialId == purchase.MaterialId)
+                    .Select(m => m.MaterialName)
+                    .FirstOrDefault();
+            }
+
+            _transactionBll.AddTransaction(new TransactionLog
+            {
+                ProjectId = purchase.ProjectId,
+                TransactionType = type,
+                Category = "Material",
+                Description = $"{description} {materialName}".Trim(),
+                Amount = purchase.TotalCost ?? purchase.Quantity * purchase.UnitPrice,
+                BudgetEffect = 0
+            });
         }
     }
 }

@@ -12,6 +12,18 @@
 
     var recentExpenses  = ViewBag.RecentExpensesList as List<TransactionLog> ?? new();
     var monthlyExpenses = ViewBag.MonthlyExpenses as System.Collections.IEnumerable;
+    var advisorTriggers = ViewBag.AdvisorTriggers as List<DashboardAdvisorTrigger> ?? new();
+    var phases = ViewBag.Phases as List<Phase> ?? new();
+    var phaseProgress = phases
+        .Select(p => new
+        {
+            Name = string.IsNullOrWhiteSpace(p.CustomPhaseName) ? p.PhaseType.PhaseName : p.CustomPhaseName,
+            TotalTasks = p.Tasks.Count,
+            CompletedTasks = p.Tasks.Count(t => t.StatusId == 3),
+            Progress = p.Tasks.Count > 0 ? Math.Round(p.Tasks.Count(t => t.StatusId == 3) * 100m / p.Tasks.Count, 0) : (p.IsCompleted ? 100m : 0m)
+        })
+        .ToList();
+    decimal constructionProgress = phaseProgress.Any() ? Math.Round(phaseProgress.Average(p => p.Progress), 0) : 0;
 
     string FormatMoney(decimal val) =>
         $"PKR {val.ToString("N0", new CultureInfo("en-IN"))}";
@@ -241,6 +253,94 @@
 <!-- ══════════════════════════════════════════════
      BOTTOM ROW: Monthly Trend + Feature Cards
      ══════════════════════════════════════════════ -->
+@if (ViewBag.SelectedProjectId != null)
+{
+    <div class="db-card db-construction-card">
+        <div class="db-card-header">
+            <span class="db-card-title">Construction Status</span>
+            <a href="/Construction" class="db-card-link">Manage Progress</a>
+        </div>
+        <div class="db-construction-body">
+            <div class="db-construction-stats">
+                <div class="db-construction-stat">
+                    <span>Project Progress</span>
+                    <strong>@constructionProgress.ToString("0")%</strong>
+                </div>
+                <div class="db-construction-stat">
+                    <span>Total Tasks</span>
+                    <strong>@(ViewBag.TotalTasks ?? 0)</strong>
+                </div>
+                <div class="db-construction-stat">
+                    <span>In Progress</span>
+                    <strong>@(ViewBag.TasksInProgress ?? 0)</strong>
+                </div>
+                <div class="db-construction-stat">
+                    <span>Overdue</span>
+                    <strong class="db-stat-danger">@(ViewBag.TasksOverdue ?? 0)</strong>
+                </div>
+            </div>
+
+            @if (phaseProgress.Any())
+            {
+                <div class="db-phase-grid">
+                    @foreach (var phase in phaseProgress.Take(6))
+                    {
+                        <div class="db-phase-chip">
+                            <div class="db-phase-chip-top">
+                                <strong>@phase.Name</strong>
+                                <span>@phase.Progress.ToString("0")%</span>
+                            </div>
+                            <div class="db-phase-track">
+                                <div class="db-phase-fill" style="width:@phase.Progress%"></div>
+                            </div>
+                            <small>@phase.CompletedTasks/@phase.TotalTasks tasks complete</small>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="db-construction-empty">No construction phases have been created for this project yet.</p>
+            }
+        </div>
+    </div>
+}
+
+<div class="db-card db-advisor-card">
+    <div class="db-card-header">
+        <span class="db-card-title">Cost Advisor Triggers</span>
+        <a href="/Advisor" class="db-card-link">Open Advisor</a>
+    </div>
+    <div class="db-advisor-body">
+        @if (advisorTriggers.Any())
+        {
+            <div class="db-advisor-trigger-grid">
+                @foreach (var trigger in advisorTriggers)
+                {
+                    var severityClass = trigger.Severity.ToLowerInvariant();
+                    <a href="@trigger.ActionUrl" class="db-advisor-trigger db-advisor-trigger--@severityClass">
+                        <div class="db-advisor-trigger-mark"></div>
+                        <div class="db-advisor-trigger-content">
+                            <div class="db-advisor-trigger-top">
+                                <strong>@trigger.Title</strong>
+                                <span>@trigger.Severity</span>
+                            </div>
+                            <small>@trigger.Category</small>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="db-advisor-clear">
+                <strong>No active cost triggers</strong>
+                <p>Your current budget, spending, materials, and construction progress do not show immediate cost risks.</p>
+            </div>
+        }
+    </div>
+</div>
+
 <div class="db-bottom-row">
 
     <!-- Monthly Spend Trend -->

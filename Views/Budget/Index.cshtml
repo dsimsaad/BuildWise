@@ -432,7 +432,7 @@
                 </div>
                 <div class="form-group">
                     <label>Amount (PKR)</label>
-                    <input type="number" id="budget-amount" class="form-control" placeholder="e.g. 500000" required>
+                    <input type="number" id="budget-amount" class="form-control" step="0.01" min="0" placeholder="e.g. 500000" required>
                 </div>
                 <button type="submit" class="btn-primary" id="budget-submit-btn" style="width: 100%; margin-top: 12px;">Save Allocation</button>
                 <button type="button" class="btn-secondary" id="budget-cancel-edit" onclick="resetBudgetForm()" style="width: 100%; justify-content: center; margin-top: 10px; display: none;">Cancel Edit</button>
@@ -491,7 +491,7 @@
                 </div>
                 <div class="form-group">
                     <label>Amount (PKR)</label>
-                    <input type="number" id="expense-amount" class="form-control" placeholder="0.00" required>
+                    <input type="number" id="expense-amount" class="form-control" step="0.01" min="0" placeholder="0.00" required>
                 </div>
                 <div class="form-group">
                     <label>Date</label>

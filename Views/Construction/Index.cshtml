@@ -6,66 +6,358 @@
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/modules.css">
     <style>
-        .progress-header { 
-            background: white; padding: 32px; border-radius: 12px; border: 1px solid #E2E8F0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-align: center; margin-bottom: 28px;
+        .progress-header {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            text-align: center;
+            margin-bottom: 28px;
         }
-        .progress-circle {
-            width: 130px; height: 130px; border-radius: 50%; border: 10px solid #F1F5F9;
-            margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;
-            position: relative;
-        }
-        .progress-circle span { font-size: 2rem; font-weight: 700; color: #1D4ED8; }
-        
-        .phase-section { margin-bottom: 24px; }
-        .phase-header { 
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 0; border-bottom: 1px solid #E2E8F0; margin-bottom: 16px;
-        }
-        .phase-name { font-size: 1.1rem; font-weight: 700; color: #0F172A; }
-        .phase-weight { color: #64748B; font-size: 0.8125rem; }
 
-        .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-        .task-card { 
-            background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px;
-            display: flex; flex-direction: column; gap: 8px; position: relative;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: box-shadow 0.2s;
+        .progress-circle {
+            width: 132px;
+            height: 132px;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: conic-gradient(#1D4ED8 var(--progress-value, 0%), #EEF2F7 0);
+            position: relative;
+            box-shadow: inset 0 0 0 1px #E2E8F0;
         }
-        .task-card:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); }
-        .task-status { position: absolute; top: 14px; right: 14px; }
-        
-        .gantt-timeline { margin-top: 28px; }
-        .gantt-row { display: grid; grid-template-columns: 200px 1fr; gap: 10px; margin-bottom: 12px; align-items: center; }
-        .gantt-bar-wrap { background: #F1F5F9; height: 28px; border-radius: 6px; position: relative; overflow: hidden; }
-        .gantt-bar { height: 100%; background: #1D4ED8; opacity: 0.85; border-radius: 6px; }
-        
-        .modal { 
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background: rgba(15,23,42,0.4); backdrop-filter: blur(4px);
+
+        .progress-circle::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            box-shadow: inset 0 0 0 1px #F1F5F9;
         }
-        .modal-body { 
-            background: white; margin: 8% auto; padding: 28px; border-radius: 16px; width: 420px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15); border: 1px solid #E2E8F0;
+
+        .progress-circle span {
+            position: relative;
+            z-index: 1;
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1D4ED8;
         }
-        .modal-body h2 { font-size: 1.25rem; font-weight: 700; color: #0F172A; margin: 0 0 20px 0; }
+
+        .phase-section {
+            background: #fff;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 0;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 20px rgba(15,23,42,0.05);
+            overflow: hidden;
+        }
+
+        .phase-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: center;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 18px 20px;
+            background: #FBFDFF;
+        }
+
+        .phase-name {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #0F172A;
+        }
+
+        .phase-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 7px;
+            color: #64748B;
+            font-size: 0.84rem;
+            align-items: center;
+        }
+
+        .phase-chip {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 6px;
+            padding: 4px 9px;
+            background: #EEF3FF;
+            color: #1D4ED8;
+            font-weight: 800;
+        }
+
+        .phase-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .phase-progress-box {
+            width: 220px;
+            min-width: 190px;
+        }
+
+        .phase-progress-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 7px;
+            color: #475569;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .phase-action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .phase-action-buttons .btn-primary,
+        .phase-action-buttons .btn-secondary {
+            min-height: 36px;
+            padding: 7px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+            padding: 18px 20px 20px;
+        }
+
+        .task-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 164px;
+            overflow: hidden;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        }
+
+        .task-card:hover {
+            border-color: #CBD5E1;
+            box-shadow: 0 8px 18px rgba(15,23,42,0.07);
+            transform: translateY(-1px);
+        }
+
+        .task-card.is-overdue {
+            border-color: #FCA5A5;
+            background: #FFFBFB;
+        }
+
+        .task-content {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .task-title-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .task-title {
+            color: #0F172A;
+            font-size: 0.98rem;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+
+        .task-description {
+            color: #64748B;
+            font-size: 0.84rem;
+            margin: 0;
+            line-height: 1.45;
+        }
+
+        .task-meta-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 2px;
+        }
+
+        .task-dates {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 0.78rem;
+            color: #64748B;
+        }
+
+        .task-dates span {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 6px;
+            background: #F8FAFC;
+            padding: 4px 8px;
+            color: #475569;
+        }
+
+        .task-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 0;
+            margin-top: auto;
+            border-top: 1px solid #F1F5F9;
+            background: #FBFDFF;
+        }
+
+        .text-action {
+            border: 0;
+            background: transparent;
+            padding: 11px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--accent);
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+        }
+
+        .text-action:hover {
+            background: #EEF3FF;
+        }
+
+        .text-action.danger {
+            color: var(--danger);
+        }
+
+        .text-action.danger:hover {
+            background: #FEF2F2;
+        }
+
+        .gantt-timeline {
+            margin-top: 28px;
+        }
+
+        .gantt-row {
+            display: grid;
+            grid-template-columns: minmax(150px, 220px) 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .gantt-bar-wrap {
+            background: #F1F5F9;
+            height: 28px;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gantt-bar {
+            height: 100%;
+            background: #1D4ED8;
+            opacity: 0.86;
+            border-radius: 6px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            inset: 0;
+            background: rgba(15,23,42,0.42);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-body {
+            background: white;
+            margin: 5vh auto;
+            padding: 28px;
+            border-radius: 14px;
+            width: min(560px, calc(100vw - 28px));
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            border: 1px solid #E2E8F0;
+        }
+
+        .modal-body h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #0F172A;
+            margin: 0 0 20px 0;
+        }
+
+        .inline-error {
+            display: none;
+            margin: 0 0 14px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #FEF2F2;
+            color: #991B1B;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        @@media (max-width: 720px) {
+            .phase-header {
+                flex-direction: column;
+            }
+
+            .phase-actions {
+                justify-content: flex-start;
+                width: 100%;
+            }
+
+            .phase-progress-box,
+            .phase-action-buttons {
+                width: 100%;
+            }
+
+            .phase-action-buttons .btn-primary,
+            .phase-action-buttons .btn-secondary {
+                flex: 1;
+            }
+
+            .gantt-row {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 }
 
 <div class="module-header">
     <div class="module-title">
         <h1>Construction Management</h1>
-        <p>Monitor project phases, tasks, and real-time progress.</p>
+        <p>Plan project phases, manage tasks, and track site progress from real project data.</p>
     </div>
+    <button type="button" class="btn-create" onclick="openAddPhase()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add Phase
+    </button>
 </div>
 
-<!-- Overall Progress Card -->
 <div class="progress-header">
     <div class="progress-circle">
         <span id="overall-progress-text">0%</span>
     </div>
     <h2>Project Completion</h2>
-    <p>Overall progress calculated from phase and task completion weights.</p>
-    <div class="summary-grid" style="max-width: 800px; margin: 30px auto 0;">
+    <p>Progress is calculated from completed tasks inside each phase.</p>
+    <div class="summary-grid" style="max-width: 900px; margin: 30px auto 0;">
         <div class="sum-card">
             <div class="sum-info"><h3>Total Phases</h3><p id="stat-phases">0</p></div>
         </div>
@@ -76,61 +368,103 @@
             <div class="sum-info"><h3>Completed</h3><p id="stat-completed" style="color:var(--success)">0</p></div>
         </div>
         <div class="sum-card">
-            <div class="sum-info"><h3>Delayed</h3><p id="stat-delayed" style="color:var(--danger)">0</p></div>
+            <div class="sum-info"><h3>Overdue</h3><p id="stat-delayed" style="color:var(--danger)">0</p></div>
         </div>
     </div>
 </div>
 
-<div id="phases-container">
-    <!-- Populated by JS -->
-</div>
+<div id="phases-container"></div>
 
-<!-- Gantt-style Timeline -->
 <div class="module-card gantt-timeline">
     <div class="card-header">
-        <h2>Visual Project Timeline (Gantt)</h2>
-        <p style="margin:0; font-size:0.8rem; color:var(--text-muted)">Historical task schedule overview</p>
+        <h2>Visual Project Timeline</h2>
+        <p style="margin:0; font-size:0.8rem; color:var(--text-muted)">Tasks with start and end dates appear here.</p>
     </div>
-    <div class="card-body" id="gantt-container">
-        <!-- Populated by JS -->
+    <div class="card-body" id="gantt-container"></div>
+</div>
+
+<div id="phaseModal" class="modal">
+    <div class="modal-body">
+        <h2 id="phase-modal-title">Add Phase</h2>
+        <div id="phase-error" class="inline-error"></div>
+        <form id="phase-form">
+            <input type="hidden" id="phase-id">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Phase Type</label>
+                    <select id="phase-type-id" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Sequence</label>
+                    <input type="number" id="phase-sequence" class="form-control" min="1" placeholder="Auto">
+                </div>
+                <div class="form-group full-width" id="custom-phase-group">
+                    <label>Custom Phase Name</label>
+                    <input type="text" id="phase-custom-name" class="form-control" placeholder="e.g. Boundary Wall">
+                </div>
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" id="phase-start" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" id="phase-end" class="form-control">
+                </div>
+                <div class="form-group full-width">
+                    <label>Notes</label>
+                    <textarea id="phase-notes" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label style="display:flex; gap:8px; align-items:center;">
+                        <input type="checkbox" id="phase-completed">
+                        Mark phase complete when it has no tasks
+                    </label>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closePhaseModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Save Phase</button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Add Task Modal -->
 <div id="taskModal" class="modal">
     <div class="modal-body">
-        <h2 id="modal-title">Add Task</h2>
+        <h2 id="task-modal-title">Add Task</h2>
+        <div id="task-error" class="inline-error"></div>
         <form id="task-form">
             <input type="hidden" id="task-id">
             <input type="hidden" id="task-phase-id">
-            <div class="form-group">
-                <label>Task Name</label>
-                <input type="text" id="task-name" class="form-control" required>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Task Name</label>
+                    <input type="text" id="task-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="task-status-id" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>Estimated Cost (PKR)</label>
+                    <input type="number" id="task-cost" class="form-control" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" id="task-start" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>End Date / Deadline</label>
+                    <input type="date" id="task-end" class="form-control">
+                </div>
+                <div class="form-group full-width">
+                    <label>Description</label>
+                    <textarea id="task-description" class="form-control" rows="3"></textarea>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Status</label>
-                <select id="task-status" class="form-control">
-                    <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Delayed">Delayed</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Weight (%)</label>
-                <input type="number" id="task-weight" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>Start Date</label>
-                <input type="date" id="task-start" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>End Date / Deadline</label>
-                <input type="date" id="task-end" class="form-control">
-            </div>
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button type="submit" class="btn-primary" style="flex:1">Save Task</button>
-                <button type="button" class="btn-primary" style="flex:1; background:var(--text-muted);" onclick="closeModal()">Cancel</button>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeTaskModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Save Task</button>
             </div>
         </form>
     </div>
@@ -138,156 +472,320 @@
 
 @section Scripts {
     <script>
-        async function loadConstructionData() {
-            const res = await fetch('/Construction/GetProgressData');
-            const data = await res.json();
+        const phaseTypes = @Html.Raw(Json.Serialize(ViewBag.PhaseTypes));
+        const taskStatuses = @Html.Raw(Json.Serialize(ViewBag.TaskStatuses));
+        let currentPhases = [];
 
-            // Overall Stats
-            document.getElementById('overall-progress-text').innerText = `${data.overallProgress}%`;
-            document.getElementById('stat-phases').innerText = data.phases.length;
-            
-            let totalTasks = 0, completed = 0, delayed = 0;
-            data.phases.forEach(p => {
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatDate(value) {
+            if (!value) return '-';
+            return new Date(`${value}T00:00:00`).toLocaleDateString();
+        }
+
+        function setError(id, message) {
+            const el = document.getElementById(id);
+            el.textContent = message || '';
+            el.style.display = message ? 'block' : 'none';
+        }
+
+        function populateLookups() {
+            const phaseSelect = document.getElementById('phase-type-id');
+            phaseSelect.innerHTML = phaseTypes.map(p => `<option value="${p.phaseTypeId}">${escapeHtml(p.phaseName)}</option>`).join('');
+            const statusSelect = document.getElementById('task-status-id');
+            statusSelect.innerHTML = taskStatuses.map(s => `<option value="${s.statusId}">${escapeHtml(s.statusName)}</option>`).join('');
+            phaseSelect.addEventListener('change', toggleCustomPhase);
+            toggleCustomPhase();
+        }
+
+        async function loadConstructionData() {
+            const res = await fetch('/Construction/GetProgressData', { cache: 'no-store' });
+            const data = await res.json();
+            currentPhases = data.phases || [];
+
+            const overallProgress = Math.max(0, Math.min(100, Number(data.overallProgress || 0)));
+            const progressCircle = document.querySelector('.progress-circle');
+            document.getElementById('overall-progress-text').innerText = `${overallProgress.toFixed(0)}%`;
+            progressCircle.style.setProperty('--progress-value', `${overallProgress}%`);
+            document.getElementById('stat-phases').innerText = currentPhases.length;
+
+            let totalTasks = 0, completed = 0, overdue = 0;
+            currentPhases.forEach(p => {
                 totalTasks += p.tasks.length;
                 p.tasks.forEach(t => {
                     if (t.status === 'Completed') completed++;
-                    if (t.status === 'Delayed') delayed++;
+                    if (t.isOverdue) overdue++;
                 });
             });
             document.getElementById('stat-tasks').innerText = totalTasks;
             document.getElementById('stat-completed').innerText = completed;
-            document.getElementById('stat-delayed').innerText = delayed;
+            document.getElementById('stat-delayed').innerText = overdue;
 
-            // Render Phases
+            renderPhases(currentPhases);
+            renderGantt(currentPhases);
+        }
+
+        function renderPhases(phases) {
             const container = document.getElementById('phases-container');
-            container.innerHTML = data.phases.map(p => `
-                <div class="phase-section">
+            if (!phases.length) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No construction phases yet</h2>
+                        <p>Add phases like Foundation, Grey Structure, Plumbing, Electrical, and Finishing.</p>
+                        <button type="button" class="btn-primary" onclick="openAddPhase()">Add Phase</button>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = phases.map(p => `
+                <section class="phase-section">
                     <div class="phase-header">
                         <div>
-                            <span class="phase-name">${p.phaseName}</span>
-                            <span class="phase-weight">(${p.weight}% of project)</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:20px;">
-                            <div style="width:200px">
-                                <div class="progress-container"><div class="progress-bar" style="width:${p.progress}%"></div></div>
-                                <span style="font-size:0.8rem; font-weight:700;">${p.progress}% Phase Completion</span>
+                            <div class="phase-name">${escapeHtml(p.phaseName)}</div>
+                            <div class="phase-meta">
+                                <span>Sequence ${p.sequence}</span>
+                                <span>Start: ${formatDate(p.startDate)}</span>
+                                <span>End: ${formatDate(p.endDate)}</span>
+                                <span class="phase-chip">${p.tasks.length} task${p.tasks.length === 1 ? '' : 's'}</span>
                             </div>
-                            <button class="btn-primary" style="padding:6px 12px; font-size:0.8rem" onclick="openAddTask(${p.phaseId})">+ Add Task</button>
+                        </div>
+                        <div class="phase-actions">
+                            <div class="phase-progress-box">
+                                <div class="progress-container"><div class="progress-bar" style="width:${Math.min(100, p.progress)}%"></div></div>
+                                <div class="phase-progress-label">
+                                    <span>${Number(p.progress).toFixed(0)}% Complete</span>
+                                    <span>${p.tasks.filter(t => t.status === 'Completed').length}/${p.tasks.length}</span>
+                                </div>
+                            </div>
+                            <div class="phase-action-buttons">
+                                <button class="btn-primary" onclick="openAddTask(${p.phaseId})">Add Task</button>
+                                <button class="btn-secondary" onclick="openEditPhase(${p.phaseId})">Edit</button>
+                                <button class="btn-secondary" style="color:var(--danger)" onclick="deletePhase(${p.phaseId})">Delete</button>
+                            </div>
                         </div>
                     </div>
                     <div class="task-grid">
-                        ${p.tasks.map(t => `
-                            <div class="task-card">
-                                <div class="task-status">
-                                    <span class="badge ${getStatusBadge(t.status)}">${t.status}</span>
-                                </div>
-                                <strong style="font-size:1rem;">${t.taskName}</strong>
-                                <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Weight: ${t.weight}%</p>
-                                <div style="display:flex; gap:10px; font-size:0.8rem; color:var(--text-muted);">
-                                    <span>Start: ${t.startDate ? new Date(t.startDate).toLocaleDateString() : '-'}</span>
-                                    <span>End: ${t.endDate ? new Date(t.endDate).toLocaleDateString() : '-'}</span>
-                                </div>
-                                <div style="display:flex; gap:10px; margin-top:10px; border-top:1px solid #f1f5f9; padding-top:10px;">
-                                    <button onclick="editTask(${JSON.stringify(t).replace(/"/g, '&quot;')})" style="border:none; background:none; color:var(--accent); cursor:pointer; font-size:0.8rem; font-weight:600;">Edit</button>
-                                    <button onclick="deleteTask(${t.taskId})" style="border:none; background:none; color:var(--danger); cursor:pointer; font-size:0.8rem; font-weight:600;">Delete</button>
-                                </div>
-                            </div>
-                        `).join('')}
+                        ${p.tasks.length ? p.tasks.map(t => renderTask(t)).join('') : '<p style="color:var(--text-muted); margin:0;">No tasks in this phase yet.</p>'}
                     </div>
-                </div>
+                </section>
             `).join('');
-
-            renderGantt(data.phases);
         }
 
-        function getStatusBadge(status) {
+        function renderTask(t) {
+            return `
+                <article class="task-card ${t.isOverdue ? 'is-overdue' : ''}">
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <strong class="task-title">${escapeHtml(t.taskName)}</strong>
+                            <span class="badge ${getStatusBadge(t.status, t.isOverdue)}">${t.isOverdue ? 'Overdue' : escapeHtml(t.status)}</span>
+                        </div>
+                        ${t.description ? `<p class="task-description">${escapeHtml(t.description)}</p>` : ''}
+                        <div class="task-meta-list">
+                            <div class="task-dates">
+                                <span>Start: ${formatDate(t.startDate)}</span>
+                                <span>End: ${formatDate(t.endDate)}</span>
+                            </div>
+                            <div class="task-dates">
+                                <span>Estimated: PKR ${Number(t.estimatedCost || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="text-action" onclick="openEditTask(${t.taskId})">Edit</button>
+                        <button class="text-action danger" onclick="deleteTask(${t.taskId})">Delete</button>
+                    </div>
+                </article>`;
+        }
+
+        function getStatusBadge(status, overdue) {
+            if (overdue) return 'badge-danger';
             switch(status) {
                 case 'Completed': return 'badge-success';
                 case 'In Progress': return 'badge-info';
-                case 'Delayed': return 'badge-danger';
+                case 'On Hold': return 'badge-warning';
+                case 'Cancelled': return 'badge-danger';
                 default: return 'badge-warning';
             }
         }
 
         function renderGantt(phases) {
             const gantt = document.getElementById('gantt-container');
-            let tasks = [];
-            phases.forEach(p => p.tasks.forEach(t => tasks.push({ ...t, phase: p.phaseName })));
+            const tasks = [];
+            phases.forEach(p => p.tasks.forEach(t => {
+                if (t.startDate && t.endDate) tasks.push({ ...t, phase: p.phaseName });
+            }));
 
-            if (tasks.length === 0) {
+            if (!tasks.length) {
                 gantt.innerHTML = '<p style="text-align:center; color:var(--text-muted)">Add tasks with dates to see the timeline.</p>';
                 return;
             }
 
-            gantt.innerHTML = tasks.filter(t => t.startDate && t.endDate).map(t => {
-                const start = new Date(t.startDate);
-                const end = new Date(t.endDate);
-                const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24));
-                const left = (start.getDate() * 2); // Simple visualization logic
+            const starts = tasks.map(t => new Date(`${t.startDate}T00:00:00`));
+            const ends = tasks.map(t => new Date(`${t.endDate}T00:00:00`));
+            const min = new Date(Math.min(...starts));
+            const max = new Date(Math.max(...ends));
+            const totalDays = Math.max(1, (max - min) / 86400000);
 
+            gantt.innerHTML = tasks.map(t => {
+                const start = new Date(`${t.startDate}T00:00:00`);
+                const end = new Date(`${t.endDate}T00:00:00`);
+                const left = Math.max(0, ((start - min) / 86400000) / totalDays * 100);
+                const width = Math.max(3, ((end - start) / 86400000 + 1) / totalDays * 100);
                 return `
                     <div class="gantt-row">
-                        <div style="font-size:0.85rem;"><strong>${t.taskName}</strong><br><small>${t.phase}</small></div>
+                        <div style="font-size:0.85rem;"><strong>${escapeHtml(t.taskName)}</strong><br><small>${escapeHtml(t.phase)}</small></div>
                         <div class="gantt-bar-wrap">
-                            <div class="gantt-bar" style="width:${Math.min(100, duration*5)}%; margin-left:${Math.min(90, left)}%"></div>
+                            <div class="gantt-bar" style="width:${Math.min(100 - left, width)}%; margin-left:${Math.min(97, left)}%"></div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
+        function toggleCustomPhase() {
+            const selected = phaseTypes.find(p => Number(p.phaseTypeId) === Number(document.getElementById('phase-type-id').value));
+            const isCustom = selected && selected.phaseName.toLowerCase() === 'custom';
+            document.getElementById('custom-phase-group').style.display = isCustom ? 'block' : 'none';
+        }
+
+        function openAddPhase() {
+            document.getElementById('phase-form').reset();
+            document.getElementById('phase-id').value = 0;
+            document.getElementById('phase-modal-title').textContent = 'Add Phase';
+            setError('phase-error', '');
+            toggleCustomPhase();
+            document.getElementById('phaseModal').style.display = 'block';
+        }
+
+        function openEditPhase(phaseId) {
+            const p = currentPhases.find(x => x.phaseId === phaseId);
+            if (!p) return;
+            document.getElementById('phase-id').value = p.phaseId;
+            document.getElementById('phase-type-id').value = p.phaseTypeId;
+            document.getElementById('phase-sequence').value = p.sequence;
+            document.getElementById('phase-custom-name').value = p.phaseName;
+            document.getElementById('phase-start').value = p.startDate || '';
+            document.getElementById('phase-end').value = p.endDate || '';
+            document.getElementById('phase-notes').value = p.notes || '';
+            document.getElementById('phase-completed').checked = !!p.isCompleted;
+            document.getElementById('phase-modal-title').textContent = 'Edit Phase';
+            setError('phase-error', '');
+            toggleCustomPhase();
+            document.getElementById('phaseModal').style.display = 'block';
+        }
+
+        function closePhaseModal() { document.getElementById('phaseModal').style.display = 'none'; }
+
+        document.getElementById('phase-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = Number(document.getElementById('phase-id').value);
+            const payload = {
+                phaseId: id,
+                phaseTypeId: Number(document.getElementById('phase-type-id').value),
+                customPhaseName: document.getElementById('phase-custom-name').value,
+                sequence: Number(document.getElementById('phase-sequence').value || 0),
+                startDate: document.getElementById('phase-start').value || null,
+                endDate: document.getElementById('phase-end').value || null,
+                isCompleted: document.getElementById('phase-completed').checked,
+                notes: document.getElementById('phase-notes').value
+            };
+            const result = await postJson(id > 0 ? '/Construction/UpdatePhase' : '/Construction/AddPhase', payload);
+            if (!result.success) {
+                setError('phase-error', result.message || 'Unable to save phase.');
+                return;
+            }
+            closePhaseModal();
+            loadConstructionData();
+        });
+
         function openAddTask(phaseId) {
             document.getElementById('task-form').reset();
-            document.getElementById('task-id').value = "0";
+            document.getElementById('task-id').value = 0;
             document.getElementById('task-phase-id').value = phaseId;
-            document.getElementById('modal-title').innerText = "Add New Task";
+            document.getElementById('task-modal-title').textContent = 'Add Task';
+            setError('task-error', '');
             document.getElementById('taskModal').style.display = 'block';
         }
 
-        function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
-
-        document.getElementById('task-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('task-id').value);
-            const task = {
-                taskId: id,
-                phaseId: parseInt(document.getElementById('task-phase-id').value),
-                taskName: document.getElementById('task-name').value,
-                status: document.getElementById('task-status').value,
-                weight: parseFloat(document.getElementById('task-weight').value),
-                startDate: document.getElementById('task-start').value,
-                endDate: document.getElementById('task-end').value
-            };
-
-            const url = id > 0 ? '/Construction/UpdateTask' : '/Construction/AddTask';
-            await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(task)
-            });
-            closeModal();
-            loadConstructionData();
-        };
-
-        function editTask(t) {
-            document.getElementById('task-id').value = t.taskId;
-            document.getElementById('task-phase-id').value = t.phaseId;
-            document.getElementById('task-name').value = t.taskName;
-            document.getElementById('task-status').value = t.status;
-            document.getElementById('task-weight').value = t.weight;
-            if (t.startDate) document.getElementById('task-start').value = t.startDate.split('T')[0];
-            if (t.endDate) document.getElementById('task-end').value = t.endDate.split('T')[0];
-            document.getElementById('modal-title').innerText = "Edit Task";
+        function openEditTask(taskId) {
+            const task = currentPhases.flatMap(p => p.tasks).find(t => t.taskId === taskId);
+            if (!task) return;
+            document.getElementById('task-id').value = task.taskId;
+            document.getElementById('task-phase-id').value = task.phaseId;
+            document.getElementById('task-name').value = task.taskName;
+            document.getElementById('task-status-id').value = task.statusId;
+            document.getElementById('task-cost').value = task.estimatedCost || 0;
+            document.getElementById('task-start').value = task.startDate || '';
+            document.getElementById('task-end').value = task.endDate || '';
+            document.getElementById('task-description').value = task.description || '';
+            document.getElementById('task-modal-title').textContent = 'Edit Task';
+            setError('task-error', '');
             document.getElementById('taskModal').style.display = 'block';
+        }
+
+        function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
+
+        document.getElementById('task-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = Number(document.getElementById('task-id').value);
+            const payload = {
+                taskId: id,
+                phaseId: Number(document.getElementById('task-phase-id').value),
+                taskName: document.getElementById('task-name').value,
+                description: document.getElementById('task-description').value,
+                statusId: Number(document.getElementById('task-status-id').value),
+                startDate: document.getElementById('task-start').value || null,
+                endDate: document.getElementById('task-end').value || null,
+                estimatedCost: Number(document.getElementById('task-cost').value || 0)
+            };
+            const result = await postJson(id > 0 ? '/Construction/UpdateTask' : '/Construction/AddTask', payload);
+            if (!result.success) {
+                setError('task-error', result.message || 'Unable to save task.');
+                return;
+            }
+            closeTaskModal();
+            loadConstructionData();
+        });
+
+        async function deletePhase(id) {
+            if (!confirm('Delete this phase and its tasks?')) return;
+            const result = await postForm(`/Construction/DeletePhase?id=${id}`);
+            if (!result.success) {
+                alert(result.message || 'Unable to delete phase.');
+            }
+            loadConstructionData();
         }
 
         async function deleteTask(id) {
-            if (confirm('Delete this task?')) {
-                await fetch(`/Construction/DeleteTask?id=${id}`, { method: 'POST' });
-                loadConstructionData();
+            if (!confirm('Delete this task?')) return;
+            const result = await postForm(`/Construction/DeleteTask?id=${id}`);
+            if (!result.success) {
+                alert(result.message || 'Unable to delete task.');
             }
+            loadConstructionData();
         }
 
+        async function postJson(url, payload) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            return res.ok ? await res.json() : { success: false, message: 'Request failed.' };
+        }
+
+        async function postForm(url) {
+            const res = await fetch(url, { method: 'POST' });
+            return res.ok ? await res.json() : { success: false, message: 'Request failed.' };
+        }
+
+        populateLookups();
         loadConstructionData();
     </script>
 }
