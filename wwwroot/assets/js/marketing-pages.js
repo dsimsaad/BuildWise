@@ -56,7 +56,7 @@
         });
     });
 
-    document.querySelector(".contact-form")?.addEventListener("submit", event => {
+    document.querySelector(".contact-form")?.addEventListener("submit", async event => {
         event.preventDefault();
 
         const form = event.currentTarget;
@@ -64,15 +64,33 @@
         if (!btn) return;
 
         const originalText = btn.innerHTML;
-        btn.innerHTML = "Message Sent!";
+        btn.innerHTML = "Sending...";
         btn.disabled = true;
-        btn.style.background = "#059669";
-        form.reset();
 
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.style.background = "";
-            btn.disabled = false;
-        }, 1800);
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: new FormData(form),
+                headers: { Accept: "application/json" }
+            });
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to send message.");
+            }
+
+            btn.innerHTML = "Message Sent!";
+            btn.style.background = "#059669";
+            form.reset();
+        } catch {
+            btn.innerHTML = "Message Failed";
+            btn.style.background = "#DC2626";
+        } finally {
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = "";
+                btn.disabled = false;
+            }, 1800);
+        }
     });
 })();

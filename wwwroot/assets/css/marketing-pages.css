@@ -1,4 +1,4 @@
-.dash-content.marketing-page-content { padding: 0; background: #fff; }
+.dash-content.marketing-page-content { padding: 0; background: #fff; overflow: hidden; }
 .dash-content.marketing-page-content .reveal { opacity: 1; transform: none; }
 .faq-body,
 .contact-section {
@@ -34,6 +34,10 @@
 .faq-cta a { display: inline-block; background: #fff; color: #0F172A; padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; transition: all .2s; }
 .faq-cta a:hover { background: #EFF6FF; transform: translateY(-1px); }
 
+.dash-content.marketing-page-content .filter-btn { border-radius: 100px !important; }
+.dash-content.marketing-page-content .faq-cta { border-radius: 18px !important; }
+.dash-content.marketing-page-content .faq-cta a { border-radius: 10px !important; }
+
 /* === CONTACT PAGE === */
 .contact-section { padding: 80px 24px 100px; position: relative; z-index: 1; }
 .contact-wrapper { max-width: 1100px; margin: 0 auto; display: flex; gap: 64px; align-items: flex-start; }
@@ -60,6 +64,13 @@
 .input-group textarea { resize: vertical; min-height: 140px; }
 .btn-submit { width: 100%; background: #1D4ED8; color: #fff; border: none; border-radius: 12px; padding: 16px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s ease; font-family: 'Inter', sans-serif; letter-spacing: 0.2px; margin-top: 12px; }
 .btn-submit:hover { background: #1E40AF; transform: translateY(-1px); }
+
+.dash-content.marketing-page-content .details-card { border-radius: 16px !important; }
+.dash-content.marketing-page-content .detail-icon { border-radius: 10px !important; }
+.dash-content.marketing-page-content .contact-form-card { border-radius: 18px !important; }
+.dash-content.marketing-page-content .input-group input,
+.dash-content.marketing-page-content .input-group textarea { border-radius: 10px !important; }
+.dash-content.marketing-page-content .btn-submit { border-radius: 12px !important; }
 
 @media (max-width: 900px) {
   .contact-wrapper { flex-direction: column; gap: 48px; }

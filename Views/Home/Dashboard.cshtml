@@ -25,8 +25,14 @@
         .ToList();
     decimal constructionProgress = phaseProgress.Any() ? Math.Round(phaseProgress.Average(p => p.Progress), 0) : 0;
 
-    string FormatMoney(decimal val) =>
-        $"PKR {val.ToString("N0", new CultureInfo("en-IN"))}";
+    string FormatMoney(decimal val)
+    {
+        var abs = Math.Abs(val);
+        static string Trimmed(decimal amount) => amount.ToString(amount < 10 && amount % 1 != 0 ? "0.##" : "0.#", CultureInfo.InvariantCulture);
+        if (abs >= 10000000) return $"PKR {Trimmed(val / 10000000)}Cr";
+        if (abs >= 100000) return $"PKR {Trimmed(val / 100000)}L";
+        return $"PKR {val.ToString("N0", new CultureInfo("en-IN"))}";
+    }
 
     double budgetUsedPct = totalBudget > 0 ? (double)(totalExpenses / totalBudget * 100) : 0;
     bool isOverallDashboard = ViewBag.IsOverallDashboard == true;
@@ -469,7 +475,18 @@
         return items.reduce((s, i) => s + Number(i.total || 0), 0);
     }
     function formatPKR(value) {
-        return `PKR ${Number(value || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
+        const amount = Number(value || 0);
+        const abs = Math.abs(amount);
+        const formatCompact = (divisor, suffix) => {
+            const compact = amount / divisor;
+            return `PKR ${compact.toLocaleString('en-IN', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: compact < 10 && compact % 1 !== 0 ? 2 : 1
+            }).replace(/\.0$/, '')}${suffix}`;
+        };
+        if (abs >= 10000000) return formatCompact(10000000, 'Cr');
+        if (abs >= 100000) return formatCompact(100000, 'L');
+        return `PKR ${amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
     }
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, ch => ({
@@ -796,10 +813,12 @@
             // close all
             document.querySelectorAll('.db-kpi-dropdown').forEach(m => m.classList.remove('is-open'));
             document.querySelectorAll('.db-kpi-more').forEach(b => b.classList.remove('is-active'));
+            document.querySelectorAll('.db-kpi-card').forEach(c => c.classList.remove('is-menu-open'));
             // toggle clicked
             if (!isOpen) {
                 menu.classList.add('is-open');
                 this.classList.add('is-active');
+                this.closest('.db-kpi-card')?.classList.add('is-menu-open');
             }
         });
     });
@@ -808,6 +827,7 @@
     document.addEventListener('click', () => {
         document.querySelectorAll('.db-kpi-dropdown').forEach(m => m.classList.remove('is-open'));
         document.querySelectorAll('.db-kpi-more').forEach(b => b.classList.remove('is-active'));
+        document.querySelectorAll('.db-kpi-card').forEach(c => c.classList.remove('is-menu-open'));
     });
 
     // ─────────────────────────────────────────────

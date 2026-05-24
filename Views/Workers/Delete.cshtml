@@ -5,7 +5,14 @@
     ViewData["Title"] = "Delete Worker";
     Layout = "_ModuleLayout";
     var pkrCulture = new CultureInfo("en-IN");
-    string FormatPkr(decimal value) => $"PKR {value.ToString("N0", pkrCulture)}";
+    string FormatPkr(decimal value)
+    {
+        var abs = Math.Abs(value);
+        static string Trimmed(decimal amount) => amount.ToString(amount < 10 && amount % 1 != 0 ? "0.##" : "0.#", CultureInfo.InvariantCulture);
+        if (abs >= 10000000) return $"PKR {Trimmed(value / 10000000)}Cr";
+        if (abs >= 100000) return $"PKR {Trimmed(value / 100000)}L";
+        return $"PKR {value.ToString("N0", new CultureInfo("en-IN"))}";
+    }
 }
 
 @section Styles {

@@ -160,5 +160,31 @@ ORDER BY b.Category";
                 return Convert.ToDecimal(result);
             }
         }
+
+        public decimal GetApprovedProjectBudget(int? projectId = null)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT ISNULL(SUM(TotalBudget), 0) FROM Projects WHERE (@ProjectId IS NULL OR ProjectId = @ProjectId)";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ProjectId", (object?)projectId ?? DBNull.Value);
+                object result = cmd.ExecuteScalar();
+                return Convert.ToDecimal(result);
+            }
+        }
+
+        public decimal GetApprovedProjectBudgetForUser(int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT ISNULL(SUM(TotalBudget), 0) FROM Projects WHERE UserId = @UserId";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                object result = cmd.ExecuteScalar();
+                return Convert.ToDecimal(result);
+            }
+        }
     }
 }

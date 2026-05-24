@@ -91,6 +91,26 @@ namespace BuildWise.BusinessLayer
             return expenseDal.GetExpensesByCategory(projectId, userId);
         }
 
+        public bool ApplyMaterialReturn(MaterialPurchase purchase, decimal returnQuantity, decimal returnAmount, string? returnNotes = null)
+        {
+            if (purchase.ProjectId <= 0 || returnQuantity <= 0 || returnAmount <= 0)
+            {
+                return false;
+            }
+
+            var adjustedExpense = true;
+            var mirroredExpense = expenseDal.GetMaterialPurchaseExpense(purchase.ProjectId, purchase.PurchaseId);
+            if (mirroredExpense != null)
+            {
+                var newAmount = Math.Round((purchase.TotalCost ?? purchase.Quantity * purchase.UnitPrice), 2);
+                adjustedExpense = newAmount > 0
+                    ? expenseDal.UpdateAmount(mirroredExpense.ExpenseId, newAmount)
+                    : expenseDal.Delete(mirroredExpense.ExpenseId);
+            }
+
+            return adjustedExpense && LogMaterialReturnTransaction(purchase, returnQuantity, returnAmount, returnNotes);
+        }
+
         private void LogTransaction(string type, ExpenseItem item)
         {
             decimal totalBudget = budgetDal.GetTotalBudget(item.ProjectId);
@@ -110,6 +130,35 @@ namespace BuildWise.BusinessLayer
                 BudgetEffect = Math.Round(effect, 2)
             };
             transactionDal.Add(log);
+        }
+
+        private bool LogMaterialReturnTransaction(MaterialPurchase purchase, decimal returnQuantity, decimal returnAmount, string? returnNotes)
+        {
+            decimal totalBudget = budgetDal.GetTotalBudget(purchase.ProjectId);
+            decimal effect = 0;
+            if (totalBudget > 0)
+            {
+                effect = -((returnAmount / totalBudget) * 100);
+            }
+
+            var materialName = purchase.Material?.MaterialName ?? "material";
+            var unitName = purchase.Unit?.UnitName ?? "units";
+            var description = $"Returned {returnQuantity:0.###} {unitName} of {materialName} from purchase #{purchase.PurchaseId}. Expense reduced by PKR {returnAmount:N0}.";
+            if (!string.IsNullOrWhiteSpace(returnNotes))
+            {
+                description += $" Notes: {returnNotes.Trim()}";
+            }
+
+            TransactionLog log = new TransactionLog
+            {
+                ProjectId = purchase.ProjectId,
+                TransactionType = "Returned",
+                Category = "Material",
+                Description = description,
+                Amount = returnAmount,
+                BudgetEffect = Math.Round(effect, 2)
+            };
+            return transactionDal.Add(log);
         }
     }
 }

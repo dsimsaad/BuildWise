@@ -19,14 +19,33 @@
             g.Key.MaterialName,
             g.Key.UnitName,
             Purchased = g.Sum(x => x.Quantity),
+            Used = g.Sum(x => x.MaterialUsages.Sum(u => u.QuantityUsed)),
             AverageUnitPrice = g.Average(x => x.UnitPrice),
             Cost = g.Sum(x => x.TotalCost ?? 0),
             Purchases = g.Count()
         })
+        .Select(x => new
+        {
+            x.MaterialName,
+            x.UnitName,
+            x.Purchased,
+            x.Used,
+            Available = Math.Max(0, x.Purchased - x.Used),
+            x.AverageUnitPrice,
+            x.Cost,
+            x.Purchases
+        })
         .OrderBy(x => x.MaterialName)
         .ToList();
     var pkrCulture = new CultureInfo("en-IN");
-    string FormatPkr(decimal value) => $"PKR {value.ToString("N0", pkrCulture)}";
+    string FormatPkr(decimal value)
+    {
+        var abs = Math.Abs(value);
+        static string Trimmed(decimal amount) => amount.ToString(amount < 10 && amount % 1 != 0 ? "0.##" : "0.#", CultureInfo.InvariantCulture);
+        if (abs >= 10000000) return $"PKR {Trimmed(value / 10000000)}Cr";
+        if (abs >= 100000) return $"PKR {Trimmed(value / 100000)}L";
+        return $"PKR {value.ToString("N0", new CultureInfo("en-IN"))}";
+    }
 }
 
 @section Styles {
@@ -49,6 +68,113 @@
             padding-top: 11px;
             padding-bottom: 11px;
         }
+
+        .material-message {
+            margin-bottom: 18px;
+            justify-content: flex-start;
+        }
+
+        .btn-return {
+            background: #ECFDF5;
+            color: #047857;
+        }
+
+        .btn-return:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .return-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 2400;
+            background: rgba(15, 23, 42, 0.48);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .return-modal.is-open {
+            display: flex;
+        }
+
+        .return-dialog {
+            width: min(440px, 100%);
+            background: #FFFFFF;
+            border: 1px solid #DCE8F7;
+            border-radius: 3px;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.26);
+        }
+
+        .return-dialog-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 20px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .return-dialog-header h2 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .return-dialog-header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        .return-close {
+            border: none;
+            background: #F8FAFC;
+            color: #64748B;
+            width: 30px;
+            height: 30px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .return-dialog-body {
+            padding: 20px;
+        }
+
+        .return-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .return-meta-item {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 3px;
+            padding: 10px;
+        }
+
+        .return-meta-item span {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+
+        .return-meta-item strong {
+            display: block;
+            color: var(--text-main);
+            font-size: 0.86rem;
+        }
     </style>
 }
 
@@ -65,6 +191,15 @@
         </a>
     </div>
 </div>
+
+@if (TempData["MaterialMessage"] != null)
+{
+    <div class="badge badge-success material-message">@TempData["MaterialMessage"]</div>
+}
+@if (TempData["MaterialError"] != null)
+{
+    <div class="badge badge-danger material-message">@TempData["MaterialError"]</div>
+}
 
 <div class="summary-grid">
     <div class="sum-card">
@@ -126,6 +261,8 @@
                         <tr>
                             <th>Material</th>
                             <th>Purchased</th>
+                            <th>Used</th>
+                            <th>Available</th>
                             <th>Avg Unit Price</th>
                             <th>Total Cost</th>
                             <th>Purchases</th>
@@ -137,6 +274,8 @@
                             <tr>
                                 <td><strong>@item.MaterialName</strong></td>
                                 <td>@item.Purchased.ToString("N2") @item.UnitName</td>
+                                <td>@item.Used.ToString("N2") @item.UnitName</td>
+                                <td><strong>@item.Available.ToString("N2") @item.UnitName</strong></td>
                                 <td>@FormatPkr(item.AverageUnitPrice)</td>
                                 <td><strong>@FormatPkr(item.Cost)</strong></td>
                                 <td>@item.Purchases</td>
@@ -173,6 +312,8 @@
                             <th>Date</th>
                             <th>Material</th>
                             <th>Quantity</th>
+                            <th>Used</th>
+                            <th>Available</th>
                             <th>Unit Price</th>
                             <th>Total Cost</th>
                             <th>Notes</th>
@@ -182,15 +323,31 @@
                     <tbody>
                         @foreach (var item in Model)
                         {
+                            var usedQuantity = item.MaterialUsages.Sum(u => u.QuantityUsed);
+                            var availableQuantity = Math.Max(0, item.Quantity - usedQuantity);
+                            var canReturn = availableQuantity > 0;
                             <tr>
                                 <td>@item.PurchaseDate.ToString("MMM dd, yyyy")</td>
                                 <td><strong>@item.Material?.MaterialName</strong></td>
                                 <td>@item.Quantity @item.Unit?.UnitName</td>
+                                <td>@usedQuantity.ToString("N2") @item.Unit?.UnitName</td>
+                                <td><strong>@availableQuantity.ToString("N2") @item.Unit?.UnitName</strong></td>
                                 <td>@FormatPkr(item.UnitPrice)</td>
                                 <td><strong>@FormatPkr(item.TotalCost ?? 0)</strong></td>
                                 <td>@(string.IsNullOrWhiteSpace(item.Notes) ? "-" : item.Notes)</td>
                                 <td>
                                     <div class="action-btns">
+                                        <button type="button"
+                                                class="btn-icon btn-return js-return-purchase"
+                                                title="Return unused material"
+                                                data-purchase-id="@item.PurchaseId"
+                                                data-material="@item.Material?.MaterialName"
+                                                data-unit="@item.Unit?.UnitName"
+                                                data-available="@availableQuantity"
+                                                data-unit-price="@item.UnitPrice"
+                                                @(canReturn ? "" : "disabled")>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14 4 9l5-5"></path><path d="M4 9h11a5 5 0 0 1 0 10h-4"></path></svg>
+                                        </button>
                                         <form asp-action="DeletePurchase" method="post" class="inline-delete-form" onsubmit="return confirm('Delete this purchase? This affects project costs.');">
                                             <input type="hidden" name="id" value="@item.PurchaseId" />
                                             <button type="submit" class="btn-icon btn-delete" title="Delete">
@@ -207,3 +364,112 @@
         }
     </div>
 </div>
+
+<div class="return-modal" id="returnModal" aria-hidden="true">
+    <div class="return-dialog">
+        <div class="return-dialog-header">
+            <div>
+                <h2>Return Material</h2>
+                <p id="returnMaterialName">Select unused quantity to return.</p>
+            </div>
+            <button type="button" class="return-close" data-return-close aria-label="Close">&times;</button>
+        </div>
+        <form asp-action="ReturnPurchase" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="returnPurchaseId" />
+            <div class="return-dialog-body">
+                <div class="return-meta">
+                    <div class="return-meta-item">
+                        <span>Available</span>
+                        <strong id="returnAvailable">0</strong>
+                    </div>
+                    <div class="return-meta-item">
+                        <span>Refund Value</span>
+                        <strong id="returnAmount">PKR 0</strong>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="returnQuantity">Quantity to Return</label>
+                    <input id="returnQuantity" name="returnQuantity" class="form-control" type="number" min="0.001" step="0.001" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="returnNotes">Notes</label>
+                    <textarea id="returnNotes" name="returnNotes" class="form-control" rows="3" placeholder="Optional supplier or return reference"></textarea>
+                </div>
+
+                <div class="form-actions" style="margin-top:18px;">
+                    <button type="button" class="btn-secondary" data-return-close>Cancel</button>
+                    <button type="submit" class="btn-primary">Confirm Return</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const returnModal = document.getElementById('returnModal');
+        const returnPurchaseId = document.getElementById('returnPurchaseId');
+        const returnMaterialName = document.getElementById('returnMaterialName');
+        const returnAvailable = document.getElementById('returnAvailable');
+        const returnAmount = document.getElementById('returnAmount');
+        const returnQuantity = document.getElementById('returnQuantity');
+        const returnNotes = document.getElementById('returnNotes');
+        let activeUnitPrice = 0;
+        let activeUnit = '';
+
+        function formatQty(value) {
+            return Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 3 });
+        }
+
+        function refreshReturnAmount() {
+            const quantity = Number(returnQuantity.value || 0);
+            returnAmount.textContent = formatPKR(quantity * activeUnitPrice);
+        }
+
+        document.querySelectorAll('.js-return-purchase').forEach(button => {
+            button.addEventListener('click', () => {
+                const available = Number(button.dataset.available || 0);
+                activeUnitPrice = Number(button.dataset.unitPrice || 0);
+                activeUnit = button.dataset.unit || '';
+
+                returnPurchaseId.value = button.dataset.purchaseId;
+                returnMaterialName.textContent = button.dataset.material || 'Return material';
+                returnAvailable.textContent = `${formatQty(available)} ${activeUnit}`;
+                returnQuantity.max = available;
+                returnQuantity.value = available;
+                returnNotes.value = '';
+                refreshReturnAmount();
+
+                returnModal.classList.add('is-open');
+                returnModal.setAttribute('aria-hidden', 'false');
+                returnQuantity.focus();
+            });
+        });
+
+        returnQuantity?.addEventListener('input', refreshReturnAmount);
+
+        document.querySelectorAll('[data-return-close]').forEach(button => {
+            button.addEventListener('click', () => {
+                returnModal.classList.remove('is-open');
+                returnModal.setAttribute('aria-hidden', 'true');
+            });
+        });
+
+        returnModal?.addEventListener('click', event => {
+            if (event.target === returnModal) {
+                returnModal.classList.remove('is-open');
+                returnModal.setAttribute('aria-hidden', 'true');
+            }
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && returnModal.classList.contains('is-open')) {
+                returnModal.classList.remove('is-open');
+                returnModal.setAttribute('aria-hidden', 'true');
+            }
+        });
+    </script>
+}

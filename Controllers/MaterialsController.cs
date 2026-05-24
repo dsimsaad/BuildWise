@@ -141,6 +141,42 @@ namespace BuildWise.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReturnPurchase(int id, decimal returnQuantity, string? returnNotes)
+        {
+            var userId = GetCurrentUserId();
+            var projectId = GetSelectedProjectId();
+            if (projectId == null) return RedirectToAction("Index", "Projects");
+
+            if (!await UserOwnsProjectAsync(projectId.Value, userId))
+            {
+                HttpContext.Session.Remove("SelectedProjectId");
+                return RedirectToAction("Index", "Projects");
+            }
+
+            try
+            {
+                var purchase = await _materialBll.ReturnPurchaseAsync(id, projectId.Value, returnQuantity);
+                var returnAmount = Math.Round(returnQuantity * purchase.UnitPrice, 2);
+
+                if (!_expenseBll.ApplyMaterialReturn(purchase, returnQuantity, returnAmount, returnNotes))
+                {
+                    TempData["MaterialMessage"] = "Return saved, but the expense adjustment could not be fully logged.";
+                }
+                else
+                {
+                    TempData["MaterialMessage"] = $"Returned {returnQuantity:0.###} {purchase.Unit?.UnitName} of {purchase.Material?.MaterialName}. Expense reduced by PKR {returnAmount:N0}.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["MaterialError"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
         // Catalog Management
         public async Task<IActionResult> Catalog()
         {

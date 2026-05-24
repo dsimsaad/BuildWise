@@ -95,6 +95,43 @@ ORDER BY e.ExpenseDate DESC";
             return item;
         }
 
+        public ExpenseItem? GetMaterialPurchaseExpense(int projectId, int purchaseId)
+        {
+            ExpenseItem? item = null;
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = @"
+SELECT TOP 1 ExpenseId, ProjectId, Category, Description, Amount, ExpenseDate, CreatedAt, UpdatedAt
+FROM ExpenseItems
+WHERE ProjectId = @ProjectId
+  AND Category = 'Material'
+  AND (Description = @DescriptionExact OR Description LIKE @DescriptionWithName)
+ORDER BY ExpenseId DESC";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ProjectId", projectId);
+                cmd.Parameters.AddWithValue("@DescriptionExact", $"Material purchase #{purchaseId}");
+                cmd.Parameters.AddWithValue("@DescriptionWithName", $"Material purchase #{purchaseId}:%");
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    item = new ExpenseItem();
+                    item.ExpenseId = Convert.ToInt32(reader["ExpenseId"]);
+                    item.ProjectId = reader["ProjectId"] != DBNull.Value ? Convert.ToInt32(reader["ProjectId"]) : null;
+                    item.Category = reader["Category"]?.ToString() ?? "";
+                    item.Description = reader["Description"] != DBNull.Value ? reader["Description"]?.ToString() ?? "" : "";
+                    item.Amount = Convert.ToDecimal(reader["Amount"]);
+                    item.ExpenseDate = Convert.ToDateTime(reader["ExpenseDate"]);
+                    item.CreatedAt = Convert.ToDateTime(reader["CreatedAt"]);
+                    item.UpdatedAt = Convert.ToDateTime(reader["UpdatedAt"]);
+                }
+            }
+
+            return item;
+        }
+
         public bool Add(ExpenseItem item)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -123,6 +160,19 @@ ORDER BY e.ExpenseDate DESC";
                 cmd.Parameters.AddWithValue("@Description", (object?)item.Description ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Amount", item.Amount);
                 cmd.Parameters.AddWithValue("@ExpenseDate", item.ExpenseDate);
+                return cmd.ExecuteNonQuery() > 0;
+            }
+        }
+
+        public bool UpdateAmount(int id, decimal amount)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "UPDATE ExpenseItems SET Amount = @Amount, UpdatedAt = GETDATE() WHERE ExpenseId = @Id";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@Amount", amount);
                 return cmd.ExecuteNonQuery() > 0;
             }
         }

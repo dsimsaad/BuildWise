@@ -132,6 +132,16 @@
     <script>
         function formatPKR(value) {
             const amount = Number(value || 0);
+            const abs = Math.abs(amount);
+            const formatCompact = (divisor, suffix) => {
+                const compact = amount / divisor;
+                return 'PKR ' + compact.toLocaleString('en-IN', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: compact < 10 && compact % 1 !== 0 ? 2 : 1
+                }).replace(/\.0$/, '') + suffix;
+            };
+            if (abs >= 10000000) return formatCompact(10000000, 'Cr');
+            if (abs >= 100000) return formatCompact(100000, 'L');
             return 'PKR ' + amount.toLocaleString('en-IN', { maximumFractionDigits: 0 });
         }
 

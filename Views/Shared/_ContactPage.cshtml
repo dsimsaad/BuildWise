@@ -33,28 +33,31 @@
 
     <div class="contact-form-card reveal">
       <h2>Send us a message</h2>
-      <form class="contact-form">
+      <form class="contact-form" action="https://api.web3forms.com/submit" method="POST">
+        <input type="hidden" name="access_key" value="4752468f-734c-4d7c-8b63-3d8e6c4bcc03">
+        <input type="hidden" name="from_name" value="BuildWise Contact Form">
+        <input type="checkbox" name="botcheck" style="display:none;">
         <div class="form-row">
           <div class="input-group">
             <label>First Name</label>
-            <input type="text" placeholder="First Name">
+            <input type="text" name="first_name" placeholder="First Name" required>
           </div>
           <div class="input-group">
             <label>Last Name</label>
-            <input type="text" placeholder="Last Name">
+            <input type="text" name="last_name" placeholder="Last Name" required>
           </div>
         </div>
         <div class="input-group">
           <label>Email</label>
-          <input type="email" placeholder="you@example.com">
+          <input type="email" name="email" placeholder="you@example.com" required>
         </div>
         <div class="input-group">
           <label>Subject</label>
-          <input type="text" placeholder="How can we help?">
+          <input type="text" name="subject" placeholder="How can we help?" required>
         </div>
         <div class="input-group">
           <label>Message</label>
-          <textarea placeholder="Type your message here..."></textarea>
+          <textarea name="message" placeholder="Type your message here..." required></textarea>
         </div>
         <button type="submit" class="btn-submit">Send Message &nbsp;→</button>
       </form>

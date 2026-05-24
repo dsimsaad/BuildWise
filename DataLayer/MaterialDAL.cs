@@ -64,6 +64,12 @@ namespace BuildWise.DataLayer
             _context.MaterialPurchases.Add(purchase);
             await _context.SaveChangesAsync();
         }
+
+        public async Task UpdatePurchaseAsync(MaterialPurchase purchase)
+        {
+            purchase.TotalCost = purchase.Quantity * purchase.UnitPrice;
+            await _context.SaveChangesAsync();
+        }
         
         public async Task DeletePurchaseAsync(int purchaseId, int projectId)
         {

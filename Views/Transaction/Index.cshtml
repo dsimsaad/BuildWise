@@ -70,6 +70,7 @@
             <option value="Added">Added</option>
             <option value="Updated">Updated</option>
             <option value="Deleted">Deleted</option>
+            <option value="Returned">Returned</option>
         </select>
     </div>
     <div class="filter-group">
@@ -133,6 +134,7 @@
                 if (t.transactionType === 'Added') badgeClass = 'badge-success';
                 if (t.transactionType === 'Deleted') badgeClass = 'badge-danger';
                 if (t.transactionType === 'Updated') badgeClass = 'badge-warning';
+                if (t.transactionType === 'Returned') badgeClass = 'badge-info';
 
                 return `
                     <tr>

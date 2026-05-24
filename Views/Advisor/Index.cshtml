@@ -6,30 +6,76 @@
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/modules.css">
     <style>
-        .advisor-container { max-width: 900px; margin: 0; }
+        .advisor-container { max-width: 960px; margin: 0; }
         .critical-modal {
             display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
             background: rgba(15,23,42,0.4); backdrop-filter: blur(4px);
         }
         .modal-content {
             background: white; margin: 12% auto; padding: 36px; border-radius: 16px;
-            width: 90%; max-width: 480px; text-align: center; 
+            width: 90%; max-width: 480px; text-align: center;
             box-shadow: 0 20px 40px rgba(0,0,0,0.15); border: 1px solid #E2E8F0;
         }
-        .modal-icon { font-size: 48px; margin-bottom: 16px; display: block; }
-        .btn-close-modal { 
-            margin-top: 20px; background: #0F172A; color: white; border: none; 
+        .modal-icon {
+            width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: #FEE2E2; color: #991B1B; font-size: 28px; font-weight: 800;
+        }
+        .btn-close-modal {
+            margin-top: 20px; background: #0F172A; color: white; border: none;
             padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;
             font-size: 0.875rem; font-family: inherit; transition: background 0.15s;
         }
         .btn-close-modal:hover { background: #1E293B; }
+        .advisor-card strong { color: inherit; }
+        .advisor-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+        .advisor-category {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.65);
+        }
+        .advisor-message {
+            margin: 0;
+            color: inherit;
+            line-height: 1.6;
+        }
+        .advisor-message span {
+            display: block;
+        }
+        .advisor-message span + span {
+            margin-top: 4px;
+        }
+        .advisor-label {
+            font-weight: 800;
+        }
+        .advisor-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.65);
+            font-weight: 800;
+            flex-shrink: 0;
+        }
     </style>
 }
 
 <div class="module-header">
     <div class="module-title">
         <h1>Cost Advisor</h1>
-        <p>Rule-based analysis of your project's financial health.</p>
+        <p>Precise warnings with short, practical advice for budget decisions.</p>
     </div>
 </div>
 
@@ -52,18 +98,16 @@
     </div>
 
     <div id="advisor-results">
-        <!-- Results populated via JS -->
         <div style="text-align:center; padding: 50px; color: var(--text-muted);">
             <p>Analyzing project data...</p>
         </div>
     </div>
 </div>
 
-<!-- Critical Warning Modal -->
 <div id="criticalModal" class="critical-modal">
     <div class="modal-content">
-        <span class="modal-icon">🔴</span>
-        <h2 style="color:var(--danger)">Critical Budget Warning!</h2>
+        <span class="modal-icon">!</span>
+        <h2 style="color:var(--danger)">Critical Budget Warning</h2>
         <p id="modal-message"></p>
         <button class="btn-close-modal" onclick="closeModal()">I Understand</button>
     </div>
@@ -75,17 +119,17 @@
             const res = await fetch('/Advisor/GetAnalysis');
             const data = await res.json();
 
-            document.getElementById('stat-rules').innerText = "12"; // 12 rules implemented in BLL
+            document.getElementById('stat-rules').innerText = "8";
             document.getElementById('stat-triggered').innerText = data.length;
 
             const resultsDiv = document.getElementById('advisor-results');
-            
+
             if (data.length === 0) {
                 resultsDiv.innerHTML = `
                     <div class="advisor-card success">
                         <div class="sum-icon" style="background:#dcfce7; color:#166534;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
                         <div>
-                            <strong>All Clear!</strong>
+                            <strong>All Clear</strong>
                             <p>No financial risks or warnings were detected in your current records.</p>
                         </div>
                     </div>
@@ -94,30 +138,49 @@
             }
 
             resultsDiv.innerHTML = data.map(rule => {
-                const typeClass = rule.severity.toLowerCase();
-                let icon = 'ℹ️';
-                if (typeClass === 'warning') icon = '🔴';
-                if (typeClass === 'alert') icon = '🟠';
-                if (typeClass === 'caution') icon = '🟡';
-                if (typeClass === 'info') icon = '🔵';
+                const typeClass = String(rule.severity || 'info').toLowerCase();
+                const icon = typeClass === 'info' ? 'i' : '!';
 
                 return `
                     <div class="advisor-card ${typeClass}">
-                        <div style="font-size: 24px;">${icon}</div>
+                        <div class="advisor-icon">${icon}</div>
                         <div>
-                            <strong style="display:block; margin-bottom:4px;">${rule.ruleName} [${rule.category}]</strong>
-                            <p>${rule.message}</p>
+                            <div class="advisor-meta">
+                                <strong>${escapeHtml(rule.ruleName)}</strong>
+                                <span class="advisor-category">${escapeHtml(rule.category)}</span>
+                            </div>
+                            <p class="advisor-message">${formatAdvisorMessage(rule.message)}</p>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            // Check for critical warning on page load
-            const critical = data.find(r => r.ruleName === "Budget Exceeded");
+            const critical = data.find(r => r.ruleName === "Overall Budget Exceeded");
             if (critical) {
                 document.getElementById('modal-message').innerText = critical.message;
                 document.getElementById('criticalModal').style.display = 'block';
             }
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function formatAdvisorMessage(message) {
+            const safeMessage = escapeHtml(message);
+            const adviceIndex = safeMessage.indexOf(' Advice:');
+            if (adviceIndex >= 0) {
+                const firstPart = safeMessage.slice(0, adviceIndex).replace('Warning:', '').replace('Status:', '').trim();
+                const advicePart = safeMessage.slice(adviceIndex + ' Advice:'.length).trim();
+                const firstLabel = safeMessage.startsWith('Status:') ? 'Status:' : 'Warning:';
+                return `<span><span class="advisor-label">${firstLabel}</span> ${firstPart}</span><span><span class="advisor-label">Advice:</span> ${advicePart}</span>`;
+            }
+            return `<span>${safeMessage}</span>`;
         }
 
         function closeModal() {

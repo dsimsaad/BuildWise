@@ -862,10 +862,14 @@
             
             if (!result.success) {
                 alert(result.message || 'Failed to add budget.');
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
             }
             
             await loadData();
             resetBudgetForm();
+            btn.innerText = originalText;
             btn.disabled = false;
         };
 
@@ -893,6 +897,9 @@
             
             if (!result.success) {
                 alert(result.message || 'Failed to add expense.');
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
             }
             
             await loadData();
@@ -905,15 +912,25 @@
 
         async function deleteBudget(id) {
             if (confirm('Delete this budget allocation?')) {
-                await fetch(`/Budget/DeleteBudget?id=${id}`, { method: 'POST' });
-                loadData();
+                const req = await fetch(`/Budget/DeleteBudget?id=${id}`, { method: 'POST' });
+                const result = await req.json();
+                if (!result.success) {
+                    alert(result.message || 'Unable to delete budget allocation.');
+                    return;
+                }
+                await loadData();
             }
         }
 
         async function deleteExpense(id) {
             if (confirm('Delete this expense record?')) {
-                await fetch(`/Budget/DeleteExpense?id=${id}`, { method: 'POST' });
-                loadData();
+                const req = await fetch(`/Budget/DeleteExpense?id=${id}`, { method: 'POST' });
+                const result = await req.json();
+                if (!result.success) {
+                    alert(result.message || 'Unable to delete expense.');
+                    return;
+                }
+                await loadData();
             }
         }
 

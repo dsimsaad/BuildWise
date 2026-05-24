@@ -50,6 +50,29 @@ namespace BuildWise.BusinessLayer
             await _materialDal.AddPurchaseAsync(purchase);
         }
 
+        public async Task<MaterialPurchase> ReturnPurchaseAsync(int purchaseId, int projectId, decimal returnQuantity)
+        {
+            if (returnQuantity <= 0)
+                throw new ArgumentException("Return quantity must be greater than zero.");
+
+            var purchase = await _materialDal.GetPurchaseByIdAsync(purchaseId, projectId);
+            if (purchase == null)
+                throw new ArgumentException("Purchase record was not found.");
+
+            var usedQuantity = purchase.MaterialUsages.Sum(u => u.QuantityUsed);
+            var availableQuantity = purchase.Quantity - usedQuantity;
+
+            if (availableQuantity <= 0)
+                throw new ArgumentException("There is no unused quantity available to return.");
+
+            if (returnQuantity > availableQuantity)
+                throw new ArgumentException($"Return quantity cannot exceed the available quantity ({availableQuantity:0.###}).");
+
+            purchase.Quantity -= returnQuantity;
+            await _materialDal.UpdatePurchaseAsync(purchase);
+            return purchase;
+        }
+
         public async Task DeletePurchaseAsync(int purchaseId, int projectId)
         {
             await _materialDal.DeletePurchaseAsync(purchaseId, projectId);
