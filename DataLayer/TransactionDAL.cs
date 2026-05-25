@@ -93,7 +93,7 @@ WHERE (@ProjectId IS NULL OR t.ProjectId = @ProjectId)
                 if (!string.IsNullOrEmpty(category)) query += " AND t.Category = @Category";
                 if (!string.IsNullOrEmpty(type)) query += " AND t.TransactionType = @Type";
                 if (fromDate != null) query += " AND t.TransactionDate >= @FromDate";
-                if (toDate != null) query += " AND t.TransactionDate <= @ToDate";
+                if (toDate != null) query += " AND t.TransactionDate < @ToDateExclusive";
 
                 query += " ORDER BY t.TransactionDate DESC";
 
@@ -102,8 +102,8 @@ WHERE (@ProjectId IS NULL OR t.ProjectId = @ProjectId)
                 cmd.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
                 if (!string.IsNullOrEmpty(category)) cmd.Parameters.AddWithValue("@Category", category);
                 if (!string.IsNullOrEmpty(type)) cmd.Parameters.AddWithValue("@Type", type);
-                if (fromDate != null) cmd.Parameters.AddWithValue("@FromDate", fromDate.Value);
-                if (toDate != null) cmd.Parameters.AddWithValue("@ToDate", toDate.Value);
+                if (fromDate != null) cmd.Parameters.AddWithValue("@FromDate", fromDate.Value.Date);
+                if (toDate != null) cmd.Parameters.AddWithValue("@ToDateExclusive", toDate.Value.Date.AddDays(1));
 
                 SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
