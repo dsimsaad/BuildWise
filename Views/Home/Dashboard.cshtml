@@ -6,6 +6,7 @@
 
     decimal totalBudget   = ViewBag.TotalBudget   ?? 0m;
     decimal totalExpenses = ViewBag.TotalExpenses  ?? 0m;
+    int totalProperties   = Convert.ToInt32(ViewBag.TotalProperties ?? 0);
     int totalWorkers      = Convert.ToInt32(ViewBag.TotalWorkers ?? 0);
     int workersOnSite     = Convert.ToInt32(ViewBag.WorkersOnSite ?? 0);
     int workersInactive   = Convert.ToInt32(ViewBag.WorkersInactive ?? Math.Max(0, totalWorkers - workersOnSite));
@@ -98,6 +99,39 @@
      TOP STAT CARDS
      ══════════════════════════════════════════════ -->
 <div class="db-kpi-row">
+
+    <!-- Total Properties Card -->
+    <div class="db-kpi-card db-kpi-properties">
+        <div class="db-kpi-inner">
+            <div class="db-kpi-icon db-kpi-icon--blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 21h18"/>
+                    <path d="M5 21V8l7-5 7 5v13"/>
+                    <path d="M9 21v-6h6v6"/>
+                </svg>
+            </div>
+            <div class="db-kpi-body">
+                <span class="db-kpi-label">Total Properties</span>
+                <span class="db-kpi-value" id="statTotalProperties">@totalProperties</span>
+            </div>
+            <div class="db-kpi-more-wrap">
+                <button class="db-kpi-more" data-menu="menuProperties" title="Options">•••</button>
+                <div class="db-kpi-dropdown" id="menuProperties">
+                    <a href="/Properties" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/></svg>
+                        View All Properties
+                    </a>
+                    <a href="/Properties/Create" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Property
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="db-kpi-progress">
+            <div class="db-kpi-progress-fill db-kpi-progress--blue" style="width:100%;opacity:.22;"></div>
+        </div>
+    </div>
 
     <!-- Workforce Card -->
     <div class="db-kpi-card db-kpi-workforce">
@@ -730,11 +764,13 @@
     function updateStatCards(data) {
         const tb  = Number(data.totalBudget   || 0);
         const te  = Number(data.totalExpenses  || 0);
+        const tp  = Number(data.totalProperties || 0);
         const tw  = Number(data.totalWorkers   || 0);
         const ws  = Number(data.workersOnSite  || 0);
         const wi  = Number(data.workersInactive ?? Math.max(0, tw - ws));
         const pct = tb > 0 ? te / tb * 100 : 0;
 
+        document.getElementById('statTotalProperties').textContent = tp;
         document.getElementById('statTotalWorkers').textContent  = tw;
         document.getElementById('statWorkersOnSite').textContent = `${ws} Active`;
         document.getElementById('statWorkersInactive').textContent = `${wi} Inactive`;

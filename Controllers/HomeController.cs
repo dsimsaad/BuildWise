@@ -139,6 +139,9 @@ public class HomeController : Controller
         var scopedTaskQuery = selectedProjectId.HasValue
             ? taskQuery.Where(t => t.Phase.ProjectId == selectedProjectId.Value)
             : taskQuery;
+        var scopedPropertyQuery = selectedProjectId.HasValue
+            ? _context.Properties.AsNoTracking().Where(p => p.UserId == userId && p.ProjectId == selectedProjectId.Value)
+            : _context.Properties.AsNoTracking().Where(p => p.UserId == userId && p.ProjectId != null);
 
         var connectionString = _configuration.GetConnectionString("BuildWise") ?? "";
         var budgetBll = new BudgetBLL(connectionString);
@@ -152,6 +155,7 @@ public class HomeController : Controller
             var activeStats = await vwDashQuery.FirstOrDefaultAsync(v => v.ProjectId == selectedProjectId);
             
             ViewBag.TotalProjects   = 1;
+            ViewBag.TotalProperties = await scopedPropertyQuery.CountAsync();
             ViewBag.ActiveProjects  = (activeStats?.IsCompleted == false) ? 1 : 0;
             var selectedProject = await _context.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId);
             var allocatedBudget = budgetBll.GetTotalBudget(selectedProjectId);
@@ -182,6 +186,7 @@ public class HomeController : Controller
         {
             var allStats = await vwDashQuery.ToListAsync();
             ViewBag.TotalProjects   = allStats.Count;
+            ViewBag.TotalProperties = await scopedPropertyQuery.CountAsync();
             ViewBag.ActiveProjects  = allStats.Count(s => !s.IsCompleted);
             var totalWorkers = await _context.Workers.CountAsync(w => w.UserId == userId);
             var workersOnSite = await _context.Workers.CountAsync(w => w.UserId == userId && w.IsActive);
@@ -278,6 +283,9 @@ public class HomeController : Controller
         decimal totalExpenses = selectedProjectId.HasValue
             ? expenseBll.GetTotalSpent(selectedProjectId)
             : expenseBll.GetTotalSpentForUser(userId);
+        int totalProperties = selectedProjectId.HasValue
+            ? await _context.Properties.CountAsync(p => p.UserId == userId && p.ProjectId == selectedProjectId.Value)
+            : await _context.Properties.CountAsync(p => p.UserId == userId && p.ProjectId != null);
 
         int totalWorkers = selectedProjectId.HasValue
             ? await GetProjectWorkersQuery(userId, selectedProjectId.Value).CountAsync()
@@ -302,6 +310,7 @@ public class HomeController : Controller
         {
             totalBudget,
             totalExpenses,
+            totalProperties,
             totalWorkers,
             workersOnSite,
             workersInactive,

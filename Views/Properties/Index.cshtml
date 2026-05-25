@@ -3,6 +3,19 @@
 @{
     ViewData["Title"] = "Properties";
     Layout = "_ModuleLayout";
+
+    string StatusBadgeClass(string? statusName)
+    {
+        var normalized = (statusName ?? "").Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "completed" => "badge-success",
+            "under construction" => "badge-warning",
+            "on hold" => "badge-danger",
+            "planned" => "badge-info",
+            _ => "badge-info"
+        };
+    }
 }
 
 @section Styles {
@@ -35,8 +48,8 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-6"></path></svg>
         </div>
         <div class="sum-info">
-            <h3>Linked Projects</h3>
-            <p>@Model.Sum(p => p.Projects?.Count ?? 0)</p>
+            <h3>Linked to Projects</h3>
+            <p>@Model.Count(p => p.ProjectId.HasValue)</p>
         </div>
     </div>
     <div class="sum-card">
@@ -61,29 +74,58 @@
 }
 else
 {
-    <div class="entity-grid">
-        @foreach (var item in Model)
-        {
-            <article class="entity-card">
-                <div class="entity-card-header">
-                    <div>
-                        <h2 class="entity-card-title">@item.PropertyName</h2>
-                        <div class="entity-card-subtitle">@item.Location@(string.IsNullOrWhiteSpace(item.City) ? "" : ", " + item.City)</div>
-                    </div>
-                    <span class="badge badge-info">@item.Type?.TypeName</span>
-                </div>
-
-                <ul class="entity-meta">
-                    <li><span>Area</span><strong>@item.AreaSize @item.AreaUnit?.UnitName</strong></li>
-                    <li><span>Status</span><strong>@item.Status?.StatusName</strong></li>
-                    <li><span>Added</span><strong>@item.CreatedAt.ToString("MMM dd, yyyy")</strong></li>
-                </ul>
-
-                <div class="entity-actions">
-                    <a asp-action="Details" asp-route-id="@item.PropertyId" class="btn-secondary">Details</a>
-                    <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn-primary">Edit</a>
-                </div>
-            </article>
-        }
+    <div class="module-card">
+        <div class="card-header">
+            <h2>All Properties</h2>
+            <span class="badge badge-info">@Model.Count() records</span>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <div class="table-responsive">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Property Name</th>
+                            <th>Project</th>
+                            <th>Location</th>
+                            <th>Type</th>
+                            <th>Area</th>
+                            <th>Status</th>
+                            <th>Added</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><strong>@item.PropertyName</strong></td>
+                            <td>@(item.Project?.ProjectName ?? "Unassigned")</td>
+                            <td style="max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@item.Location@(string.IsNullOrWhiteSpace(item.City) ? "" : ", " + item.City)</td>
+                            <td>@(item.Type?.TypeName ?? "-")</td>
+                            <td>@item.AreaSize @item.AreaUnit?.UnitName</td>
+                            <td><span class="badge @StatusBadgeClass(item.Status?.StatusName)">@(item.Status?.StatusName ?? "-")</span></td>
+                            <td>@item.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td>
+                                <div class="action-btns">
+                                    <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn-icon btn-edit" title="Edit">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.PropertyId" class="btn-icon" style="background:#F1F5F9; color:#64748B;" title="Details">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </a>
+                                    <form asp-action="Delete" method="post" class="inline-delete-form" onsubmit="return confirm('Are you sure you want to delete this property?');">
+                                        <input type="hidden" name="id" value="@item.PropertyId" />
+                                        <button type="submit" class="btn-icon btn-delete" title="Delete">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 }

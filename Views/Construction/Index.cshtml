@@ -1,340 +1,530 @@
 @{
-    ViewData["Title"] = "Construction Progress";
+    ViewData["Title"] = "Construction";
     Layout = "_ModuleLayout";
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/modules.css">
     <style>
-        .progress-header {
-            background: #fff;
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid #E2E8F0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-            text-align: center;
-            margin-bottom: 28px;
+        .construction-board {
+            display: grid;
+            gap: 18px;
         }
 
-        .progress-circle {
-            width: 132px;
-            height: 132px;
-            border-radius: 50%;
-            margin: 0 auto 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: conic-gradient(#1D4ED8 var(--progress-value, 0%), #EEF2F7 0);
-            position: relative;
-            box-shadow: inset 0 0 0 1px #E2E8F0;
-        }
-
-        .progress-circle::before {
-            content: "";
-            position: absolute;
-            inset: 12px;
-            border-radius: 50%;
+        .construction-hero {
             background: #FFFFFF;
-            box-shadow: inset 0 0 0 1px #F1F5F9;
-        }
-
-        .progress-circle span {
-            position: relative;
-            z-index: 1;
-            font-size: 2rem;
-            font-weight: 800;
-            color: #1D4ED8;
-        }
-
-        .phase-section {
-            background: #fff;
             border: 1px solid #E2E8F0;
-            border-radius: 12px;
-            padding: 0;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 20px rgba(15,23,42,0.05);
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+            padding: 22px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+            gap: 22px;
+            align-items: center;
+        }
+
+        .construction-eyebrow {
+            color: #64748B;
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+
+        .construction-title {
+            margin: 0;
+            color: #0F172A;
+            font-size: 1.65rem;
+            line-height: 1.15;
+            font-weight: 800;
+        }
+
+        .construction-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .construction-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 6px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            color: #475569;
+            padding: 6px 9px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .overall-progress-panel {
+            border: 1px solid #E2E8F0;
+            background: #F8FAFC;
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .overall-progress-number {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .overall-progress-number strong {
+            color: #0F172A;
+            font-size: 2rem;
+            line-height: 1;
+        }
+
+        .overall-progress-number span {
+            color: #64748B;
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .construction-progress-track {
+            height: 10px;
+            background: #E2E8F0;
+            border-radius: 999px;
             overflow: hidden;
         }
 
-        .phase-header {
-            display: flex;
-            justify-content: space-between;
+        .construction-progress-fill {
+            height: 100%;
+            width: 0;
+            border-radius: inherit;
+            background: #2563EB;
+            transition: width 0.35s ease;
+        }
+
+        .construction-stats {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .construction-stat {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 15px 16px;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+            min-width: 0;
+        }
+
+        .construction-stat span {
+            display: block;
+            color: #64748B;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 8px;
+            white-space: nowrap;
+        }
+
+        .construction-stat strong {
+            display: block;
+            color: #0F172A;
+            font-size: 1.35rem;
+            line-height: 1.1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .construction-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
             gap: 18px;
-            align-items: center;
+            align-items: start;
+        }
+
+        .phase-stack {
+            display: grid;
+            gap: 14px;
+        }
+
+        .phase-panel {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+            overflow: hidden;
+        }
+
+        .phase-panel-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 16px;
+            padding: 16px 18px;
             border-bottom: 1px solid #E2E8F0;
-            padding: 18px 20px;
             background: #FBFDFF;
         }
 
-        .phase-name {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: #0F172A;
-        }
-
-        .phase-meta {
+        .phase-title-row {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 7px;
-            color: #64748B;
-            font-size: 0.84rem;
             align-items: center;
+            gap: 10px;
+            min-width: 0;
         }
 
-        .phase-chip {
+        .phase-sequence {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            background: #EFF6FF;
+            color: #1D4ED8;
             display: inline-flex;
             align-items: center;
-            border-radius: 6px;
-            padding: 4px 9px;
-            background: #EEF3FF;
-            color: #1D4ED8;
+            justify-content: center;
             font-weight: 800;
+            flex: 0 0 auto;
         }
 
-        .phase-actions {
+        .phase-title {
+            color: #0F172A;
+            font-size: 1rem;
+            font-weight: 800;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .phase-subline {
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            color: #64748B;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .phase-panel-actions {
             display: flex;
             align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
             justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .phase-progress-box {
-            width: 220px;
+        .phase-progress {
             min-width: 190px;
+            margin-top: 12px;
         }
 
         .phase-progress-label {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            margin-top: 7px;
-            color: #475569;
-            font-size: 0.78rem;
+            color: #64748B;
+            font-size: 0.76rem;
             font-weight: 800;
+            margin-bottom: 6px;
         }
 
-        .phase-action-buttons {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
+        .task-table-wrap {
+            overflow-x: auto;
         }
 
-        .phase-action-buttons .btn-primary,
-        .phase-action-buttons .btn-secondary {
-            min-height: 36px;
-            padding: 7px 12px;
-            font-size: 0.8rem;
-            border-radius: 6px;
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        .task-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 14px;
-            padding: 18px 20px 20px;
+        .task-table th {
+            text-align: left;
+            color: #94A3B8;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 11px 16px;
+            border-bottom: 1px solid #F1F5F9;
+            white-space: nowrap;
         }
 
-        .task-card {
-            background: #FFFFFF;
-            border: 1px solid #E2E8F0;
-            border-radius: 10px;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 164px;
-            overflow: hidden;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        .task-table td {
+            padding: 13px 16px;
+            border-bottom: 1px solid #F8FAFC;
+            color: #334155;
+            font-size: 0.85rem;
+            vertical-align: middle;
         }
 
-        .task-card:hover {
-            border-color: #CBD5E1;
-            box-shadow: 0 8px 18px rgba(15,23,42,0.07);
-            transform: translateY(-1px);
+        .task-table tr:last-child td {
+            border-bottom: 0;
         }
 
-        .task-card.is-overdue {
-            border-color: #FCA5A5;
-            background: #FFFBFB;
-        }
-
-        .task-content {
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .task-title-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: flex-start;
-        }
-
-        .task-title {
+        .task-name-cell strong {
+            display: block;
             color: #0F172A;
-            font-size: 0.98rem;
-            font-weight: 800;
-            line-height: 1.35;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
         }
 
-        .task-description {
+        .task-name-cell small {
+            display: block;
             color: #64748B;
-            font-size: 0.84rem;
-            margin: 0;
-            line-height: 1.45;
+            max-width: 340px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .task-meta-list {
+        .task-actions-row {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 2px;
-        }
-
-        .task-dates {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            font-size: 0.78rem;
-            color: #64748B;
-        }
-
-        .task-dates span {
-            display: inline-flex;
+            gap: 6px;
             align-items: center;
+            justify-content: flex-end;
+            white-space: nowrap;
+        }
+
+        .mini-action {
+            border: 1px solid #E2E8F0;
+            background: #FFFFFF;
+            color: #334155;
             border-radius: 6px;
-            background: #F8FAFC;
-            padding: 4px 8px;
-            color: #475569;
-        }
-
-        .task-actions {
-            display: flex;
-            justify-content: space-between;
-            gap: 0;
-            margin-top: auto;
-            border-top: 1px solid #F1F5F9;
-            background: #FBFDFF;
-        }
-
-        .text-action {
-            border: 0;
-            background: transparent;
-            padding: 11px 14px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: var(--accent);
+            padding: 6px 9px;
+            font-size: 0.74rem;
+            font-weight: 800;
             cursor: pointer;
-            flex: 1;
-            text-align: center;
         }
 
-        .text-action:hover {
-            background: #EEF3FF;
+        .mini-action:hover {
+            background: #F8FAFC;
         }
 
-        .text-action.danger {
-            color: var(--danger);
+        .mini-action.primary {
+            color: #1D4ED8;
+            border-color: #BFDBFE;
+            background: #EFF6FF;
         }
 
-        .text-action.danger:hover {
+        .mini-action.success {
+            color: #047857;
+            border-color: #A7F3D0;
+            background: #ECFDF5;
+        }
+
+        .mini-action.danger {
+            color: #B91C1C;
+            border-color: #FECACA;
             background: #FEF2F2;
         }
 
-        .gantt-timeline {
-            margin-top: 28px;
+        .construction-side {
+            display: grid;
+            gap: 14px;
+            position: sticky;
+            top: 18px;
         }
 
-        .gantt-row {
+        .side-panel {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 16px;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+        }
+
+        .side-panel h2 {
+            margin: 0 0 12px;
+            color: #0F172A;
+            font-size: 0.98rem;
+            font-weight: 800;
+        }
+
+        .focus-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .focus-item {
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 11px;
+            background: #F8FAFC;
+        }
+
+        .focus-item strong {
+            display: block;
+            color: #0F172A;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .focus-item span {
+            display: block;
+            color: #64748B;
+            font-size: 0.76rem;
+        }
+
+        .timeline-panel {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 18px;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+        }
+
+        .timeline-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .timeline-head h2 {
+            margin: 0;
+            color: #0F172A;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .timeline-row {
             display: grid;
             grid-template-columns: minmax(150px, 220px) 1fr;
             gap: 12px;
-            margin-bottom: 12px;
             align-items: center;
+            margin-bottom: 11px;
         }
 
-        .gantt-bar-wrap {
-            background: #F1F5F9;
-            height: 28px;
+        .timeline-label {
+            min-width: 0;
+        }
+
+        .timeline-label strong {
+            display: block;
+            color: #0F172A;
+            font-size: 0.82rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .timeline-label span {
+            display: block;
+            color: #64748B;
+            font-size: 0.72rem;
+            margin-top: 2px;
+        }
+
+        .timeline-track {
+            height: 24px;
             border-radius: 6px;
-            position: relative;
+            background: #F1F5F9;
             overflow: hidden;
         }
 
-        .gantt-bar {
+        .timeline-bar {
             height: 100%;
-            background: #1D4ED8;
-            opacity: 0.86;
+            min-width: 4px;
             border-radius: 6px;
+            background: #2563EB;
         }
 
-        .modal {
+        .construction-empty {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 34px 22px;
+            text-align: center;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+        }
+
+        .construction-empty h2 {
+            color: #0F172A;
+            font-size: 1.15rem;
+            margin: 0 0 8px;
+        }
+
+        .construction-empty p {
+            color: #64748B;
+            margin: 0 0 18px;
+        }
+
+        .construction-modal {
             display: none;
             position: fixed;
             z-index: 1000;
             inset: 0;
-            background: rgba(15,23,42,0.42);
-            backdrop-filter: blur(4px);
+            background: rgba(15, 23, 42, 0.46);
+            backdrop-filter: blur(3px);
+            padding: 18px;
         }
 
-        .modal-body {
-            background: white;
+        .construction-modal.is-open {
+            display: block;
+        }
+
+        .construction-modal-body {
+            background: #FFFFFF;
             margin: 5vh auto;
-            padding: 28px;
-            border-radius: 14px;
-            width: min(560px, calc(100vw - 28px));
+            padding: 24px;
+            border-radius: 6px;
+            width: min(560px, 100%);
             max-height: 90vh;
             overflow: auto;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
             border: 1px solid #E2E8F0;
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.18);
         }
 
-        .modal-body h2 {
-            font-size: 1.25rem;
-            font-weight: 800;
+        .construction-modal-body h2 {
             color: #0F172A;
-            margin: 0 0 20px 0;
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin: 0 0 18px;
         }
 
         .inline-error {
             display: none;
             margin: 0 0 14px;
             padding: 10px 12px;
-            border-radius: 8px;
+            border-radius: 6px;
             background: #FEF2F2;
             color: #991B1B;
-            font-size: 0.875rem;
-            font-weight: 600;
+            font-size: 0.86rem;
+            font-weight: 700;
         }
 
-        @@media (max-width: 720px) {
-            .phase-header {
-                flex-direction: column;
+        @@media (max-width: 1280px) {
+            .construction-stats {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
             }
 
-            .phase-actions {
-                justify-content: flex-start;
-                width: 100%;
-            }
-
-            .phase-progress-box,
-            .phase-action-buttons {
-                width: 100%;
-            }
-
-            .phase-action-buttons .btn-primary,
-            .phase-action-buttons .btn-secondary {
-                flex: 1;
-            }
-
-            .gantt-row {
+            .construction-layout {
                 grid-template-columns: 1fr;
+            }
+
+            .construction-side {
+                position: static;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @@media (max-width: 800px) {
+            .construction-hero,
+            .phase-panel-header,
+            .timeline-row {
+                grid-template-columns: 1fr;
+            }
+
+            .construction-stats,
+            .construction-side {
+                grid-template-columns: 1fr;
+            }
+
+            .phase-panel-actions,
+            .task-actions-row {
+                justify-content: flex-start;
             }
         }
     </style>
@@ -342,49 +532,75 @@
 
 <div class="module-header">
     <div class="module-title">
-        <h1>Construction Management</h1>
-        <p>Plan project phases, manage tasks, and track site progress from real project data.</p>
+        <h1>Construction</h1>
+        <p>@ViewBag.ProjectName</p>
     </div>
-    <button type="button" class="btn-create" onclick="openAddPhase()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Add Phase
-    </button>
-</div>
-
-<div class="progress-header">
-    <div class="progress-circle">
-        <span id="overall-progress-text">0%</span>
-    </div>
-    <h2>Project Completion</h2>
-    <p>Progress is calculated from completed tasks inside each phase.</p>
-    <div class="summary-grid" style="max-width: 900px; margin: 30px auto 0;">
-        <div class="sum-card">
-            <div class="sum-info"><h3>Total Phases</h3><p id="stat-phases">0</p></div>
-        </div>
-        <div class="sum-card">
-            <div class="sum-info"><h3>Total Tasks</h3><p id="stat-tasks">0</p></div>
-        </div>
-        <div class="sum-card">
-            <div class="sum-info"><h3>Completed</h3><p id="stat-completed" style="color:var(--success)">0</p></div>
-        </div>
-        <div class="sum-card">
-            <div class="sum-info"><h3>Overdue</h3><p id="stat-delayed" style="color:var(--danger)">0</p></div>
-        </div>
+    <div class="entity-actions">
+        <button type="button" class="btn-secondary" onclick="quickSetup()">Quick Setup</button>
+        <button type="button" class="btn-create" onclick="openAddPhase()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Phase
+        </button>
     </div>
 </div>
 
-<div id="phases-container"></div>
+<div class="construction-board">
+    <section class="construction-hero">
+        <div>
+            <div class="construction-eyebrow">Active Project</div>
+            <h2 class="construction-title">@ViewBag.ProjectName</h2>
+            <div class="construction-meta">
+                <span class="construction-chip">@ViewBag.PropertyCount Properties</span>
+                <span class="construction-chip">@(ViewBag.IsProjectCompleted == true ? "Completed Project" : "Open Project")</span>
+                <span class="construction-chip" id="hero-health">Loading</span>
+            </div>
+        </div>
+        <div class="overall-progress-panel">
+            <div class="overall-progress-number">
+                <span>Project Progress</span>
+                <strong id="overall-progress-text">0%</strong>
+            </div>
+            <div class="construction-progress-track">
+                <div class="construction-progress-fill" id="overall-progress-bar"></div>
+            </div>
+        </div>
+    </section>
 
-<div class="module-card gantt-timeline">
-    <div class="card-header">
-        <h2>Visual Project Timeline</h2>
-        <p style="margin:0; font-size:0.8rem; color:var(--text-muted)">Tasks with start and end dates appear here.</p>
-    </div>
-    <div class="card-body" id="gantt-container"></div>
+    <section class="construction-stats">
+        <div class="construction-stat"><span>Phases</span><strong id="stat-phases">0</strong></div>
+        <div class="construction-stat"><span>Tasks</span><strong id="stat-tasks">0</strong></div>
+        <div class="construction-stat"><span>In Progress</span><strong id="stat-progress">0</strong></div>
+        <div class="construction-stat"><span>Completed</span><strong id="stat-completed">0</strong></div>
+        <div class="construction-stat"><span>Overdue</span><strong id="stat-overdue">0</strong></div>
+        <div class="construction-stat"><span>Est. Cost</span><strong id="stat-cost">PKR 0</strong></div>
+    </section>
+
+    <section class="construction-layout">
+        <div class="phase-stack" id="phases-container"></div>
+
+        <aside class="construction-side">
+            <div class="side-panel">
+                <h2>Today Focus</h2>
+                <div class="focus-list" id="focus-list"></div>
+            </div>
+            <div class="side-panel">
+                <h2>Task Health</h2>
+                <div class="focus-list" id="health-list"></div>
+            </div>
+        </aside>
+    </section>
+
+    <section class="timeline-panel">
+        <div class="timeline-head">
+            <h2>Timeline</h2>
+            <span class="badge badge-info" id="timeline-count">0 scheduled</span>
+        </div>
+        <div id="timeline-container"></div>
+    </section>
 </div>
 
-<div id="phaseModal" class="modal">
-    <div class="modal-body">
+<div id="phaseModal" class="construction-modal">
+    <div class="construction-modal-body">
         <h2 id="phase-modal-title">Add Phase</h2>
         <div id="phase-error" class="inline-error"></div>
         <form id="phase-form">
@@ -400,7 +616,7 @@
                 </div>
                 <div class="form-group full-width" id="custom-phase-group">
                     <label>Custom Phase Name</label>
-                    <input type="text" id="phase-custom-name" class="form-control" placeholder="e.g. Boundary Wall">
+                    <input type="text" id="phase-custom-name" class="form-control" placeholder="Boundary wall">
                 </div>
                 <div class="form-group">
                     <label>Start Date</label>
@@ -417,7 +633,7 @@
                 <div class="form-group full-width">
                     <label style="display:flex; gap:8px; align-items:center;">
                         <input type="checkbox" id="phase-completed">
-                        Mark phase complete when it has no tasks
+                        Mark phase complete
                     </label>
                 </div>
             </div>
@@ -429,8 +645,8 @@
     </div>
 </div>
 
-<div id="taskModal" class="modal">
-    <div class="modal-body">
+<div id="taskModal" class="construction-modal">
+    <div class="construction-modal-body">
         <h2 id="task-modal-title">Add Task</h2>
         <div id="task-error" class="inline-error"></div>
         <form id="task-form">
@@ -454,7 +670,7 @@
                     <input type="date" id="task-start" class="form-control">
                 </div>
                 <div class="form-group">
-                    <label>End Date / Deadline</label>
+                    <label>Deadline</label>
                     <input type="date" id="task-end" class="form-control">
                 </div>
                 <div class="form-group full-width">
@@ -487,7 +703,25 @@
 
         function formatDate(value) {
             if (!value) return '-';
-            return new Date(`${value}T00:00:00`).toLocaleDateString();
+            return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric' });
+        }
+
+        function formatShortDate(value) {
+            if (!value) return '-';
+            return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: '2-digit' });
+        }
+
+        function formatMoney(value) {
+            return formatPKR(Number(value || 0));
+        }
+
+        function statusId(name) {
+            const found = taskStatuses.find(s => String(s.statusName).toLowerCase() === String(name).toLowerCase());
+            return found ? Number(found.statusId) : null;
+        }
+
+        function isCompletedTask(task) {
+            return Number(task.statusId) === 3 || String(task.status).toLowerCase() === 'completed';
         }
 
         function setError(id, message) {
@@ -499,8 +733,10 @@
         function populateLookups() {
             const phaseSelect = document.getElementById('phase-type-id');
             phaseSelect.innerHTML = phaseTypes.map(p => `<option value="${p.phaseTypeId}">${escapeHtml(p.phaseName)}</option>`).join('');
+
             const statusSelect = document.getElementById('task-status-id');
             statusSelect.innerHTML = taskStatuses.map(s => `<option value="${s.statusId}">${escapeHtml(s.statusName)}</option>`).join('');
+
             phaseSelect.addEventListener('change', toggleCustomPhase);
             toggleCustomPhase();
         }
@@ -511,119 +747,192 @@
             currentPhases = data.phases || [];
 
             const overallProgress = Math.max(0, Math.min(100, Number(data.overallProgress || 0)));
-            const progressCircle = document.querySelector('.progress-circle');
-            document.getElementById('overall-progress-text').innerText = `${overallProgress.toFixed(0)}%`;
-            progressCircle.style.setProperty('--progress-value', `${overallProgress}%`);
-            document.getElementById('stat-phases').innerText = currentPhases.length;
+            document.getElementById('overall-progress-text').textContent = `${overallProgress.toFixed(0)}%`;
+            document.getElementById('overall-progress-bar').style.width = `${overallProgress}%`;
 
-            let totalTasks = 0, completed = 0, overdue = 0;
-            currentPhases.forEach(p => {
-                totalTasks += p.tasks.length;
-                p.tasks.forEach(t => {
-                    if (t.status === 'Completed') completed++;
-                    if (t.isOverdue) overdue++;
-                });
-            });
-            document.getElementById('stat-tasks').innerText = totalTasks;
-            document.getElementById('stat-completed').innerText = completed;
-            document.getElementById('stat-delayed').innerText = overdue;
+            const allTasks = currentPhases.flatMap(p => p.tasks.map(t => ({ ...t, phaseName: p.phaseName })));
+            const completed = allTasks.filter(isCompletedTask).length;
+            const inProgress = allTasks.filter(t => String(t.status).toLowerCase() === 'in progress').length;
+            const overdue = allTasks.filter(t => t.isOverdue).length;
+            const estimatedCost = allTasks.reduce((sum, t) => sum + Number(t.estimatedCost || 0), 0);
+
+            document.getElementById('stat-phases').textContent = currentPhases.length;
+            document.getElementById('stat-tasks').textContent = allTasks.length;
+            document.getElementById('stat-progress').textContent = inProgress;
+            document.getElementById('stat-completed').textContent = completed;
+            document.getElementById('stat-overdue').textContent = overdue;
+            document.getElementById('stat-cost').textContent = formatMoney(estimatedCost);
+            document.getElementById('hero-health').textContent = overdue > 0 ? `${overdue} overdue` : `${Math.max(0, allTasks.length - completed)} open tasks`;
 
             renderPhases(currentPhases);
-            renderGantt(currentPhases);
+            renderFocus(allTasks);
+            renderHealth(allTasks);
+            renderTimeline(currentPhases);
         }
 
         function renderPhases(phases) {
             const container = document.getElementById('phases-container');
             if (!phases.length) {
                 container.innerHTML = `
-                    <div class="empty-state">
-                        <h2>No construction phases yet</h2>
-                        <p>Add phases like Foundation, Grey Structure, Plumbing, Electrical, and Finishing.</p>
-                        <button type="button" class="btn-primary" onclick="openAddPhase()">Add Phase</button>
+                    <div class="construction-empty">
+                        <h2>No phases yet</h2>
+                        <p>Start with a standard construction sequence or add your own phase.</p>
+                        <button type="button" class="btn-primary" onclick="quickSetup()">Quick Setup</button>
+                        <button type="button" class="btn-secondary" onclick="openAddPhase()" style="margin-left:8px;">Add Phase</button>
                     </div>`;
                 return;
             }
 
             container.innerHTML = phases.map(p => `
-                <section class="phase-section">
-                    <div class="phase-header">
+                <section class="phase-panel">
+                    <div class="phase-panel-header">
                         <div>
-                            <div class="phase-name">${escapeHtml(p.phaseName)}</div>
-                            <div class="phase-meta">
-                                <span>Sequence ${p.sequence}</span>
-                                <span>Start: ${formatDate(p.startDate)}</span>
-                                <span>End: ${formatDate(p.endDate)}</span>
-                                <span class="phase-chip">${p.tasks.length} task${p.tasks.length === 1 ? '' : 's'}</span>
+                            <div class="phase-title-row">
+                                <span class="phase-sequence">${p.sequence}</span>
+                                <div class="phase-title">${escapeHtml(p.phaseName)}</div>
+                                <span class="badge ${p.isCompleted ? 'badge-success' : 'badge-info'}">${p.isCompleted ? 'Complete' : 'Open'}</span>
                             </div>
-                        </div>
-                        <div class="phase-actions">
-                            <div class="phase-progress-box">
-                                <div class="progress-container"><div class="progress-bar" style="width:${Math.min(100, p.progress)}%"></div></div>
+                            <div class="phase-subline">
+                                <span>${formatDate(p.startDate)} - ${formatDate(p.endDate)}</span>
+                                <span>${p.tasks.length} task${p.tasks.length === 1 ? '' : 's'}</span>
+                                ${p.notes ? `<span>${escapeHtml(p.notes)}</span>` : ''}
+                            </div>
+                            <div class="phase-progress">
                                 <div class="phase-progress-label">
-                                    <span>${Number(p.progress).toFixed(0)}% Complete</span>
-                                    <span>${p.tasks.filter(t => t.status === 'Completed').length}/${p.tasks.length}</span>
+                                    <span>${Number(p.progress).toFixed(0)}% complete</span>
+                                    <span>${p.tasks.filter(isCompletedTask).length}/${p.tasks.length}</span>
+                                </div>
+                                <div class="construction-progress-track">
+                                    <div class="construction-progress-fill" style="width:${Math.min(100, Number(p.progress || 0))}%"></div>
                                 </div>
                             </div>
-                            <div class="phase-action-buttons">
-                                <button class="btn-primary" onclick="openAddTask(${p.phaseId})">Add Task</button>
-                                <button class="btn-secondary" onclick="openEditPhase(${p.phaseId})">Edit</button>
-                                <button class="btn-secondary" style="color:var(--danger)" onclick="deletePhase(${p.phaseId})">Delete</button>
-                            </div>
+                        </div>
+                        <div class="phase-panel-actions">
+                            <button class="mini-action primary" onclick="openAddTask(${p.phaseId})">Add Task</button>
+                            <button class="mini-action" onclick="openEditPhase(${p.phaseId})">Edit</button>
+                            <button class="mini-action danger" onclick="deletePhase(${p.phaseId})">Delete</button>
                         </div>
                     </div>
-                    <div class="task-grid">
-                        ${p.tasks.length ? p.tasks.map(t => renderTask(t)).join('') : '<p style="color:var(--text-muted); margin:0;">No tasks in this phase yet.</p>'}
-                    </div>
+                    ${renderTaskTable(p)}
                 </section>
             `).join('');
         }
 
-        function renderTask(t) {
+        function renderTaskTable(phase) {
+            if (!phase.tasks.length) {
+                return `<div class="construction-empty" style="border:0; box-shadow:none; border-radius:0;">
+                    <h2>No tasks in this phase</h2>
+                    <p>Add the work items that make this phase measurable.</p>
+                    <button type="button" class="btn-primary" onclick="openAddTask(${phase.phaseId})">Add Task</button>
+                </div>`;
+            }
+
             return `
-                <article class="task-card ${t.isOverdue ? 'is-overdue' : ''}">
-                    <div class="task-content">
-                        <div class="task-title-row">
-                            <strong class="task-title">${escapeHtml(t.taskName)}</strong>
-                            <span class="badge ${getStatusBadge(t.status, t.isOverdue)}">${t.isOverdue ? 'Overdue' : escapeHtml(t.status)}</span>
-                        </div>
-                        ${t.description ? `<p class="task-description">${escapeHtml(t.description)}</p>` : ''}
-                        <div class="task-meta-list">
-                            <div class="task-dates">
-                                <span>Start: ${formatDate(t.startDate)}</span>
-                                <span>End: ${formatDate(t.endDate)}</span>
-                            </div>
-                            <div class="task-dates">
-                                <span>Estimated: PKR ${Number(t.estimatedCost || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="task-actions">
-                        <button class="text-action" onclick="openEditTask(${t.taskId})">Edit</button>
-                        <button class="text-action danger" onclick="deleteTask(${t.taskId})">Delete</button>
-                    </div>
-                </article>`;
+                <div class="task-table-wrap">
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Status</th>
+                                <th>Dates</th>
+                                <th>Cost</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${phase.tasks.map(t => renderTaskRow(t)).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
         }
 
-        function getStatusBadge(status, overdue) {
-            if (overdue) return 'badge-danger';
-            switch(status) {
-                case 'Completed': return 'badge-success';
-                case 'In Progress': return 'badge-info';
-                case 'On Hold': return 'badge-warning';
-                case 'Cancelled': return 'badge-danger';
+        function renderTaskRow(task) {
+            const canStart = String(task.status).toLowerCase() === 'pending' && statusId('In Progress');
+            const canComplete = !isCompletedTask(task) && statusId('Completed');
+            return `
+                <tr>
+                    <td class="task-name-cell">
+                        <strong>${escapeHtml(task.taskName)}</strong>
+                        ${task.description ? `<small>${escapeHtml(task.description)}</small>` : ''}
+                    </td>
+                    <td><span class="badge ${statusBadge(task)}">${task.isOverdue ? 'Overdue' : escapeHtml(task.status)}</span></td>
+                    <td>${formatShortDate(task.startDate)} - ${formatShortDate(task.endDate)}</td>
+                    <td>${formatMoney(task.estimatedCost)}</td>
+                    <td>
+                        <div class="task-actions-row">
+                            ${canStart ? `<button class="mini-action primary" onclick="setTaskStatus(${task.taskId}, 'In Progress')">Start</button>` : ''}
+                            ${canComplete ? `<button class="mini-action success" onclick="setTaskStatus(${task.taskId}, 'Completed')">Done</button>` : ''}
+                            <button class="mini-action" onclick="openEditTask(${task.taskId})">Edit</button>
+                            <button class="mini-action danger" onclick="deleteTask(${task.taskId})">Delete</button>
+                        </div>
+                    </td>
+                </tr>`;
+        }
+
+        function statusBadge(task) {
+            if (task.isOverdue) return 'badge-danger';
+            switch (String(task.status).toLowerCase()) {
+                case 'completed': return 'badge-success';
+                case 'in progress': return 'badge-info';
+                case 'on hold': return 'badge-warning';
+                case 'cancelled': return 'badge-danger';
                 default: return 'badge-warning';
             }
         }
 
-        function renderGantt(phases) {
-            const gantt = document.getElementById('gantt-container');
-            const tasks = [];
-            phases.forEach(p => p.tasks.forEach(t => {
-                if (t.startDate && t.endDate) tasks.push({ ...t, phase: p.phaseName });
-            }));
+        function renderFocus(tasks) {
+            const list = document.getElementById('focus-list');
+            const openTasks = tasks
+                .filter(t => !isCompletedTask(t))
+                .sort((a, b) => {
+                    if (!a.endDate && !b.endDate) return 0;
+                    if (!a.endDate) return 1;
+                    if (!b.endDate) return -1;
+                    return new Date(`${a.endDate}T00:00:00`) - new Date(`${b.endDate}T00:00:00`);
+                })
+                .slice(0, 4);
+
+            if (!openTasks.length) {
+                list.innerHTML = '<div class="focus-item"><strong>No open tasks</strong><span>All tracked tasks are complete.</span></div>';
+                return;
+            }
+
+            list.innerHTML = openTasks.map(t => `
+                <div class="focus-item">
+                    <strong>${escapeHtml(t.taskName)}</strong>
+                    <span>${escapeHtml(t.phaseName)} | ${formatDate(t.endDate)}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderHealth(tasks) {
+            const list = document.getElementById('health-list');
+            const counts = taskStatuses.map(s => ({
+                name: s.statusName,
+                count: tasks.filter(t => Number(t.statusId) === Number(s.statusId)).length
+            })).filter(x => x.count > 0);
+
+            const overdue = tasks.filter(t => t.isOverdue).length;
+            if (!counts.length && overdue === 0) {
+                list.innerHTML = '<div class="focus-item"><strong>No task data</strong><span>Add tasks to see status health.</span></div>';
+                return;
+            }
+
+            list.innerHTML = [
+                overdue > 0 ? `<div class="focus-item"><strong>${overdue} Overdue</strong><span>Needs attention</span></div>` : '',
+                ...counts.map(x => `<div class="focus-item"><strong>${x.count} ${escapeHtml(x.name)}</strong><span>Current task status</span></div>`)
+            ].join('');
+        }
+
+        function renderTimeline(phases) {
+            const container = document.getElementById('timeline-container');
+            const tasks = phases.flatMap(p => p.tasks
+                .filter(t => t.startDate && t.endDate)
+                .map(t => ({ ...t, phaseName: p.phaseName })));
+            document.getElementById('timeline-count').textContent = `${tasks.length} scheduled`;
 
             if (!tasks.length) {
-                gantt.innerHTML = '<p style="text-align:center; color:var(--text-muted)">Add tasks with dates to see the timeline.</p>';
+                container.innerHTML = '<div class="construction-empty" style="box-shadow:none;"><h2>No scheduled work</h2><p>Add start and deadline dates to tasks to build the timeline.</p></div>';
                 return;
             }
 
@@ -633,24 +942,29 @@
             const max = new Date(Math.max(...ends));
             const totalDays = Math.max(1, (max - min) / 86400000);
 
-            gantt.innerHTML = tasks.map(t => {
-                const start = new Date(`${t.startDate}T00:00:00`);
-                const end = new Date(`${t.endDate}T00:00:00`);
-                const left = Math.max(0, ((start - min) / 86400000) / totalDays * 100);
-                const width = Math.max(3, ((end - start) / 86400000 + 1) / totalDays * 100);
-                return `
-                    <div class="gantt-row">
-                        <div style="font-size:0.85rem;"><strong>${escapeHtml(t.taskName)}</strong><br><small>${escapeHtml(t.phase)}</small></div>
-                        <div class="gantt-bar-wrap">
-                            <div class="gantt-bar" style="width:${Math.min(100 - left, width)}%; margin-left:${Math.min(97, left)}%"></div>
-                        </div>
-                    </div>`;
-            }).join('');
+            container.innerHTML = tasks
+                .sort((a, b) => new Date(`${a.startDate}T00:00:00`) - new Date(`${b.startDate}T00:00:00`))
+                .map(t => {
+                    const start = new Date(`${t.startDate}T00:00:00`);
+                    const end = new Date(`${t.endDate}T00:00:00`);
+                    const left = Math.max(0, ((start - min) / 86400000) / totalDays * 100);
+                    const width = Math.max(4, ((end - start) / 86400000 + 1) / totalDays * 100);
+                    return `
+                        <div class="timeline-row">
+                            <div class="timeline-label">
+                                <strong>${escapeHtml(t.taskName)}</strong>
+                                <span>${escapeHtml(t.phaseName)}</span>
+                            </div>
+                            <div class="timeline-track">
+                                <div class="timeline-bar" style="width:${Math.min(100 - left, width)}%; margin-left:${Math.min(96, left)}%; background:${isCompletedTask(t) ? '#10B981' : t.isOverdue ? '#EF4444' : '#2563EB'}"></div>
+                            </div>
+                        </div>`;
+                }).join('');
         }
 
         function toggleCustomPhase() {
             const selected = phaseTypes.find(p => Number(p.phaseTypeId) === Number(document.getElementById('phase-type-id').value));
-            const isCustom = selected && selected.phaseName.toLowerCase() === 'custom';
+            const isCustom = selected && String(selected.phaseName).toLowerCase() === 'custom';
             document.getElementById('custom-phase-group').style.display = isCustom ? 'block' : 'none';
         }
 
@@ -660,33 +974,35 @@
             document.getElementById('phase-modal-title').textContent = 'Add Phase';
             setError('phase-error', '');
             toggleCustomPhase();
-            document.getElementById('phaseModal').style.display = 'block';
+            document.getElementById('phaseModal').classList.add('is-open');
         }
 
         function openEditPhase(phaseId) {
-            const p = currentPhases.find(x => x.phaseId === phaseId);
-            if (!p) return;
-            document.getElementById('phase-id').value = p.phaseId;
-            document.getElementById('phase-type-id').value = p.phaseTypeId;
-            document.getElementById('phase-sequence').value = p.sequence;
-            document.getElementById('phase-custom-name').value = p.phaseName;
-            document.getElementById('phase-start').value = p.startDate || '';
-            document.getElementById('phase-end').value = p.endDate || '';
-            document.getElementById('phase-notes').value = p.notes || '';
-            document.getElementById('phase-completed').checked = !!p.isCompleted;
+            const phase = currentPhases.find(p => p.phaseId === phaseId);
+            if (!phase) return;
+            document.getElementById('phase-id').value = phase.phaseId;
+            document.getElementById('phase-type-id').value = phase.phaseTypeId;
+            document.getElementById('phase-sequence').value = phase.sequence;
+            document.getElementById('phase-custom-name').value = phase.phaseName;
+            document.getElementById('phase-start').value = phase.startDate || '';
+            document.getElementById('phase-end').value = phase.endDate || '';
+            document.getElementById('phase-notes').value = phase.notes || '';
+            document.getElementById('phase-completed').checked = !!phase.isCompleted;
             document.getElementById('phase-modal-title').textContent = 'Edit Phase';
             setError('phase-error', '');
             toggleCustomPhase();
-            document.getElementById('phaseModal').style.display = 'block';
+            document.getElementById('phaseModal').classList.add('is-open');
         }
 
-        function closePhaseModal() { document.getElementById('phaseModal').style.display = 'none'; }
+        function closePhaseModal() {
+            document.getElementById('phaseModal').classList.remove('is-open');
+        }
 
-        document.getElementById('phase-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = Number(document.getElementById('phase-id').value);
+        document.getElementById('phase-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const phaseId = Number(document.getElementById('phase-id').value);
             const payload = {
-                phaseId: id,
+                phaseId,
                 phaseTypeId: Number(document.getElementById('phase-type-id').value),
                 customPhaseName: document.getElementById('phase-custom-name').value,
                 sequence: Number(document.getElementById('phase-sequence').value || 0),
@@ -695,11 +1011,13 @@
                 isCompleted: document.getElementById('phase-completed').checked,
                 notes: document.getElementById('phase-notes').value
             };
-            const result = await postJson(id > 0 ? '/Construction/UpdatePhase' : '/Construction/AddPhase', payload);
+
+            const result = await postJson(phaseId > 0 ? '/Construction/UpdatePhase' : '/Construction/AddPhase', payload);
             if (!result.success) {
                 setError('phase-error', result.message || 'Unable to save phase.');
                 return;
             }
+
             closePhaseModal();
             loadConstructionData();
         });
@@ -710,7 +1028,7 @@
             document.getElementById('task-phase-id').value = phaseId;
             document.getElementById('task-modal-title').textContent = 'Add Task';
             setError('task-error', '');
-            document.getElementById('taskModal').style.display = 'block';
+            document.getElementById('taskModal').classList.add('is-open');
         }
 
         function openEditTask(taskId) {
@@ -726,16 +1044,18 @@
             document.getElementById('task-description').value = task.description || '';
             document.getElementById('task-modal-title').textContent = 'Edit Task';
             setError('task-error', '');
-            document.getElementById('taskModal').style.display = 'block';
+            document.getElementById('taskModal').classList.add('is-open');
         }
 
-        function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.remove('is-open');
+        }
 
-        document.getElementById('task-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = Number(document.getElementById('task-id').value);
+        document.getElementById('task-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const taskId = Number(document.getElementById('task-id').value);
             const payload = {
-                taskId: id,
+                taskId,
                 phaseId: Number(document.getElementById('task-phase-id').value),
                 taskName: document.getElementById('task-name').value,
                 description: document.getElementById('task-description').value,
@@ -744,14 +1064,51 @@
                 endDate: document.getElementById('task-end').value || null,
                 estimatedCost: Number(document.getElementById('task-cost').value || 0)
             };
-            const result = await postJson(id > 0 ? '/Construction/UpdateTask' : '/Construction/AddTask', payload);
+
+            const result = await postJson(taskId > 0 ? '/Construction/UpdateTask' : '/Construction/AddTask', payload);
             if (!result.success) {
                 setError('task-error', result.message || 'Unable to save task.');
                 return;
             }
+
             closeTaskModal();
             loadConstructionData();
         });
+
+        async function setTaskStatus(taskId, statusName) {
+            const task = currentPhases.flatMap(p => p.tasks).find(t => t.taskId === taskId);
+            const newStatusId = statusId(statusName);
+            if (!task || !newStatusId) return;
+
+            const result = await postJson('/Construction/UpdateTask', {
+                taskId: task.taskId,
+                phaseId: task.phaseId,
+                taskName: task.taskName,
+                description: task.description,
+                statusId: newStatusId,
+                startDate: task.startDate,
+                endDate: task.endDate,
+                estimatedCost: Number(task.estimatedCost || 0)
+            });
+
+            if (!result.success) {
+                alert(result.message || 'Unable to update task.');
+                return;
+            }
+
+            loadConstructionData();
+        }
+
+        async function quickSetup() {
+            if (!confirm('Create the standard construction phase sequence for this project?')) return;
+            const result = await postForm('/Construction/QuickSetup');
+            if (!result.success) {
+                alert(result.message || 'Unable to create phases.');
+                return;
+            }
+
+            loadConstructionData();
+        }
 
         async function deletePhase(id) {
             if (!confirm('Delete this phase and its tasks?')) return;
@@ -784,6 +1141,14 @@
             const res = await fetch(url, { method: 'POST' });
             return res.ok ? await res.json() : { success: false, message: 'Request failed.' };
         }
+
+        document.querySelectorAll('.construction-modal').forEach(modal => {
+            modal.addEventListener('click', event => {
+                if (event.target === modal) {
+                    modal.classList.remove('is-open');
+                }
+            });
+        });
 
         populateLookups();
         loadConstructionData();

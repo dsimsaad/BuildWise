@@ -12,7 +12,7 @@
 <div class="module-header">
     <div class="module-title">
         <h1>Add Property</h1>
-        <p>Create a site record that can be used by construction projects.</p>
+        <p>Create a property inside a project.</p>
     </div>
     <a asp-action="Index" class="btn-secondary">Back to Properties</a>
 </div>
@@ -30,6 +30,14 @@
                     <label asp-for="PropertyName">Property Name</label>
                     <input asp-for="PropertyName" class="form-control" placeholder="e.g. Phase 5 Plot" />
                     <span asp-validation-for="PropertyName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group full-width">
+                    <label asp-for="ProjectId">Project</label>
+                    <select asp-for="ProjectId" class="form-control" asp-items="ViewBag.ProjectId">
+                        <option value="">No project selected</option>
+                    </select>
+                    <span asp-validation-for="ProjectId" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">

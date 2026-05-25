@@ -112,6 +112,7 @@ BEGIN
     CREATE TABLE Properties (
         PropertyID int IDENTITY(1,1) NOT NULL PRIMARY KEY,
         UserID int NOT NULL,
+        ProjectID int NULL,
         PropertyName nvarchar(150) NOT NULL,
         TypeID tinyint NOT NULL,
         StatusID tinyint NOT NULL DEFAULT 1,
@@ -138,6 +139,12 @@ BEGIN
 END
 GO
 
+IF COL_LENGTH('Properties', 'ProjectID') IS NULL
+BEGIN
+    ALTER TABLE Properties ADD ProjectID int NULL;
+END
+GO
+
 IF COL_LENGTH('Properties', 'UserID') IS NOT NULL
 BEGIN
     EXEC('UPDATE Properties SET UserID = (SELECT TOP 1 UserID FROM Users ORDER BY UserID) WHERE UserID IS NULL');
@@ -147,6 +154,18 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Properties_Users')
 BEGIN
     ALTER TABLE Properties ADD CONSTRAINT FK_Properties_Users FOREIGN KEY (UserID) REFERENCES Users(UserID);
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Properties_Projects_ProjectID')
+BEGIN
+    ALTER TABLE Properties ADD CONSTRAINT FK_Properties_Projects_ProjectID FOREIGN KEY (ProjectID) REFERENCES Projects(ProjectID);
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Properties_ProjectID' AND object_id = OBJECT_ID('Properties'))
+BEGIN
+    CREATE INDEX IX_Properties_ProjectID ON Properties(ProjectID);
 END
 GO
 
@@ -213,6 +232,19 @@ WHERE NOT EXISTS (
     WHERE pr.UserID = u.UserID
       AND pr.ProjectName = 'main'
 );
+GO
+
+UPDATE p
+SET ProjectID = pr.ProjectID,
+    UpdatedAt = GETDATE()
+FROM Properties p
+CROSS APPLY (
+    SELECT TOP 1 ProjectID
+    FROM Projects pr
+    WHERE pr.PropertyID = p.PropertyID
+    ORDER BY pr.ProjectID
+) pr
+WHERE p.ProjectID IS NULL;
 GO
 
 -- Material module lookup and main tables

@@ -22,6 +22,7 @@ namespace BuildWise.DataLayer
                 .Include(p => p.Type)
                 .Include(p => p.Status)
                 .Include(p => p.AreaUnit)
+                .Include(p => p.Project)
                 .Include(p => p.Projects)
                 .Where(p => p.UserId == userId)
                 .OrderByDescending(p => p.CreatedAt)
@@ -34,6 +35,7 @@ namespace BuildWise.DataLayer
                 .Include(p => p.Type)
                 .Include(p => p.Status)
                 .Include(p => p.AreaUnit)
+                .Include(p => p.Project)
                 .Include(p => p.Projects)
                 .FirstOrDefaultAsync(p => p.PropertyId == propertyId && p.UserId == userId);
         }

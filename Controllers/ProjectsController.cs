@@ -50,6 +50,16 @@ namespace BuildWise.Controllers
 
             var project = await _context.Projects
                 .Include(p => p.Property)
+                .Include(p => p.Properties)
+                    .ThenInclude(p => p.Status)
+                .Include(p => p.Properties)
+                    .ThenInclude(p => p.Type)
+                .Include(p => p.Properties)
+                    .ThenInclude(p => p.AreaUnit)
+                .Include(p => p.Budget)
+                .Include(p => p.Expenses)
+                .Include(p => p.Phases)
+                    .ThenInclude(p => p.Tasks)
                 .Include(p => p.User)
                 .FirstOrDefaultAsync(m => m.ProjectId == id && m.UserId == userId);
 
@@ -72,59 +82,48 @@ namespace BuildWise.Controllers
 
             if (ModelState.IsValid)
             {
-                // Reuse a user's existing property if available, otherwise create a minimal default one.
-                var propertyId = await _context.Properties
-                    .Where(p => p.UserId == currentUserId)
-                    .OrderByDescending(p => p.PropertyId)
-                    .Select(p => (int?)p.PropertyId)
+                var defaultTypeId = await _context.PropertyTypes
+                    .OrderBy(t => t.TypeId)
+                    .Select(t => (byte?)t.TypeId)
+                    .FirstOrDefaultAsync();
+                var defaultStatusId = await _context.PropertyStatuses
+                    .OrderBy(s => s.StatusId)
+                    .Select(s => (byte?)s.StatusId)
+                    .FirstOrDefaultAsync();
+                var defaultAreaUnitId = await _context.AreaUnits
+                    .OrderBy(a => a.UnitId)
+                    .Select(a => (byte?)a.UnitId)
                     .FirstOrDefaultAsync();
 
-                if (!propertyId.HasValue)
+                if (!defaultTypeId.HasValue || !defaultStatusId.HasValue || !defaultAreaUnitId.HasValue)
                 {
-                    var defaultTypeId = await _context.PropertyTypes
-                        .OrderBy(t => t.TypeId)
-                        .Select(t => (byte?)t.TypeId)
-                        .FirstOrDefaultAsync();
-                    var defaultStatusId = await _context.PropertyStatuses
-                        .OrderBy(s => s.StatusId)
-                        .Select(s => (byte?)s.StatusId)
-                        .FirstOrDefaultAsync();
-                    var defaultAreaUnitId = await _context.AreaUnits
-                        .OrderBy(a => a.UnitId)
-                        .Select(a => (byte?)a.UnitId)
-                        .FirstOrDefaultAsync();
-
-                    if (!defaultTypeId.HasValue || !defaultStatusId.HasValue || !defaultAreaUnitId.HasValue)
-                    {
-                        ModelState.AddModelError("", "Unable to initialize required default property metadata.");
-                        return View(model);
-                    }
-
-                    var bootstrapProperty = new Property
-                    {
-                        UserId = currentUserId,
-                        PropertyName = "Default Property",
-                        TypeId = defaultTypeId.Value,
-                        StatusId = defaultStatusId.Value,
-                        AreaUnitId = defaultAreaUnitId.Value,
-                        AreaSize = 0,
-                        Location = "Not specified",
-                        City = null,
-                        Notes = "Auto-created for quick project setup.",
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
-                    };
-
-                    _context.Properties.Add(bootstrapProperty);
-                    await _context.SaveChangesAsync();
-                    propertyId = bootstrapProperty.PropertyId;
+                    ModelState.AddModelError("", "Unable to initialize required default property metadata.");
+                    return View(model);
                 }
+
+                var bootstrapProperty = new Property
+                {
+                    UserId = currentUserId,
+                    PropertyName = $"{model.ProjectName.Trim()} Property",
+                    TypeId = defaultTypeId.Value,
+                    StatusId = defaultStatusId.Value,
+                    AreaUnitId = defaultAreaUnitId.Value,
+                    AreaSize = 0,
+                    Location = "Not specified",
+                    City = null,
+                    Notes = "Auto-created for quick project setup.",
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+
+                _context.Properties.Add(bootstrapProperty);
+                await _context.SaveChangesAsync();
 
                 var project = new Project
                 {
                     ProjectName = model.ProjectName.Trim(),
                     Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
-                    PropertyId = propertyId.Value,
+                    PropertyId = bootstrapProperty.PropertyId,
                     UserId = currentUserId,
                     StartDate = DateOnly.FromDateTime(DateTime.Now),
                     ExpectedEndDate = null,
@@ -137,6 +136,11 @@ namespace BuildWise.Controllers
 
                 _context.Add(project);
                 await _context.SaveChangesAsync();
+
+                bootstrapProperty.ProjectId = project.ProjectId;
+                bootstrapProperty.UpdatedAt = DateTime.Now;
+                await _context.SaveChangesAsync();
+
                 ClearProjectSelectorCache(currentUserId);
                 HttpContext.Session.SetInt32("SelectedProjectId", project.ProjectId);
                 return RedirectToAction("Dashboard", "Home");

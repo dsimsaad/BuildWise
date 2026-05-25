@@ -529,6 +529,8 @@ public partial class BuildWiseDbContext : DbContext
 
             entity.HasIndex(e => e.UserId, "IX_Properties_UserID");
 
+            entity.HasIndex(e => e.ProjectId, "IX_Properties_ProjectID");
+
             entity.Property(e => e.PropertyId)
                 .HasComment("Auto-increment PK")
                 .HasColumnName("PropertyID");
@@ -543,6 +545,9 @@ public partial class BuildWiseDbContext : DbContext
             entity.Property(e => e.Location).HasMaxLength(300);
             entity.Property(e => e.Notes).HasMaxLength(500);
             entity.Property(e => e.PropertyName).HasMaxLength(150);
+            entity.Property(e => e.ProjectId)
+                .HasComment("Optional FK to Projects — parent project for this property")
+                .HasColumnName("ProjectID");
             entity.Property(e => e.StatusId)
                 .HasDefaultValue((byte)1)
                 .HasComment("FK to PropertyStatus: Under Construction/Completed etc")
@@ -559,6 +564,10 @@ public partial class BuildWiseDbContext : DbContext
                 .HasForeignKey(d => d.AreaUnitId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Propertie__AreaU__7C4F7684");
+
+            entity.HasOne(d => d.Project).WithMany(p => p.Properties)
+                .HasForeignKey(d => d.ProjectId)
+                .HasConstraintName("FK_Properties_Projects_ProjectID");
 
             entity.HasOne(d => d.Status).WithMany(p => p.Properties)
                 .HasForeignKey(d => d.StatusId)

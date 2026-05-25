@@ -7,6 +7,7 @@ public partial class Property
 {
     public int PropertyId { get; set; }
     public int UserId { get; set; }
+    public int? ProjectId { get; set; }
 
     public string PropertyName { get; set; } = null!;
     public byte TypeId { get; set; }
@@ -25,6 +26,8 @@ public partial class Property
     public DateTime UpdatedAt { get; set; }
 
     public virtual AreaUnit AreaUnit { get; set; } = null!;
+
+    public virtual Project? Project { get; set; }
 
     public virtual ICollection<Project> Projects { get; set; } = new List<Project>();
 

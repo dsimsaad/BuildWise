@@ -43,24 +43,30 @@ namespace BuildWise.Controllers
             return View(property);
         }
 
-        public IActionResult Create()
+        public IActionResult Create(int? projectId)
         {
-            PopulateDropdowns();
-            return View();
+            var property = new Property { ProjectId = projectId };
+            PopulateDropdowns(property);
+            ViewBag.SourceProjectId = projectId;
+            return View(property);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PropertyName,TypeId,StatusId,Location,City,AreaSize,AreaUnitId,Notes")] Property property)
+        public async Task<IActionResult> Create([Bind("PropertyName,ProjectId,TypeId,StatusId,Location,City,AreaSize,AreaUnitId,Notes")] Property property)
         {
-            property.UserId = GetCurrentUserId();
+            var userId = GetCurrentUserId();
+            property.UserId = userId;
             
             // Remove navigation properties from model state validation
             ModelState.Remove("User");
+            ModelState.Remove("Project");
             ModelState.Remove("Type");
             ModelState.Remove("Status");
             ModelState.Remove("AreaUnit");
             ModelState.Remove("Projects");
+
+            await ValidateProjectSelectionAsync(property.ProjectId, userId);
 
             if (ModelState.IsValid)
             {
@@ -75,6 +81,7 @@ namespace BuildWise.Controllers
                 }
             }
             PopulateDropdowns(property);
+            ViewBag.SourceProjectId = property.ProjectId;
             return View(property);
         }
 
@@ -90,17 +97,20 @@ namespace BuildWise.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("PropertyId,PropertyName,TypeId,StatusId,Location,City,AreaSize,AreaUnitId,Notes")] Property property)
+        public async Task<IActionResult> Edit(int id, [Bind("PropertyId,PropertyName,ProjectId,TypeId,StatusId,Location,City,AreaSize,AreaUnitId,Notes")] Property property)
         {
             if (id != property.PropertyId) return NotFound();
 
             var userId = GetCurrentUserId();
 
             ModelState.Remove("User");
+            ModelState.Remove("Project");
             ModelState.Remove("Type");
             ModelState.Remove("Status");
             ModelState.Remove("AreaUnit");
             ModelState.Remove("Projects");
+
+            await ValidateProjectSelectionAsync(property.ProjectId, userId);
 
             if (ModelState.IsValid)
             {
@@ -129,9 +139,32 @@ namespace BuildWise.Controllers
 
         private void PopulateDropdowns(Property? property = null)
         {
-            ViewData["TypeId"] = new SelectList(_context.Set<PropertyType>(), "TypeId", "TypeName", property?.TypeId);
-            ViewData["StatusId"] = new SelectList(_context.Set<PropertyStatus>(), "StatusId", "StatusName", property?.StatusId);
-            ViewData["AreaUnitId"] = new SelectList(_context.Set<AreaUnit>(), "UnitId", "UnitName", property?.AreaUnitId);
+            var userId = GetCurrentUserId();
+            ViewData["ProjectId"] = new SelectList(
+                _context.Set<Project>()
+                    .AsNoTracking()
+                    .Where(p => p.UserId == userId)
+                    .OrderBy(p => p.ProjectName),
+                "ProjectId",
+                "ProjectName",
+                property?.ProjectId);
+            ViewData["TypeId"] = new SelectList(_context.Set<PropertyType>().AsNoTracking(), "TypeId", "TypeName", property?.TypeId);
+            ViewData["StatusId"] = new SelectList(_context.Set<PropertyStatus>().AsNoTracking(), "StatusId", "StatusName", property?.StatusId);
+            ViewData["AreaUnitId"] = new SelectList(_context.Set<AreaUnit>().AsNoTracking(), "UnitId", "UnitName", property?.AreaUnitId);
+        }
+
+        private async System.Threading.Tasks.Task ValidateProjectSelectionAsync(int? projectId, int userId)
+        {
+            if (!projectId.HasValue) return;
+
+            var ownsProject = await _context.Projects
+                .AsNoTracking()
+                .AnyAsync(p => p.ProjectId == projectId.Value && p.UserId == userId);
+
+            if (!ownsProject)
+            {
+                ModelState.AddModelError(nameof(Property.ProjectId), "Select a valid project.");
+            }
         }
     }
 }

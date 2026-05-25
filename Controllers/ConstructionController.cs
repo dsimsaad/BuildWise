@@ -36,6 +36,14 @@ namespace BuildWise.Controllers
                 .Select(s => new { s.StatusId, s.StatusName })
                 .ToListAsync();
 
+            var project = await _context.Projects
+                .AsNoTracking()
+                .Include(p => p.Properties)
+                .FirstOrDefaultAsync(p => p.ProjectId == projectId.Value && p.UserId == userId);
+            ViewBag.ProjectName = project?.ProjectName ?? "Selected Project";
+            ViewBag.PropertyCount = project?.Properties.Count ?? 0;
+            ViewBag.IsProjectCompleted = project?.IsCompleted == true;
+
             return View();
         }
 
@@ -107,6 +115,9 @@ namespace BuildWise.Controllers
                 var progress = tasks.Count > 0
                     ? Math.Round(completedTasks * 100m / tasks.Count, 2)
                     : (p.IsCompleted ? 100m : 0m);
+                var phaseCompleted = tasks.Count > 0
+                    ? completedTasks == tasks.Count
+                    : p.IsCompleted;
                 var displayName = string.IsNullOrWhiteSpace(p.CustomPhaseName)
                     ? p.PhaseType.PhaseName
                     : p.CustomPhaseName;
@@ -119,7 +130,7 @@ namespace BuildWise.Controllers
                     sequence = p.Sequence,
                     startDate = p.StartDate?.ToString("yyyy-MM-dd"),
                     endDate = p.EndDate?.ToString("yyyy-MM-dd"),
-                    isCompleted = p.IsCompleted,
+                    isCompleted = phaseCompleted,
                     notes = p.Notes,
                     progress,
                     tasks = tasks.Select(t => new
@@ -150,6 +161,79 @@ namespace BuildWise.Controllers
         }
 
         [HttpPost]
+        public async System.Threading.Tasks.Task<IActionResult> QuickSetup()
+        {
+            var userId = GetCurrentUserId();
+            var projectId = await GetValidSelectedProjectIdAsync(userId);
+            if (projectId == null)
+                return Json(new { success = false, message = "Please select a project first." });
+
+            var hasPhases = await _context.Phases.AnyAsync(p => p.ProjectId == projectId.Value);
+            if (hasPhases)
+                return Json(new { success = false, message = "This project already has phases. Add more phases manually if needed." });
+
+            var preferredOrder = new[] { "Foundation", "Grey Structure", "Plumbing", "Electrical", "Tiling", "Painting", "Finishing" };
+            var phaseTypes = await _context.PhaseTypes
+                .Where(p => preferredOrder.Contains(p.PhaseName))
+                .ToListAsync();
+
+            var orderedTypes = preferredOrder
+                .Select((name, index) => new { name, index })
+                .Join(phaseTypes, order => order.name, type => type.PhaseName, (order, type) => new { order.index, type })
+                .OrderBy(x => x.index)
+                .ToList();
+
+            if (!orderedTypes.Any())
+                return Json(new { success = false, message = "Construction phase types are not configured." });
+
+            var pendingStatusId = await _context.TaskStatuses
+                .Where(s => s.StatusName == "Pending")
+                .Select(s => (byte?)s.StatusId)
+                .FirstOrDefaultAsync() ?? 1;
+            var taskTemplates = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Foundation"] = new[] { "Site layout", "Excavation", "Foundation concrete" },
+                ["Grey Structure"] = new[] { "Columns and beams", "Masonry work", "Roof slab" },
+                ["Plumbing"] = new[] { "Water supply lines", "Drainage lines", "Fixture points" },
+                ["Electrical"] = new[] { "Conduit layout", "Wiring", "DB and switch points" },
+                ["Tiling"] = new[] { "Floor tiles", "Wall tiles", "Grouting" },
+                ["Painting"] = new[] { "Surface preparation", "Primer", "Final coat" },
+                ["Finishing"] = new[] { "Doors and windows", "Fixtures", "Final inspection" }
+            };
+
+            foreach (var item in orderedTypes)
+            {
+                var phase = new Phase
+                {
+                    ProjectId = projectId.Value,
+                    PhaseTypeId = item.type.PhaseTypeId,
+                    Sequence = (byte)(item.index + 1),
+                    IsCompleted = false
+                };
+
+                if (taskTemplates.TryGetValue(item.type.PhaseName, out var templates))
+                {
+                    foreach (var template in templates)
+                    {
+                        phase.Tasks.Add(new Models.Task
+                        {
+                            TaskName = template,
+                            StatusId = pendingStatusId,
+                            EstimatedCost = 0,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now
+                        });
+                    }
+                }
+
+                _context.Phases.Add(phase);
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
         public async System.Threading.Tasks.Task<IActionResult> AddPhase([FromBody] PhaseRequest request)
         {
             var userId = GetCurrentUserId();
@@ -160,6 +244,10 @@ namespace BuildWise.Controllers
             var phaseType = await _context.PhaseTypes.FirstOrDefaultAsync(p => p.PhaseTypeId == request.PhaseTypeId);
             if (phaseType == null)
                 return Json(new { success = false, message = "Please select a valid phase type." });
+
+            var dateError = ValidateDateRange(request.StartDate, request.EndDate, "phase");
+            if (dateError != null)
+                return Json(new { success = false, message = dateError });
 
             var sequence = request.Sequence;
             if (sequence <= 0)
@@ -202,6 +290,8 @@ namespace BuildWise.Controllers
             var userId = GetCurrentUserId();
             var phase = await _context.Phases
                 .Include(p => p.PhaseType)
+                .Include(p => p.Tasks)
+                    .ThenInclude(t => t.Status)
                 .FirstOrDefaultAsync(p => p.PhaseId == request.PhaseId && p.Project.UserId == userId);
             if (phase == null)
                 return Forbid();
@@ -209,6 +299,10 @@ namespace BuildWise.Controllers
             var phaseType = await _context.PhaseTypes.FirstOrDefaultAsync(p => p.PhaseTypeId == request.PhaseTypeId);
             if (phaseType == null)
                 return Json(new { success = false, message = "Please select a valid phase type." });
+
+            var dateError = ValidateDateRange(request.StartDate, request.EndDate, "phase");
+            if (dateError != null)
+                return Json(new { success = false, message = dateError });
 
             var sequence = request.Sequence <= 0 ? phase.Sequence : request.Sequence;
             var sequenceTaken = await _context.Phases.AnyAsync(p =>
@@ -226,7 +320,9 @@ namespace BuildWise.Controllers
             phase.Sequence = sequence;
             phase.StartDate = request.StartDate;
             phase.EndDate = request.EndDate;
-            phase.IsCompleted = request.IsCompleted;
+            phase.IsCompleted = phase.Tasks.Any()
+                ? phase.Tasks.All(t => IsCompleted(t.Status?.StatusName, t.StatusId))
+                : request.IsCompleted;
             phase.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
 
             await _context.SaveChangesAsync();
@@ -271,6 +367,10 @@ namespace BuildWise.Controllers
                 return Json(new { success = false, message = "Task name is required." });
 
             var statusId = await ResolveStatusIdAsync(request.StatusId, request.Status);
+            var dateError = ValidateDateRange(request.StartDate, request.EndDate, "task");
+            if (dateError != null)
+                return Json(new { success = false, message = dateError });
+
             _context.Tasks.Add(new Models.Task
             {
                 PhaseId = request.PhaseId,
@@ -285,6 +385,7 @@ namespace BuildWise.Controllers
             });
 
             await _context.SaveChangesAsync();
+            await RefreshPhaseCompletionAsync(request.PhaseId);
             return Json(new { success = true });
         }
 
@@ -300,6 +401,10 @@ namespace BuildWise.Controllers
             if (string.IsNullOrWhiteSpace(request.TaskName))
                 return Json(new { success = false, message = "Task name is required." });
 
+            var dateError = ValidateDateRange(request.StartDate, request.EndDate, "task");
+            if (dateError != null)
+                return Json(new { success = false, message = dateError });
+
             task.TaskName = request.TaskName.Trim();
             task.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
             task.StatusId = await ResolveStatusIdAsync(request.StatusId, request.Status);
@@ -309,6 +414,7 @@ namespace BuildWise.Controllers
             task.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
+            await RefreshPhaseCompletionAsync(task.PhaseId);
             return Json(new { success = true });
         }
 
@@ -325,6 +431,7 @@ namespace BuildWise.Controllers
 
             _context.Tasks.Remove(task);
             await _context.SaveChangesAsync();
+            await RefreshPhaseCompletionAsync(task.PhaseId);
             return Json(new { success = true });
         }
 
@@ -347,6 +454,27 @@ namespace BuildWise.Controllers
             }
 
             return 1;
+        }
+
+        private static string? ValidateDateRange(DateOnly? startDate, DateOnly? endDate, string label)
+        {
+            if (startDate.HasValue && endDate.HasValue && endDate.Value < startDate.Value)
+                return $"The {label} end date cannot be before the start date.";
+
+            return null;
+        }
+
+        private async System.Threading.Tasks.Task RefreshPhaseCompletionAsync(int phaseId)
+        {
+            var phase = await _context.Phases
+                .Include(p => p.Tasks)
+                    .ThenInclude(t => t.Status)
+                .FirstOrDefaultAsync(p => p.PhaseId == phaseId);
+            if (phase == null || !phase.Tasks.Any())
+                return;
+
+            phase.IsCompleted = phase.Tasks.All(t => IsCompleted(t.Status?.StatusName, t.StatusId));
+            await _context.SaveChangesAsync();
         }
 
         public class PhaseRequest

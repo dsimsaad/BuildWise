@@ -35,6 +35,15 @@ namespace BuildWise.Controllers
 
             if (existingProject != null)
             {
+                var legacyProperty = await _context.Properties
+                    .FirstOrDefaultAsync(p => p.PropertyId == existingProject.PropertyId && p.UserId == user.UserId && p.ProjectId == null);
+                if (legacyProperty != null)
+                {
+                    legacyProperty.ProjectId = existingProject.ProjectId;
+                    legacyProperty.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+
                 return existingProject;
             }
 
@@ -95,6 +104,15 @@ namespace BuildWise.Controllers
             };
             _context.Projects.Add(defaultProject);
             await _context.SaveChangesAsync();
+
+            var defaultPropertyForProject = await _context.Properties
+                .FirstOrDefaultAsync(p => p.PropertyId == propertyId.Value && p.UserId == user.UserId);
+            if (defaultPropertyForProject != null && defaultPropertyForProject.ProjectId == null)
+            {
+                defaultPropertyForProject.ProjectId = defaultProject.ProjectId;
+                defaultPropertyForProject.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
 
             return defaultProject;
         }

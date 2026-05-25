@@ -40,6 +40,8 @@ public partial class Project
 
     public virtual ICollection<ProjectAlert> ProjectAlerts { get; set; } = new List<ProjectAlert>();
 
+    public virtual ICollection<Property> Properties { get; set; } = new List<Property>();
+
     public virtual Property Property { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;

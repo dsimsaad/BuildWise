@@ -240,6 +240,7 @@ GO
 CREATE TABLE [dbo].[Properties](
 	[PropertyID] [int] IDENTITY(1,1) NOT NULL,
 	[UserID] [int] NOT NULL,
+	[ProjectID] [int] NULL,
 	[PropertyName] [nvarchar](150) NOT NULL,
 	[TypeID] [tinyint] NOT NULL,
 	[StatusID] [tinyint] NOT NULL,
@@ -1094,6 +1095,12 @@ CREATE NONCLUSTERED INDEX [IX_Properties_UserID] ON [dbo].[Properties]
 	[UserID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_Properties_ProjectID]    Script Date: 02/05/2026 12:33:05 AM ******/
+CREATE NONCLUSTERED INDEX [IX_Properties_ProjectID] ON [dbo].[Properties]
+(
+	[ProjectID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [UQ__Property__05E7698AAF0F992C]    Script Date: 02/05/2026 12:33:05 AM ******/
@@ -1322,6 +1329,9 @@ REFERENCES [dbo].[Users] ([UserID])
 GO
 ALTER TABLE [dbo].[Properties]  WITH CHECK ADD FOREIGN KEY([AreaUnitID])
 REFERENCES [dbo].[AreaUnit] ([UnitID])
+GO
+ALTER TABLE [dbo].[Properties]  WITH CHECK ADD CONSTRAINT [FK_Properties_Projects_ProjectID] FOREIGN KEY([ProjectID])
+REFERENCES [dbo].[Projects] ([ProjectID])
 GO
 ALTER TABLE [dbo].[Properties]  WITH CHECK ADD FOREIGN KEY([StatusID])
 REFERENCES [dbo].[PropertyStatus] ([StatusID])

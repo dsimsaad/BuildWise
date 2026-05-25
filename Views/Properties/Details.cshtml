@@ -58,28 +58,25 @@
 
     <div class="module-card">
         <div class="card-header">
-            <h2>Associated Projects</h2>
-            <span class="badge badge-info">@(Model.Projects?.Count ?? 0)</span>
+            <h2>Project</h2>
+            <span class="badge badge-info">@(Model.Project == null ? "Unassigned" : "Linked")</span>
         </div>
         <div class="card-body">
-            @if (Model.Projects != null && Model.Projects.Any())
+            @if (Model.Project != null)
             {
                 <div class="detail-list">
-                    @foreach (var project in Model.Projects)
-                    {
-                        <div class="detail-row" style="grid-template-columns: 1fr auto;">
-                            <strong>@project.ProjectName</strong>
-                            <a asp-controller="Projects" asp-action="Details" asp-route-id="@project.ProjectId" class="btn-secondary">Open</a>
-                        </div>
-                    }
+                    <div class="detail-row" style="grid-template-columns: 1fr auto;">
+                        <strong>@Model.Project.ProjectName</strong>
+                        <a asp-controller="Projects" asp-action="Details" asp-route-id="@Model.Project.ProjectId" class="btn-secondary">Open Project</a>
+                    </div>
                 </div>
             }
             else
             {
                 <div class="empty-state" style="box-shadow:none; padding:28px 18px;">
-                    <h2>No linked projects</h2>
-                    <p>Start a project to connect it with this property.</p>
-                    <a asp-controller="Projects" asp-action="Create" class="btn-primary">New Project</a>
+                    <h2>No linked project</h2>
+                    <p>Edit this property to place it inside a project.</p>
+                    <a asp-action="Edit" asp-route-id="@Model.PropertyId" class="btn-primary">Edit Property</a>
                 </div>
             }
         </div>

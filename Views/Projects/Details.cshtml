@@ -13,6 +13,13 @@
         if (abs >= 100000) return $"PKR {Trimmed(value / 100000)}L";
         return $"PKR {value.ToString("N0", new CultureInfo("en-IN"))}";
     }
+
+    var projectBudget = Model.TotalBudget > 0 ? Model.TotalBudget : (Model.Budget?.TotalBudget ?? 0m);
+    var projectExpenses = Model.Expenses?.Sum(e => e.Amount) ?? 0m;
+    var projectTasks = Model.Phases?.SelectMany(ph => ph.Tasks).ToList() ?? new List<BuildWise.Models.Task>();
+    var projectProgress = projectTasks.Any()
+        ? Math.Round(projectTasks.Count(t => t.StatusId == 3) * 100m / projectTasks.Count, 0)
+        : (Model.IsCompleted ? 100m : 0m);
 }
 
 @section Styles {
@@ -37,12 +44,6 @@
         <dt>Start Date</dt>
         <dd>@(Model.StartDate.ToString("MMM dd, yyyy"))</dd>
 
-        <dt>Expected End Date</dt>
-        <dd>@(Model.ExpectedEndDate.HasValue ? Model.ExpectedEndDate.Value.ToString("MMM dd, yyyy") : "—")</dd>
-
-        <dt>Actual End Date</dt>
-        <dd>@(Model.ActualEndDate.HasValue ? Model.ActualEndDate.Value.ToString("MMM dd, yyyy") : "—")</dd>
-
         <dt>Total Budget</dt>
         <dd>@FormatPkr(Model.TotalBudget)</dd>
 
@@ -58,11 +59,11 @@
         <dt>Created At</dt>
         <dd>@(Model.CreatedAt.ToString("MMM dd, yyyy h:mm tt"))</dd>
 
-        <dt>Updated At</dt>
-        <dd>@(Model.UpdatedAt.ToString("MMM dd, yyyy h:mm tt"))</dd>
-
-        <dt>Property</dt>
-        <dd>@(Model.Property?.PropertyName ?? "—")</dd>
+        @if (Model.IsCompleted)
+        {
+            <dt>Completed At</dt>
+            <dd>@(Model.ActualEndDate.HasValue ? Model.ActualEndDate.Value.ToString("MMM dd, yyyy") : "—")</dd>
+        }
 
         <dt>User</dt>
         <dd>@(Model.User?.FullName ?? "—")</dd>
@@ -70,7 +71,55 @@
 
     <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #F1F5F9;">
         <a asp-action="Edit" asp-route-id="@Model?.ProjectId" class="btn-primary" style="text-decoration: none;">Edit</a>
+        <a asp-controller="Properties" asp-action="Create" asp-route-projectId="@Model!.ProjectId" class="btn-primary" style="text-decoration: none; background-color: #10b981; border-color: #10b981;">Create Property for this Project</a>
         <a asp-controller="Materials" asp-action="Index" class="btn-primary" style="text-decoration: none; background-color: #0dcaf0; border-color: #0dcaf0;">Manage Materials</a>
         <a asp-action="Index" class="back-link">← Back to List</a>
+    </div>
+</div>
+
+<div class="module-card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h2>Properties in this Project</h2>
+        <span class="badge badge-info">@(Model.Properties?.Count ?? 0)</span>
+    </div>
+    <div class="card-body">
+        @if (Model.Properties != null && Model.Properties.Any())
+        {
+            <div class="entity-grid">
+                @foreach (var property in Model.Properties.OrderBy(p => p.PropertyName))
+                {
+                    <article class="entity-card">
+                        <div class="entity-card-header">
+                            <div>
+                                <h2 class="entity-card-title">@property.PropertyName</h2>
+                                <div class="entity-card-subtitle">@property.Location@(string.IsNullOrWhiteSpace(property.City) ? "" : ", " + property.City)</div>
+                            </div>
+                            <span class="badge badge-info">@(property.Status?.StatusName ?? "Unspecified")</span>
+                        </div>
+
+                        <ul class="entity-meta">
+                            <li><span>Type</span><strong>@(property.Type?.TypeName ?? "-")</strong></li>
+                            <li><span>Area</span><strong>@property.AreaSize @property.AreaUnit?.UnitName</strong></li>
+                            <li><span>Budget</span><strong>@FormatPkr(projectBudget)</strong></li>
+                            <li><span>Expenses</span><strong>@FormatPkr(projectExpenses)</strong></li>
+                            <li><span>Progress</span><strong>@projectProgress.ToString("0")%</strong></li>
+                        </ul>
+
+                        <div class="entity-actions">
+                            <a asp-controller="Properties" asp-action="Details" asp-route-id="@property.PropertyId" class="btn-secondary">Details</a>
+                            <a asp-controller="Properties" asp-action="Edit" asp-route-id="@property.PropertyId" class="btn-primary">Edit</a>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state" style="box-shadow:none; padding:28px 18px;">
+                <h2>No properties in this project</h2>
+                <p>Create a property to track a site under this project.</p>
+                <a asp-controller="Properties" asp-action="Create" asp-route-projectId="@Model.ProjectId" class="btn-primary">Create Property for this Project</a>
+            </div>
+        }
     </div>
 </div>

@@ -45,6 +45,7 @@ namespace BuildWise.BusinessLayer
             existing.PropertyName = property.PropertyName;
             existing.TypeId = property.TypeId;
             existing.StatusId = property.StatusId;
+            existing.ProjectId = property.ProjectId;
             existing.Location = property.Location;
             existing.City = property.City;
             existing.AreaSize = property.AreaSize;
