@@ -1,0 +1,94 @@
+@model BuildWise.Controllers.ConstructionController.PhaseRequest
+@{
+    ViewData["Title"] = "Add Phase";
+    Layout = "_ModuleLayout";
+    var phaseTypes = ViewBag.PhaseTypes as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css">
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Add Phase</h1>
+        <p>@ViewBag.ProjectName</p>
+    </div>
+    <a asp-action="Index" class="btn-secondary">Back to Construction</a>
+</div>
+
+<div class="module-card" style="max-width:720px;">
+    <div class="card-header">
+        <h2>Phase Details</h2>
+    </div>
+    <div class="card-body">
+        <form asp-action="AddPhasePage" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label asp-for="PhaseTypeId">Phase Type</label>
+                    <select asp-for="PhaseTypeId" class="form-control" id="phase-type-id" required>
+                        @foreach (var phaseType in phaseTypes)
+                        {
+                            var name = Convert.ToString(phaseType.PhaseName) ?? "";
+                            <option value="@phaseType.PhaseTypeId">@((name.Equals("Custom", StringComparison.OrdinalIgnoreCase)) ? "Custom phase name" : name)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="PhaseTypeId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="StartDate">Start Date</label>
+                    <input asp-for="StartDate" type="date" class="form-control" />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+
+                <div class="form-group full-width" id="custom-phase-group">
+                    <label asp-for="CustomPhaseName">Custom Phase Name</label>
+                    <input asp-for="CustomPhaseName" class="form-control" placeholder="Boundary wall" />
+                    <span asp-validation-for="CustomPhaseName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group full-width">
+                    <label asp-for="Notes">Notes</label>
+                    <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Optional notes for this phase"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-check-line">
+                        <input asp-for="IsCompleted" />
+                        Mark phase complete
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a asp-action="Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Add Phase</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        const phaseTypes = @Html.Raw(Json.Serialize(ViewBag.PhaseTypes));
+        const select = document.getElementById('phase-type-id');
+        const customGroup = document.getElementById('custom-phase-group');
+        const customInput = document.getElementById('CustomPhaseName');
+
+        function toggleCustomPhase() {
+            const selected = phaseTypes.find(p => Number(p.phaseTypeId) === Number(select.value));
+            const isCustom = selected && String(selected.phaseName).toLowerCase() === 'custom';
+            customGroup.style.display = isCustom ? 'block' : 'none';
+            customInput.required = !!isCustom;
+            if (!isCustom) customInput.value = '';
+        }
+
+        select.addEventListener('change', toggleCustomPhase);
+        toggleCustomPhase();
+    </script>
+}

@@ -241,19 +241,77 @@ namespace BuildWise.Controllers
             if (projectId == null)
                 return Json(new { success = false, message = "Please select a project first." });
 
+            var result = await CreatePhaseAsync(request, projectId.Value);
+            if (!result.Success)
+                return Json(new { success = false, message = result.Message });
+
+            return Json(new { success = true });
+        }
+
+        [HttpGet]
+        public async System.Threading.Tasks.Task<IActionResult> AddPhase()
+        {
+            var userId = GetCurrentUserId();
+            var projectId = await GetValidSelectedProjectIdAsync(userId);
+            if (projectId == null)
+            {
+                TempData["WarningMessage"] = "Please select a specific project from the top navigation to add a phase.";
+                return RedirectToAction("Index", "Projects");
+            }
+
+            await PopulateAddPhasePageAsync(projectId.Value, userId);
+            return View(new PhaseRequest
+            {
+                StartDate = DateOnly.FromDateTime(DateTime.Today)
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async System.Threading.Tasks.Task<IActionResult> AddPhasePage(PhaseRequest request)
+        {
+            var userId = GetCurrentUserId();
+            var projectId = await GetValidSelectedProjectIdAsync(userId);
+            if (projectId == null)
+            {
+                TempData["WarningMessage"] = "Please select a specific project from the top navigation to add a phase.";
+                return RedirectToAction("Index", "Projects");
+            }
+
+            var result = await CreatePhaseAsync(request, projectId.Value);
+            if (result.Success)
+                return RedirectToAction(nameof(Index));
+
+            ModelState.AddModelError("", result.Message ?? "Unable to add phase.");
+            await PopulateAddPhasePageAsync(projectId.Value, userId);
+            return View("AddPhase", request);
+        }
+
+        private async System.Threading.Tasks.Task PopulateAddPhasePageAsync(int projectId, int userId)
+        {
+            ViewBag.PhaseTypes = await _context.PhaseTypes
+                .AsNoTracking()
+                .OrderBy(p => p.PhaseTypeId)
+                .Select(p => new { p.PhaseTypeId, p.PhaseName })
+                .ToListAsync();
+
+            var project = await _context.Projects
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProjectId == projectId && p.UserId == userId);
+            ViewBag.ProjectName = project?.ProjectName ?? "Selected Project";
+        }
+
+        private async System.Threading.Tasks.Task<(bool Success, string? Message)> CreatePhaseAsync(PhaseRequest request, int projectId)
+        {
             var phaseType = await _context.PhaseTypes.FirstOrDefaultAsync(p => p.PhaseTypeId == request.PhaseTypeId);
             if (phaseType == null)
-                return Json(new { success = false, message = "Please select a valid phase type." });
-
-            var dateError = ValidateDateRange(request.StartDate, request.EndDate, "phase");
-            if (dateError != null)
-                return Json(new { success = false, message = dateError });
+                return (false, "Please select a valid phase type.");
 
             var sequence = request.Sequence;
             if (sequence <= 0)
             {
                 var maxSequence = await _context.Phases
-                    .Where(p => p.ProjectId == projectId.Value)
+                    .Where(p => p.ProjectId == projectId)
                     .Select(p => (byte?)p.Sequence)
                     .MaxAsync() ?? 0;
                 sequence = (byte)Math.Min(byte.MaxValue, maxSequence + 1);
@@ -261,27 +319,33 @@ namespace BuildWise.Controllers
 
             var customName = request.CustomPhaseName?.Trim();
             if (phaseType.PhaseName.Equals("Custom", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(customName))
-                return Json(new { success = false, message = "Custom phase name is required." });
+                return (false, "Custom phase name is required.");
 
-            var sequenceTaken = await _context.Phases.AnyAsync(p => p.ProjectId == projectId.Value && p.Sequence == sequence);
+            var sequenceTaken = await _context.Phases.AnyAsync(p => p.ProjectId == projectId && p.Sequence == sequence);
             if (sequenceTaken)
-                return Json(new { success = false, message = "Another phase already uses this sequence number." });
+                return (false, "Another phase already uses this sequence number.");
 
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var startDate = request.StartDate ?? today;
             var isCustomPhase = phaseType.PhaseName.Equals("Custom", StringComparison.OrdinalIgnoreCase);
+            var isCompleted = request.IsCompleted;
+            if (isCompleted && startDate > today)
+                return (false, "A completed phase cannot start in the future.");
+
             _context.Phases.Add(new Phase
             {
-                ProjectId = projectId.Value,
+                ProjectId = projectId,
                 PhaseTypeId = request.PhaseTypeId,
                 CustomPhaseName = isCustomPhase && !string.IsNullOrWhiteSpace(customName) ? customName : null,
                 Sequence = sequence,
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
-                IsCompleted = request.IsCompleted,
+                StartDate = startDate,
+                EndDate = isCompleted ? today : null,
+                IsCompleted = isCompleted,
                 Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim()
             });
 
             await _context.SaveChangesAsync();
-            return Json(new { success = true });
+            return (true, null);
         }
 
         [HttpPost]
@@ -300,10 +364,6 @@ namespace BuildWise.Controllers
             if (phaseType == null)
                 return Json(new { success = false, message = "Please select a valid phase type." });
 
-            var dateError = ValidateDateRange(request.StartDate, request.EndDate, "phase");
-            if (dateError != null)
-                return Json(new { success = false, message = dateError });
-
             var sequence = request.Sequence <= 0 ? phase.Sequence : request.Sequence;
             var sequenceTaken = await _context.Phases.AnyAsync(p =>
                 p.ProjectId == phase.ProjectId && p.Sequence == sequence && p.PhaseId != phase.PhaseId);
@@ -319,11 +379,49 @@ namespace BuildWise.Controllers
             phase.CustomPhaseName = isCustomPhase && !string.IsNullOrWhiteSpace(customName) ? customName : null;
             phase.Sequence = sequence;
             phase.StartDate = request.StartDate;
-            phase.EndDate = request.EndDate;
-            phase.IsCompleted = phase.Tasks.Any()
+            var isCompleted = phase.Tasks.Any()
                 ? phase.Tasks.All(t => IsCompleted(t.Status?.StatusName, t.StatusId))
                 : request.IsCompleted;
+            if (isCompleted && request.StartDate.HasValue && request.StartDate.Value > DateOnly.FromDateTime(DateTime.Today))
+                return Json(new { success = false, message = "A completed phase cannot start in the future." });
+
+            phase.IsCompleted = isCompleted;
+            phase.EndDate = isCompleted
+                ? phase.EndDate ?? DateOnly.FromDateTime(DateTime.Today)
+                : null;
             phase.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async System.Threading.Tasks.Task<IActionResult> ReorderPhases([FromBody] PhaseOrderRequest request)
+        {
+            var userId = GetCurrentUserId();
+            var projectId = await GetValidSelectedProjectIdAsync(userId);
+            if (projectId == null)
+                return Json(new { success = false, message = "Please select a project first." });
+
+            var requestedIds = request?.PhaseIds?.Distinct().ToList() ?? new List<int>();
+            if (!requestedIds.Any())
+                return Json(new { success = false, message = "No phases were provided." });
+
+            if (requestedIds.Count > byte.MaxValue)
+                return Json(new { success = false, message = "Too many phases to reorder." });
+
+            var phases = await _context.Phases
+                .Where(p => p.ProjectId == projectId.Value && p.Project.UserId == userId)
+                .ToListAsync();
+
+            if (phases.Count != requestedIds.Count || phases.Any(p => !requestedIds.Contains(p.PhaseId)))
+                return Json(new { success = false, message = "Phase order is out of date. Refresh and try again." });
+
+            var phaseMap = phases.ToDictionary(p => p.PhaseId);
+            for (var i = 0; i < requestedIds.Count; i++)
+            {
+                phaseMap[requestedIds[i]].Sequence = (byte)(i + 1);
+            }
 
             await _context.SaveChangesAsync();
             return Json(new { success = true });
@@ -474,6 +572,9 @@ namespace BuildWise.Controllers
                 return;
 
             phase.IsCompleted = phase.Tasks.All(t => IsCompleted(t.Status?.StatusName, t.StatusId));
+            phase.EndDate = phase.IsCompleted
+                ? phase.EndDate ?? DateOnly.FromDateTime(DateTime.Today)
+                : null;
             await _context.SaveChangesAsync();
         }
 
@@ -487,6 +588,11 @@ namespace BuildWise.Controllers
             public DateOnly? EndDate { get; set; }
             public bool IsCompleted { get; set; }
             public string? Notes { get; set; }
+        }
+
+        public class PhaseOrderRequest
+        {
+            public List<int> PhaseIds { get; set; } = new();
         }
 
         public class TaskRequest

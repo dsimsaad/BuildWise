@@ -104,7 +104,7 @@
             width: min(440px, 100%);
             background: #FFFFFF;
             border: 1px solid #DCE8F7;
-            border-radius: 3px;
+            border-radius: var(--radius-lg);
             box-shadow: 0 24px 70px rgba(15, 23, 42, 0.26);
         }
 
@@ -136,7 +136,7 @@
             color: #64748B;
             width: 30px;
             height: 30px;
-            border-radius: 3px;
+            border-radius: var(--radius);
             cursor: pointer;
             font-size: 1.1rem;
             line-height: 1;
@@ -156,7 +156,7 @@
         .return-meta-item {
             background: #F8FAFC;
             border: 1px solid #E2E8F0;
-            border-radius: 3px;
+            border-radius: var(--radius);
             padding: 10px;
         }
 
@@ -341,12 +341,13 @@
                                                 data-unit="@item.Unit?.UnitName"
                                                 data-available="@availableQuantity"
                                                 data-unit-price="@item.UnitPrice"
+                                                aria-label="Return unused @item.Material?.MaterialName"
                                                 @(canReturn ? "" : "disabled")>
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14 4 9l5-5"></path><path d="M4 9h11a5 5 0 0 1 0 10h-4"></path></svg>
                                         </button>
                                         <form asp-action="DeletePurchase" method="post" class="inline-delete-form" onsubmit="return confirm('Delete this purchase? This affects project costs.');">
                                             <input type="hidden" name="id" value="@item.PurchaseId" />
-                                            <button type="submit" class="btn-icon btn-delete" title="Delete">
+                                            <button type="submit" class="btn-icon btn-delete" title="Delete" aria-label="Delete @item.Material?.MaterialName purchase">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                                             </button>
                                         </form>

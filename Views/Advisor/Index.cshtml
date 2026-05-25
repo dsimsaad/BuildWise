@@ -12,9 +12,9 @@
             background: rgba(15,23,42,0.4); backdrop-filter: blur(4px);
         }
         .modal-content {
-            background: white; margin: 12% auto; padding: 36px; border-radius: 16px;
+            background: white; margin: 12% auto; padding: 32px; border-radius: var(--radius-lg);
             width: 90%; max-width: 480px; text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15); border: 1px solid #E2E8F0;
+            box-shadow: 0 24px 70px rgba(15,23,42,0.24); border: 1px solid #D6E3F5;
         }
         .modal-icon {
             width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 50%;
@@ -22,11 +22,11 @@
             background: #FEE2E2; color: #991B1B; font-size: 28px; font-weight: 800;
         }
         .btn-close-modal {
-            margin-top: 20px; background: #0F172A; color: white; border: none;
-            padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;
+            margin-top: 20px; background: var(--accent); color: white; border: none;
+            padding: 10px 24px; border-radius: var(--radius); cursor: pointer; font-weight: 600;
             font-size: 0.875rem; font-family: inherit; transition: background 0.15s;
         }
-        .btn-close-modal:hover { background: #1E293B; }
+        .btn-close-modal:hover { background: var(--accent-hover); }
         .advisor-card strong { color: inherit; }
         .advisor-meta {
             display: flex;
@@ -98,7 +98,7 @@
     </div>
 
     <div id="advisor-results">
-        <div style="text-align:center; padding: 50px; color: var(--text-muted);">
+        <div class="empty-state" style="box-shadow:none;">
             <p>Analyzing project data...</p>
         </div>
     </div>

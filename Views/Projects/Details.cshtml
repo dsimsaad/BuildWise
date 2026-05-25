@@ -71,8 +71,8 @@
 
     <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #F1F5F9;">
         <a asp-action="Edit" asp-route-id="@Model?.ProjectId" class="btn-primary" style="text-decoration: none;">Edit</a>
-        <a asp-controller="Properties" asp-action="Create" asp-route-projectId="@Model!.ProjectId" class="btn-primary" style="text-decoration: none; background-color: #10b981; border-color: #10b981;">Create Property for this Project</a>
-        <a asp-controller="Materials" asp-action="Index" class="btn-primary" style="text-decoration: none; background-color: #0dcaf0; border-color: #0dcaf0;">Manage Materials</a>
+        <a asp-controller="Properties" asp-action="Create" asp-route-projectId="@Model!.ProjectId" class="btn-create">Create Property</a>
+        <a asp-controller="Materials" asp-action="Index" class="btn-secondary">Manage Materials</a>
         <a asp-action="Index" class="back-link">← Back to List</a>
     </div>
 </div>
@@ -106,8 +106,12 @@
                         </ul>
 
                         <div class="entity-actions">
-                            <a asp-controller="Properties" asp-action="Details" asp-route-id="@property.PropertyId" class="btn-secondary">Details</a>
-                            <a asp-controller="Properties" asp-action="Edit" asp-route-id="@property.PropertyId" class="btn-primary">Edit</a>
+                            <a asp-controller="Properties" asp-action="Details" asp-route-id="@property.PropertyId" class="btn-icon btn-view" title="Details" aria-label="View @property.PropertyName details">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </a>
+                            <a asp-controller="Properties" asp-action="Edit" asp-route-id="@property.PropertyId" class="btn-icon btn-edit" title="Edit" aria-label="Edit @property.PropertyName">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </a>
                         </div>
                     </article>
                 }

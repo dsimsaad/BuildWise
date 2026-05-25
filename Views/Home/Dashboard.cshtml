@@ -309,7 +309,7 @@
     <div class="db-card db-card--distribution">
         <div class="db-card-header">
             <span class="db-card-title">Expense Distribution</span>
-            <a href="/Budget" class="db-card-link">Manage Expenses →</a>
+            <a href="/Budget" class="db-card-link">Manage Expenses <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
         </div>
         <div class="db-dist-body">
             <!-- Donut -->
@@ -332,7 +332,7 @@
     <div class="db-card db-card--recent">
         <div class="db-card-header">
             <span class="db-card-title">Recent Expenses</span>
-            <a href="/Transaction" class="db-card-link">View All →</a>
+            <a href="/Transaction" class="db-card-link">View All <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
         </div>
         <table class="db-table">
             <thead>
@@ -374,7 +374,7 @@
     <div class="db-card db-construction-card">
         <div class="db-card-header">
             <span class="db-card-title">Construction Status</span>
-            <a href="/Construction" class="db-card-link">Manage Progress</a>
+            <a href="/Construction" class="db-card-link">Manage Progress <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
         </div>
         <div class="db-construction-body">
             <div class="db-construction-stats">
@@ -426,7 +426,7 @@ else if (isOverallDashboard)
     <div class="db-card db-construction-card db-overall-project-card">
         <div class="db-card-header">
             <span class="db-card-title">Overall Project Status</span>
-            <a href="/Projects" class="db-card-link">View Projects</a>
+            <a href="/Projects" class="db-card-link">View Projects <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
         </div>
         <div class="db-construction-body">
             <div class="db-construction-stats">
@@ -477,7 +477,7 @@ else if (isOverallDashboard)
 <div class="db-card db-advisor-card">
     <div class="db-card-header">
         <span class="db-card-title">Cost Advisor Triggers</span>
-        <a href="/Advisor" class="db-card-link">Open Advisor</a>
+        <a href="/Advisor" class="db-card-link">Open Advisor <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
     </div>
     <div class="db-advisor-body">
         @if (advisorTriggers.Any())
@@ -734,7 +734,7 @@ else if (isOverallDashboard)
                 <button class="db-cat-box" data-idx="${i}" type="button">
                     <span class="db-cat-top">
                         <span class="db-cat-pill" style="background:${col}">${pct}%</span>
-                        <strong class="db-cat-name">${it.category}</strong>
+                        <strong class="db-cat-name">${escapeHtml(it.category)}</strong>
                     </span>
                     <span class="db-cat-amount">${formatPKR(amt)}</span>
                 </button>`;

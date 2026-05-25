@@ -438,7 +438,7 @@
                 <button type="button" class="btn-secondary" id="budget-cancel-edit" onclick="resetBudgetForm()" style="width: 100%; justify-content: center; margin-top: 10px; display: none;">Cancel Edit</button>
             </form>
         </div>
-        <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
+        <div class="module-card">
             <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
                 <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A;">Allocated Categories</h2>
             </div>
@@ -502,7 +502,7 @@
                 <button type="button" class="btn-secondary" id="expense-cancel-edit" onclick="resetExpenseForm()" style="width: 100%; justify-content: center; margin-top: 10px; display: none;">Cancel Edit</button>
             </form>
         </div>
-        <div class="module-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; border-radius: 16px;">
+        <div class="module-card">
             <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
                 <h2 style="font-size: 1.125rem; font-weight: 600; color: #0F172A;">Recent Transactions</h2>
             </div>
@@ -739,10 +739,10 @@
                         <td>${formatPKR(b.amount)}</td>
                         <td style="text-align: right;">
                             <div class="action-btns" style="justify-content: flex-end;">
-                            <button class="btn-icon btn-edit" onclick="editBudget(${b.budgetId})" title="Edit Budget" type="button">
+                            <button class="btn-icon btn-edit" onclick="editBudget(${b.budgetId})" title="Edit Budget" aria-label="Edit ${escapeHtml(b.category)} budget" type="button">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
                             </button>
-                            <button class="btn-icon btn-delete" onclick="deleteBudget(${b.budgetId})" title="Delete Budget" type="button">
+                            <button class="btn-icon btn-delete" onclick="deleteBudget(${b.budgetId})" title="Delete Budget" aria-label="Delete ${escapeHtml(b.category)} budget" type="button">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                             </button>
                             </div>
@@ -764,10 +764,10 @@
                         <td style="color: #64748B;">${new Date(e.expenseDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</td>
                         <td style="text-align: right;">
                             <div class="action-btns" style="justify-content: flex-end;">
-                            <button class="btn-icon btn-edit" onclick="editExpense(${e.expenseId})" title="Update Expense" type="button">
+                            <button class="btn-icon btn-edit" onclick="editExpense(${e.expenseId})" title="Update Expense" aria-label="Update ${escapeHtml(e.category)} expense" type="button">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
                             </button>
-                            <button class="btn-icon btn-delete" onclick="deleteExpense(${e.expenseId})" title="Delete Expense" type="button">
+                            <button class="btn-icon btn-delete" onclick="deleteExpense(${e.expenseId})" title="Delete Expense" aria-label="Delete ${escapeHtml(e.category)} expense" type="button">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                             </button>
                             </div>

@@ -45,7 +45,7 @@
 .contact-eyebrow { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #1D4ED8; text-transform: uppercase; margin-bottom: 16px; background: #EFF6FF; padding: 6px 16px; border-radius: 100px; }
 .contact-info h1 { font-size: 48px; font-weight: 800; color: #0f172a; letter-spacing: -1.5px; line-height: 1.1; margin: 0 0 16px; }
 .contact-info > p { font-size: 15px; color: #64748b; line-height: 1.7; margin: 0 0 40px; }
-.details-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 18px rgba(15,37,87,0.05); border: 1px solid #eaf0f8; }
+.details-card { background: #fff; border-radius: 8px; padding: 28px; box-shadow: 0 4px 18px rgba(15,37,87,0.05); border: 1px solid #eaf0f8; }
 .details-card h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 24px; }
 .detail-item { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding: 0; }
 .detail-item:last-child { margin-bottom: 0; }
@@ -65,7 +65,7 @@
 .btn-submit { width: 100%; background: #1D4ED8; color: #fff; border: none; border-radius: 12px; padding: 16px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s ease; font-family: 'Inter', sans-serif; letter-spacing: 0.2px; margin-top: 12px; }
 .btn-submit:hover { background: #1E40AF; transform: translateY(-1px); }
 
-.dash-content.marketing-page-content .details-card { border-radius: 16px !important; }
+.dash-content.marketing-page-content .details-card { border-radius: 8px !important; }
 .dash-content.marketing-page-content .detail-icon { border-radius: 10px !important; }
 .dash-content.marketing-page-content .contact-form-card { border-radius: 18px !important; }
 .dash-content.marketing-page-content .input-group input,

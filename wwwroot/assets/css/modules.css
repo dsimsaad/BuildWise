@@ -19,8 +19,8 @@
     --text-muted: #64748B;
     --border: #D6E3F5;
     --bg-light: #F6F9FE;
-    --radius: 3px;
-    --radius-lg: 4px;
+    --radius: 6px;
+    --radius-lg: 8px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -221,10 +221,11 @@ select.form-control {
     background: var(--accent);
     color: #FFFFFF;
     border: none;
-    padding: 10px 20px;
-    border-radius: 3px;
+    min-height: 36px;
+    padding: 8px 14px;
+    border-radius: var(--radius);
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.82rem;
     cursor: pointer;
     transition: all 0.15s ease;
     display: inline-flex;
@@ -244,10 +245,11 @@ select.form-control {
     background: #FFFFFF;
     color: var(--text-main);
     border: 1px solid var(--border);
-    padding: 10px 20px;
-    border-radius: 3px;
+    min-height: 36px;
+    padding: 8px 14px;
+    border-radius: var(--radius);
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.82rem;
     cursor: pointer;
     transition: all 0.15s ease;
     display: inline-flex;
@@ -267,10 +269,11 @@ select.form-control {
     background: var(--danger);
     color: #FFFFFF;
     border: none;
-    padding: 10px 20px;
-    border-radius: 3px;
+    min-height: 36px;
+    padding: 8px 14px;
+    border-radius: var(--radius);
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.82rem;
     cursor: pointer;
     transition: all 0.15s ease;
     display: inline-flex;
@@ -328,24 +331,51 @@ select.form-control {
 .action-btns {
     display: flex;
     gap: 6px;
+    align-items: center;
 }
 
 .btn-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 3px;
-    display: flex;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: none;
+    border: 1px solid transparent;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    flex: 0 0 auto;
+    padding: 0;
+    text-decoration: none;
+    font-family: inherit;
 }
 
-.btn-edit { background: var(--accent-light); color: var(--accent); }
-.btn-delete { background: #FEF2F2; color: var(--danger); }
+.btn-icon svg {
+    width: 15px;
+    height: 15px;
+}
 
-.btn-icon:hover { transform: scale(1.1); }
+.btn-edit { background: var(--accent-light); color: var(--accent); border-color: #BFDBFE; }
+.btn-view { background: #F8FAFC; color: #475569; border-color: #E2E8F0; }
+.btn-delete { background: #FFF7F7; color: #DC2626; border-color: #FECACA; }
+
+.btn-icon:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    text-decoration: none;
+}
+
+.btn-edit:hover { background: #DBEAFE; border-color: #93C5FD; color: #1E40AF; }
+.btn-view:hover { background: #EEF2F7; border-color: #CBD5E1; color: #0F172A; }
+.btn-delete:hover { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
+
+.btn-icon:disabled,
+.btn-icon.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    BADGES — Status indicators
@@ -492,6 +522,24 @@ select.form-control {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
+}
+
+.form-check-line {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-main) !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+}
+
+.form-check-line input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
 }
 
 .detail-grid {
@@ -805,10 +853,11 @@ select.form-control {
 }
 
 .scaffold-form-card .btn {
-    padding: 10px 24px;
-    border-radius: 4px;
+    min-height: 36px;
+    padding: 8px 14px;
+    border-radius: var(--radius);
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.82rem;
     cursor: pointer;
     transition: all 0.15s;
     font-family: inherit;
@@ -871,19 +920,26 @@ select.form-control {
 .btn-create {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    gap: 7px;
     background: var(--accent);
     color: #FFFFFF;
-    padding: 10px 20px;
-    border-radius: 4px;
+    min-height: 36px;
+    padding: 8px 13px;
+    border-radius: var(--radius);
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.82rem;
     text-decoration: none;
     transition: all 0.15s;
     margin-bottom: 20px;
     border: 0;
     cursor: pointer;
     font-family: inherit;
+}
+
+.btn-create svg {
+    width: 15px;
+    height: 15px;
 }
 
 .btn-create:hover {
@@ -899,12 +955,13 @@ select.form-control {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.875rem;
+    font-size: 0.82rem;
     font-weight: 600;
     color: var(--text-main);
     border: 1px solid var(--border);
-    padding: 10px 20px;
-    border-radius: 4px;
+    min-height: 36px;
+    padding: 8px 14px;
+    border-radius: var(--radius);
     text-decoration: none;
     background: #FFFFFF;
     transition: all 0.15s ease;
@@ -937,6 +994,10 @@ select.form-control {
     to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    PROFESSIONAL FORM POLISH
    Keeps older page-specific styles aligned with the sharper blue module theme.
@@ -949,6 +1010,8 @@ select.form-control {
 .entity-card,
 .sum-card {
     border-radius: var(--radius) !important;
+    border-color: #D6E3F5 !important;
+    box-shadow: var(--card-shadow) !important;
 }
 
 .module-card {
@@ -961,7 +1024,7 @@ select.form-control {
 input.form-control,
 select.form-control,
 textarea.form-control {
-    border-radius: 3px !important;
+    border-radius: var(--radius) !important;
     border-color: #C9D9EE !important;
     background-color: #F8FBFF;
 }
@@ -981,8 +1044,69 @@ textarea.form-control:focus {
 .btn-danger,
 .btn-create,
 .tab-btn,
-.btn-soft {
-    border-radius: 3px !important;
+.btn-soft,
+.back-link,
+.btn-outline {
+    min-height: 36px;
+    border-radius: var(--radius) !important;
+    line-height: 1;
+}
+
+.btn-outline {
+    background: #FFFFFF;
+    color: var(--accent);
+    border: 1px solid #BFDBFE;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    text-decoration: none;
+}
+
+.btn-primary svg,
+.btn-secondary svg,
+.btn-danger svg,
+.btn-outline svg,
+.back-link svg {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled,
+.btn-create:disabled,
+.btn-outline:disabled,
+.btn-soft:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.loading-spinner,
+.btn-loading-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #FFFFFF;
+    border-radius: 999px;
+    animation: spin 0.65s linear infinite;
+}
+
+.btn-outline:hover {
+    background: var(--accent-light);
+    border-color: #93C5FD;
+    color: var(--accent-hover);
+    transform: translateY(-1px);
+    text-decoration: none;
 }
 
 .dropdown-menu,
@@ -992,5 +1116,20 @@ select,
 button,
 .btn,
 [class*="btn-"] {
-    border-radius: 3px;
+    border-radius: var(--radius);
+}
+
+.inline-error,
+.validation-summary-errors,
+.field-validation-error {
+    border-radius: var(--radius);
+}
+
+.return-dialog,
+.modal-content,
+.forgot-modal-card,
+.construction-modal-body {
+    border-radius: var(--radius-lg) !important;
+    border: 1px solid #D6E3F5 !important;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24) !important;
 }
