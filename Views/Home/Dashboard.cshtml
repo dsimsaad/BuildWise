@@ -60,22 +60,15 @@
         <p class="db-subtitle">@(isOverallDashboard ? "Aggregated insights across every project, budget, expense, worker, and task." : $"Overview of {ViewBag.ActiveProjectName ?? "your project and business performance"}")</p>
     </div>
     <div class="db-header-actions">
-        <button type="button" class="db-report-btn" id="openReportModal">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <path d="M12 18v-6"/>
-                <path d="m9 15 3 3 3-3"/>
-            </svg>
-            Download Report
+        <button type="button" class="db-report-btn db-slide-btn db-slide-btn--wide" id="openReportModal">
+            <span class="db-slide-text-one">Download Report</span>
+            <span class="db-slide-text-two">Download Report</span>
         </button>
         <a asp-controller="Home" asp-action="Dashboard" asp-route-overall="@(isOverallDashboard ? null : "true")"
-           class="db-overall-btn @(isOverallDashboard ? "is-active" : "")"
+           class="db-overall-btn db-slide-btn db-slide-btn--wide @(isOverallDashboard ? "is-active" : "")"
            aria-pressed="@(isOverallDashboard.ToString().ToLowerInvariant())">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            Overall Stats
+            <span class="db-slide-text-one">Overall Status</span>
+            <span class="db-slide-text-two">Overall Status</span>
         </a>
     </div>
 </div>
@@ -309,7 +302,10 @@
     <div class="db-card db-card--distribution">
         <div class="db-card-header">
             <span class="db-card-title">Expense Distribution</span>
-            <a href="/Budget" class="db-card-link">Manage Expenses <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+            <a href="/Budget" class="db-card-link db-slide-btn">
+                <span class="db-slide-text-one">Manage Expenses</span>
+                <span class="db-slide-text-two">Manage Expenses</span>
+            </a>
         </div>
         <div class="db-dist-body">
             <!-- Donut -->
@@ -332,7 +328,10 @@
     <div class="db-card db-card--recent">
         <div class="db-card-header">
             <span class="db-card-title">Recent Expenses</span>
-            <a href="/Transaction" class="db-card-link">View All <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+            <a href="/Transaction" class="db-card-link db-slide-btn">
+                <span class="db-slide-text-one">View All</span>
+                <span class="db-slide-text-two">View All</span>
+            </a>
         </div>
         <table class="db-table">
             <thead>
@@ -374,7 +373,10 @@
     <div class="db-card db-construction-card">
         <div class="db-card-header">
             <span class="db-card-title">Construction Status</span>
-            <a href="/Construction" class="db-card-link">Manage Progress <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+            <a href="/Construction" class="db-card-link db-slide-btn">
+                <span class="db-slide-text-one">Manage Progress</span>
+                <span class="db-slide-text-two">Manage Progress</span>
+            </a>
         </div>
         <div class="db-construction-body">
             <div class="db-construction-stats">
@@ -477,7 +479,10 @@ else if (isOverallDashboard)
 <div class="db-card db-advisor-card">
     <div class="db-card-header">
         <span class="db-card-title">Cost Advisor Triggers</span>
-        <a href="/Advisor" class="db-card-link">Open Advisor <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+        <a href="/Advisor" class="db-card-link db-slide-btn">
+            <span class="db-slide-text-one">Open Advisor</span>
+            <span class="db-slide-text-two">Open Advisor</span>
+        </a>
     </div>
     <div class="db-advisor-body">
         @if (advisorTriggers.Any())

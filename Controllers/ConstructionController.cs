@@ -417,13 +417,27 @@ namespace BuildWise.Controllers
             if (phases.Count != requestedIds.Count || phases.Any(p => !requestedIds.Contains(p.PhaseId)))
                 return Json(new { success = false, message = "Phase order is out of date. Refresh and try again." });
 
+            var maxExistingSequence = phases.Max(p => p.Sequence);
+            var tempStart = byte.MaxValue - requestedIds.Count + 1;
+            if (tempStart <= maxExistingSequence)
+                return Json(new { success = false, message = "Too many phases to reorder safely." });
+
             var phaseMap = phases.ToDictionary(p => p.PhaseId);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            for (var i = 0; i < requestedIds.Count; i++)
+            {
+                phaseMap[requestedIds[i]].Sequence = (byte)(byte.MaxValue - i);
+            }
+
+            await _context.SaveChangesAsync();
+
             for (var i = 0; i < requestedIds.Count; i++)
             {
                 phaseMap[requestedIds[i]].Sequence = (byte)(i + 1);
             }
 
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return Json(new { success = true });
         }
 

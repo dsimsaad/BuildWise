@@ -6,7 +6,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/assets/css/modules.css">
+    <link rel="stylesheet" href="~/assets/css/modules.css" asp-append-version="true">
 }
 
 <div class="module-header">
@@ -14,9 +14,14 @@
         <h1>Projects</h1>
         <p>Manage and track all your construction projects.</p>
     </div>
-    <a asp-action="Create" class="btn-create">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    <a asp-action="Create" class="btn-create cssbuttons-io-button">
         New Project
+        <div class="icon">
+            <svg height="24" width="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M16.172 11l-5.364-5.364 1.414-1.414L20 12l-7.778 7.778-1.414-1.414L16.172 13H4v-2z" fill="currentColor"></path>
+            </svg>
+        </div>
     </a>
 </div>
 

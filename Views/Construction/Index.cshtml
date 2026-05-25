@@ -4,7 +4,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/assets/css/modules.css">
+    <link rel="stylesheet" href="~/assets/css/modules.css" asp-append-version="true">
     <style>
         .construction-board {
             display: grid;
@@ -163,7 +163,7 @@
 
         .construction-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 320px;
+            grid-template-columns: minmax(0, 1fr);
             gap: 18px;
             align-items: start;
         }
@@ -190,6 +190,10 @@
         .phase-panel.is-drag-over {
             border-color: #2563EB;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08), 0 12px 28px -22px rgba(37, 99, 235, 0.48);
+        }
+
+        .phase-panel.is-order-saving {
+            border-color: #BFDBFE;
         }
 
         .phase-panel-header {
@@ -385,53 +389,6 @@
             color: #B91C1C;
             border-color: #FECACA;
             background: #FEF2F2;
-        }
-
-        .construction-side {
-            display: grid;
-            gap: 14px;
-            position: sticky;
-            top: 18px;
-        }
-
-        .side-panel {
-            background: #FFFFFF;
-            border: 1px solid #D6E3F5;
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 8px 24px -22px rgba(15, 23, 42, 0.42), 0 1px 4px rgba(29, 78, 216, 0.04);
-        }
-
-        .side-panel h2 {
-            margin: 0 0 12px;
-            color: #0F172A;
-            font-size: 0.98rem;
-            font-weight: 800;
-        }
-
-        .focus-list {
-            display: grid;
-            gap: 10px;
-        }
-
-        .focus-item {
-            border: 1px solid #E2E8F0;
-            border-radius: 8px;
-            padding: 11px;
-            background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
-        }
-
-        .focus-item strong {
-            display: block;
-            color: #0F172A;
-            font-size: 0.85rem;
-            margin-bottom: 4px;
-        }
-
-        .focus-item span {
-            display: block;
-            color: #64748B;
-            font-size: 0.76rem;
         }
 
         .timeline-panel {
@@ -674,10 +631,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .construction-side {
-                position: static;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
         }
 
         @@media (max-width: 800px) {
@@ -689,8 +642,7 @@
                 grid-template-columns: 1fr;
             }
 
-            .construction-stats,
-            .construction-side {
+            .construction-stats {
                 grid-template-columns: 1fr;
             }
 
@@ -708,10 +660,15 @@
         <p>@ViewBag.ProjectName</p>
     </div>
     <div class="entity-actions">
-        <button type="button" class="btn-secondary" onclick="quickSetup()">Quick Setup</button>
-        <a asp-action="AddPhase" class="btn-create">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <button type="button" class="btn-secondary btn-action-peer-compact" onclick="quickSetup()">Quick Setup</button>
+        <a asp-action="AddPhase" class="btn-create cssbuttons-io-button">
             Add Phase
+            <div class="icon">
+                <svg height="24" width="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M16.172 11l-5.364-5.364 1.414-1.414L20 12l-7.778 7.778-1.414-1.414L16.172 13H4v-2z" fill="currentColor"></path>
+                </svg>
+            </div>
         </a>
     </div>
 </div>
@@ -749,17 +706,6 @@
 
     <section class="construction-layout">
         <div class="phase-stack" id="phases-container"></div>
-
-        <aside class="construction-side">
-            <div class="side-panel">
-                <h2>Today Focus</h2>
-                <div class="focus-list" id="focus-list"></div>
-            </div>
-            <div class="side-panel">
-                <h2>Task Health</h2>
-                <div class="focus-list" id="health-list"></div>
-            </div>
-        </aside>
     </section>
 
     <section class="timeline-panel">
@@ -939,8 +885,6 @@
             document.getElementById('hero-health').textContent = overdue > 0 ? `${overdue} overdue` : `${Math.max(0, allTasks.length - completed)} open tasks`;
 
             renderPhases(currentPhases);
-            renderFocus(allTasks);
-            renderHealth(allTasks);
             renderTimeline(currentPhases);
         }
 
@@ -1061,6 +1005,7 @@
 
         let draggedPhaseId = null;
         let lastSavedOrder = '';
+        let phaseOrderBeforeDrag = [];
         let pointerPhaseId = null;
         let pointerDragActive = false;
 
@@ -1072,7 +1017,17 @@
 
         function clearPhaseDragState() {
             document.querySelectorAll('.js-phase-panel').forEach(panel => {
-                panel.classList.remove('is-dragging', 'is-drag-over');
+                panel.classList.remove('is-dragging', 'is-drag-over', 'is-order-saving');
+            });
+        }
+
+        function updatePhasePriorityLabels() {
+            document.querySelectorAll('.js-phase-panel').forEach((panel, index) => {
+                const priority = panel.querySelector('.phase-priority');
+                if (!priority) return;
+
+                priority.textContent = index + 1;
+                priority.title = `Priority ${index + 1}`;
             });
         }
 
@@ -1086,16 +1041,30 @@
                 .filter(Boolean);
         }
 
+        function restoreSavedPhaseOrder() {
+            renderPhases(currentPhases);
+            renderTimeline(currentPhases);
+            phaseOrderBeforeDrag = [];
+        }
+
         async function persistPhaseOrder(orderedIds) {
             const orderKey = orderedIds.join(',');
             if (!orderedIds.length || orderKey === lastSavedOrder) return;
 
             const previous = [...currentPhases];
+            const movedPanels = Array.from(document.querySelectorAll('.js-phase-panel'));
             syncCurrentPhaseOrder(orderedIds);
-            renderPhases(currentPhases);
+            updatePhasePriorityLabels();
             renderTimeline(currentPhases);
+            movedPanels.forEach(panel => panel.classList.add('is-order-saving'));
 
-            const result = await postJson('/Construction/ReorderPhases', { phaseIds: orderedIds });
+            let result;
+            try {
+                result = await postJson('/Construction/ReorderPhases', { phaseIds: orderedIds });
+            } catch {
+                result = { success: false, message: 'Unable to save phase priority.' };
+            }
+            movedPanels.forEach(panel => panel.classList.remove('is-order-saving'));
             if (!result.success) {
                 currentPhases = previous;
                 renderPhases(currentPhases);
@@ -1105,6 +1074,7 @@
             }
 
             lastSavedOrder = orderKey;
+            phaseOrderBeforeDrag = [];
         }
 
         function bindPhaseReorder() {
@@ -1131,6 +1101,7 @@
                     if (event.pointerType === 'mouse') return;
 
                     pointerPhaseId = Number(panel.dataset.phaseId);
+                    phaseOrderBeforeDrag = getPhaseOrderFromDom();
                     pointerDragActive = false;
                     handle.setPointerCapture?.(event.pointerId);
                     event.preventDefault();
@@ -1153,6 +1124,7 @@
                     const rect = target.getBoundingClientRect();
                     const insertAfter = event.clientY > rect.top + rect.height / 2;
                     container.insertBefore(dragging, insertAfter ? target.nextSibling : target);
+                    updatePhasePriorityLabels();
                 });
 
                 handle?.addEventListener('pointerup', event => {
@@ -1166,14 +1138,17 @@
                     if (pointerDragActive) {
                         pointerDragActive = false;
                         persistPhaseOrder(orderedIds);
+                    } else {
+                        phaseOrderBeforeDrag = [];
                     }
                 });
 
                 handle?.addEventListener('pointercancel', event => {
                     if (!pointerPhaseId || event.pointerType === 'mouse') return;
                     pointerPhaseId = null;
-                    pointerDragActive = false;
                     handle.releasePointerCapture?.(event.pointerId);
+                    if (pointerDragActive) restoreSavedPhaseOrder();
+                    pointerDragActive = false;
                     clearPhaseDragState();
                 });
 
@@ -1184,14 +1159,19 @@
                     }
 
                     draggedPhaseId = Number(panel.dataset.phaseId);
+                    phaseOrderBeforeDrag = getPhaseOrderFromDom();
                     panel.classList.add('is-dragging');
                     event.dataTransfer.effectAllowed = 'move';
                     event.dataTransfer.setData('text/plain', String(draggedPhaseId));
                 });
 
                 panel.addEventListener('dragend', () => {
+                    if (draggedPhaseId && phaseOrderBeforeDrag.length && getPhaseOrderFromDom().join(',') !== phaseOrderBeforeDrag.join(',')) {
+                        restoreSavedPhaseOrder();
+                    }
                     draggedPhaseId = null;
                     clearPhaseDragState();
+                    phaseOrderBeforeDrag = [];
                 });
 
                 panel.addEventListener('dragover', event => {
@@ -1207,6 +1187,7 @@
                     const rect = panel.getBoundingClientRect();
                     const insertAfter = event.clientY > rect.top + rect.height / 2;
                     panel.parentElement.insertBefore(dragging, insertAfter ? panel.nextSibling : panel);
+                    updatePhasePriorityLabels();
                 });
 
                 panel.addEventListener('dragleave', () => {
@@ -1234,50 +1215,6 @@
                 case 'cancelled': return 'badge-danger';
                 default: return 'badge-warning';
             }
-        }
-
-        function renderFocus(tasks) {
-            const list = document.getElementById('focus-list');
-            const openTasks = tasks
-                .filter(t => !isCompletedTask(t))
-                .sort((a, b) => {
-                    if (!a.endDate && !b.endDate) return 0;
-                    if (!a.endDate) return 1;
-                    if (!b.endDate) return -1;
-                    return new Date(`${a.endDate}T00:00:00`) - new Date(`${b.endDate}T00:00:00`);
-                })
-                .slice(0, 4);
-
-            if (!openTasks.length) {
-                list.innerHTML = '<div class="focus-item"><strong>No open tasks</strong><span>All tracked tasks are complete.</span></div>';
-                return;
-            }
-
-            list.innerHTML = openTasks.map(t => `
-                <div class="focus-item">
-                    <strong>${escapeHtml(t.taskName)}</strong>
-                    <span>${escapeHtml(t.phaseName)} | ${formatDate(t.endDate)}</span>
-                </div>
-            `).join('');
-        }
-
-        function renderHealth(tasks) {
-            const list = document.getElementById('health-list');
-            const counts = taskStatuses.map(s => ({
-                name: s.statusName,
-                count: tasks.filter(t => Number(t.statusId) === Number(s.statusId)).length
-            })).filter(x => x.count > 0);
-
-            const overdue = tasks.filter(t => t.isOverdue).length;
-            if (!counts.length && overdue === 0) {
-                list.innerHTML = '<div class="focus-item"><strong>No task data</strong><span>Add tasks to see status health.</span></div>';
-                return;
-            }
-
-            list.innerHTML = [
-                overdue > 0 ? `<div class="focus-item"><strong>${overdue} Overdue</strong><span>Needs attention</span></div>` : '',
-                ...counts.map(x => `<div class="focus-item"><strong>${x.count} ${escapeHtml(x.name)}</strong><span>Current task status</span></div>`)
-            ].join('');
         }
 
         function renderTimeline(phases) {
