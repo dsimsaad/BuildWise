@@ -185,6 +185,29 @@ public class HomeController : Controller
         else
         {
             var allStats = await vwDashQuery.ToListAsync();
+            var overallProjects = allStats
+                .Select(s =>
+                {
+                    var progress = (decimal)(s.TaskProgressPct ?? s.PhaseProgressPct ?? (s.IsCompleted ? 100d : 0d));
+                    var totalBudget = s.TotalBudget;
+                    var totalSpent = s.TotalSpent ?? s.TotalExpenses;
+                    return new ProjectDashboardSummary(
+                        s.ProjectId,
+                        s.ProjectName,
+                        s.PropertyName,
+                        totalBudget,
+                        totalSpent,
+                        Math.Max(0, totalBudget - totalSpent),
+                        Math.Round(progress, 0),
+                        s.TotalTasks ?? 0,
+                        s.CompletedTasks ?? 0,
+                        s.IsCompleted);
+                })
+                .OrderBy(p => p.IsCompleted)
+                .ThenByDescending(p => p.ProgressPercent)
+                .ThenBy(p => p.ProjectName)
+                .ToList();
+
             ViewBag.TotalProjects   = allStats.Count;
             ViewBag.TotalProperties = await scopedPropertyQuery.CountAsync();
             ViewBag.ActiveProjects  = allStats.Count(s => !s.IsCompleted);
@@ -210,7 +233,11 @@ public class HomeController : Controller
             ViewBag.ProjectsNotStarted = allStats.Count(s => (s.PhaseProgressPct ?? 0) == 0);
             ViewBag.ProjectsInProgress = allStats.Count(s => (s.PhaseProgressPct ?? 0) > 0 && !s.IsCompleted);
             ViewBag.ProjectsCompleted  = allStats.Count(s => s.IsCompleted);
-            
+
+            ViewBag.OverallConstructionProgress = overallProjects.Sum(p => p.TotalTasks) > 0
+                ? Math.Round(overallProjects.Sum(p => p.CompletedTasks) * 100m / overallProjects.Sum(p => p.TotalTasks), 0)
+                : overallProjects.Count > 0 ? Math.Round(overallProjects.Average(p => p.ProgressPercent), 0) : 0m;
+            ViewBag.OverallProjects = overallProjects;
             ViewBag.Projects = allStats;
         }
 
@@ -286,6 +313,9 @@ public class HomeController : Controller
         int totalProperties = selectedProjectId.HasValue
             ? await _context.Properties.CountAsync(p => p.UserId == userId && p.ProjectId == selectedProjectId.Value)
             : await _context.Properties.CountAsync(p => p.UserId == userId && p.ProjectId != null);
+        int totalProjects = selectedProjectId.HasValue
+            ? 1
+            : await _context.Projects.CountAsync(p => p.UserId == userId);
 
         int totalWorkers = selectedProjectId.HasValue
             ? await GetProjectWorkersQuery(userId, selectedProjectId.Value).CountAsync()
@@ -305,18 +335,23 @@ public class HomeController : Controller
             .ToList();
 
         var monthlyExpenses = await BuildMonthlySpendingTrendAsync(expenseBll, selectedProjectId, userId);
+        var projectStatus = selectedProjectId.HasValue
+            ? null
+            : await BuildOverallProjectSummariesAsync(userId);
 
         return Json(new
         {
             totalBudget,
             totalExpenses,
+            totalProjects,
             totalProperties,
             totalWorkers,
             workersOnSite,
             workersInactive,
             categoryExpenses,
             recentExpenses,
-            monthlyExpenses
+            monthlyExpenses,
+            projectStatus
         });
     }
 
@@ -409,6 +444,37 @@ public class HomeController : Controller
             (w.ProjectId == projectId || w.WorkerProjectAssignments.Any(a => a.ProjectId == projectId)));
     }
 
+    private async Task<List<ProjectDashboardSummary>> BuildOverallProjectSummariesAsync(int userId)
+    {
+        var stats = await (from v in _context.VwProjectDashboards.AsNoTracking()
+                           join p in _context.Projects.AsNoTracking() on v.ProjectId equals p.ProjectId
+                           where p.UserId == userId
+                           select v)
+            .ToListAsync();
+
+        return stats
+            .Select(s =>
+            {
+                var progress = (decimal)(s.TaskProgressPct ?? s.PhaseProgressPct ?? (s.IsCompleted ? 100d : 0d));
+                var totalSpent = s.TotalSpent ?? s.TotalExpenses;
+                return new ProjectDashboardSummary(
+                    s.ProjectId,
+                    s.ProjectName,
+                    s.PropertyName,
+                    s.TotalBudget,
+                    totalSpent,
+                    Math.Max(0, s.TotalBudget - totalSpent),
+                    Math.Round(progress, 0),
+                    s.TotalTasks ?? 0,
+                    s.CompletedTasks ?? 0,
+                    s.IsCompleted);
+            })
+            .OrderBy(p => p.IsCompleted)
+            .ThenByDescending(p => p.ProgressPercent)
+            .ThenBy(p => p.ProjectName)
+            .ToList();
+    }
+
     private async Task<DashboardReportData> BuildDashboardReportDataAsync(int userId, int? projectId)
     {
         var connectionString = _configuration.GetConnectionString("BuildWise") ?? "";
@@ -420,7 +486,7 @@ public class HomeController : Controller
         if (projectId.HasValue)
             projectQuery = projectQuery.Where(p => p.ProjectId == projectId.Value);
 
-        var projectIds = await projectQuery.Select(p => p.ProjectId).ToListAsync();
+        var isOverallReport = !projectId.HasValue;
         var scopeName = projectId.HasValue
             ? await _context.Projects.AsNoTracking()
                 .Where(p => p.ProjectId == projectId.Value && p.UserId == userId)
@@ -443,6 +509,28 @@ public class HomeController : Controller
         decimal totalExpenses = projectId.HasValue
             ? expenseBll.GetTotalSpent(projectId)
             : expenseBll.GetTotalSpentForUser(userId);
+
+        var dashboardRows = await (from v in _context.VwProjectDashboards.AsNoTracking()
+                                   join p in _context.Projects.AsNoTracking() on v.ProjectId equals p.ProjectId
+                                   where p.UserId == userId && (!projectId.HasValue || v.ProjectId == projectId.Value)
+                                   orderby v.IsCompleted, v.ProjectName
+                                   select v)
+            .ToListAsync();
+        var projectReportRows = dashboardRows
+            .Select(p =>
+            {
+                var progress = (decimal)(p.TaskProgressPct ?? p.PhaseProgressPct ?? (p.IsCompleted ? 100d : 0d));
+                var spent = p.TotalSpent ?? p.TotalExpenses;
+                return new ProjectReportRow(
+                    p.ProjectName,
+                    p.PropertyName,
+                    p.TotalBudget,
+                    spent,
+                    Math.Max(0, p.TotalBudget - spent),
+                    Math.Round(progress, 0),
+                    p.IsCompleted ? "Completed" : "Active");
+            })
+            .ToList();
 
         var workersQuery = projectId.HasValue
             ? GetProjectWorkersQuery(userId, projectId.Value)
@@ -515,14 +603,12 @@ public class HomeController : Controller
             .Include(p => p.Tasks)
             .Where(p => p.Project.UserId == userId && (!projectId.HasValue || p.ProjectId == projectId.Value))
             .ToListAsync();
-        decimal constructionProgress = phases.Any()
-            ? Math.Round(phases.Average(p =>
-            {
-                if (p.Tasks.Count == 0)
-                    return p.IsCompleted ? 100m : 0m;
-                return p.Tasks.Count(t => t.StatusId == 3) * 100m / p.Tasks.Count;
-            }), 0)
-            : 0m;
+        var reportTasks = phases.SelectMany(p => p.Tasks).ToList();
+        decimal constructionProgress = reportTasks.Count > 0
+            ? Math.Round(reportTasks.Count(t => t.StatusId == 3) * 100m / reportTasks.Count, 2)
+            : phases.Count > 0
+                ? Math.Round(phases.Count(p => p.IsCompleted) * 100m / phases.Count, 2)
+                : 0m;
 
         var monthlyTrend = (await BuildMonthlySpendingTrendAsync(expenseBll, projectId, userId))
             .Select(m => new NameAmount($"{CultureInfo.InvariantCulture.DateTimeFormat.AbbreviatedMonthNames[m.Month - 1]} {m.Year}", m.Total))
@@ -530,7 +616,12 @@ public class HomeController : Controller
 
         return new DashboardReportData
         {
+            IsOverall = isOverallReport,
             ScopeName = scopeName,
+            TotalProjects = projectReportRows.Count,
+            ActiveProjects = projectReportRows.Count(p => string.Equals(p.Status, "Active", StringComparison.OrdinalIgnoreCase)),
+            CompletedProjects = projectReportRows.Count(p => string.Equals(p.Status, "Completed", StringComparison.OrdinalIgnoreCase)),
+            AverageProjectProgress = projectReportRows.Count > 0 ? Math.Round(projectReportRows.Average(p => p.ProgressPercent), 0) : 0m,
             TotalBudget = totalBudget,
             TotalExpenses = totalExpenses,
             TotalWorkers = totalWorkers,
@@ -539,6 +630,7 @@ public class HomeController : Controller
             ConstructionProgress = constructionProgress,
             TotalMaterialPurchased = materials.Sum(m => m.Purchased),
             TotalMaterialUsed = materials.Sum(m => m.Used),
+            Projects = projectReportRows,
             Properties = properties,
             WorkerSkills = workerSkills,
             ExpenseCategories = expenseCategories,

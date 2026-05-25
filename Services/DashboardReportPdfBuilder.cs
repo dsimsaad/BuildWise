@@ -9,6 +9,17 @@ public sealed class DashboardReportPdfBuilder
     private readonly PdfCanvas _pdf = new();
     private readonly DashboardReportData _data;
     private readonly DashboardReportOptions _options;
+    private static readonly (byte R, byte G, byte B)[] ChartPalette =
+    {
+        (37, 99, 235),
+        (20, 184, 166),
+        (245, 158, 11),
+        (139, 92, 246),
+        (239, 68, 68),
+        (6, 182, 212),
+        (132, 204, 22),
+        (249, 115, 22)
+    };
 
     public DashboardReportPdfBuilder(DashboardReportData data, DashboardReportOptions options)
     {
@@ -40,7 +51,7 @@ public sealed class DashboardReportPdfBuilder
         _pdf.FillRect(0, PdfCanvas.PageHeight - 124, PdfCanvas.PageWidth, 124, 15, 23, 42);
         _pdf.FillRect(42, PdfCanvas.PageHeight - 116, 5, 92, 37, 99, 235);
         _pdf.Text("BUILDWISE", 58, PdfCanvas.PageHeight - 48, 10, true, 147, 197, 253);
-        _pdf.Text("Project Metrics Report", 58, PdfCanvas.PageHeight - 76, 23, true, 255, 255, 255);
+        _pdf.Text(_data.IsOverall ? "Overall Portfolio Report" : "Project Metrics Report", 58, PdfCanvas.PageHeight - 76, 23, true, 255, 255, 255);
         _pdf.Text(_data.ScopeName, 58, PdfCanvas.PageHeight - 100, 12, false, 226, 232, 240);
         _pdf.Text($"Generated {DateTime.Now:MMM dd, yyyy h:mm tt}", 390, PdfCanvas.PageHeight - 48, 9, false, 203, 213, 225);
     }
@@ -51,23 +62,53 @@ public sealed class DashboardReportPdfBuilder
         _pdf.SectionTitle("Executive Summary");
         var remaining = Math.Max(0, _data.TotalBudget - _data.TotalExpenses);
         var spentPct = _data.TotalBudget > 0 ? _data.TotalExpenses / _data.TotalBudget * 100 : 0;
+        if (_data.IsOverall)
+        {
+            _pdf.CardRow(new[]
+            {
+                ("Projects", _data.TotalProjects.ToString("N0", CultureInfo.InvariantCulture)),
+                ("Active", _data.ActiveProjects.ToString("N0", CultureInfo.InvariantCulture)),
+                ("Completed", _data.CompletedProjects.ToString("N0", CultureInfo.InvariantCulture)),
+                ("Avg Progress", $"{_data.AverageProjectProgress:0}%")
+            });
+        }
+
         _pdf.CardRow(new[]
         {
             ("Total Budget", Money(_data.TotalBudget)),
             ("Total Spent", Money(_data.TotalExpenses)),
             ("Remaining", Money(remaining)),
-            ("Budget Used", $"{spentPct:0}%")
+            ("Budget Used", $"{Percent(spentPct)}%")
         });
     }
 
     private void DrawProperty()
     {
-        _pdf.SectionTitle("Property & Project");
+        _pdf.SectionTitle(_data.IsOverall ? "Projects & Properties" : "Property & Project");
+        if (_data.IsOverall && _data.Projects.Count > 0)
+        {
+            _pdf.Subtitle("Project Portfolio");
+            _pdf.Table(
+                new[] { "Project", "Property", "Budget", "Spent", "Progress", "Status" },
+                _data.Projects.Select(p => new[]
+                {
+                    p.Name,
+                    p.Property,
+                    Money(p.Budget),
+                    Money(p.Spent),
+                    $"{p.ProgressPercent:0}%",
+                    p.Status
+                }).Take(10).ToList());
+        }
+
         if (_data.Properties.Count == 0)
         {
             _pdf.Note("No property information is available for this scope.");
             return;
         }
+
+        if (_data.IsOverall)
+            _pdf.Subtitle("Property Details");
 
         _pdf.Table(
             new[] { "Property", "Type", "Location", "Area", "Status" },
@@ -104,7 +145,7 @@ public sealed class DashboardReportPdfBuilder
     {
         _pdf.SectionTitle("Budget");
         var usedPct = _data.TotalBudget > 0 ? _data.TotalExpenses / _data.TotalBudget : 0;
-        _pdf.Progress("Budget utilization", usedPct, $"{usedPct * 100:0}% used");
+        _pdf.Progress("Budget utilization", usedPct, $"{Percent(usedPct * 100)}% used");
         _pdf.Table(
             new[] { "Metric", "Value" },
             new List<string[]>
@@ -158,30 +199,15 @@ public sealed class DashboardReportPdfBuilder
     private void DrawUsage()
     {
         _pdf.SectionTitle("Progress & Usage");
-        _pdf.Progress("Construction progress", _data.ConstructionProgress / 100m, $"{_data.ConstructionProgress:0}% complete");
-        var materialUsedPct = _data.TotalMaterialPurchased > 0 ? _data.TotalMaterialUsed / _data.TotalMaterialPurchased : 0;
-        _pdf.Progress("Material usage", materialUsedPct, $"{materialUsedPct * 100:0}% of purchased quantity used");
+        _pdf.Progress(_data.IsOverall ? "Portfolio construction progress" : "Construction progress", _data.ConstructionProgress / 100m, $"{Percent(_data.ConstructionProgress)}% complete");
+        if (_data.Materials.Count > 0)
+            _pdf.Note("Material usage is listed per material in the Materials section so different units are not mixed into one misleading percentage.");
     }
 
     private void DrawCharts()
     {
-        _pdf.SectionTitle("Charts");
-        _pdf.Subtitle("Expense Distribution");
-        var max = _data.ExpenseCategories.Count > 0 ? _data.ExpenseCategories.Max(c => c.Amount) : 0;
-        foreach (var item in _data.ExpenseCategories.Take(7))
-        {
-            _pdf.Bar(item.Name, max > 0 ? item.Amount / max : 0, Money(item.Amount));
-        }
-
-        if (_data.MonthlyTrend.Count > 0)
-        {
-            _pdf.Subtitle("Monthly Spending Trend");
-            var trendMax = _data.MonthlyTrend.Max(m => m.Amount);
-            foreach (var item in _data.MonthlyTrend.TakeLast(6))
-            {
-                _pdf.Bar(item.Label, trendMax > 0 ? item.Amount / trendMax : 0, Money(item.Amount));
-            }
-        }
+        _pdf.SectionTitle("Expense Distribution");
+        DrawExpensePie();
     }
 
     private void DrawFooter()
@@ -190,11 +216,85 @@ public sealed class DashboardReportPdfBuilder
     }
 
     private static string Money(decimal value) => $"PKR {value.ToString("N0", new CultureInfo("en-IN"))}";
+
+    private static string Percent(decimal value)
+    {
+        var abs = Math.Abs(value);
+        if (abs == 0) return "0";
+        if (abs < 1) return value.ToString("0.##", CultureInfo.InvariantCulture);
+        return value % 1 == 0
+            ? value.ToString("0", CultureInfo.InvariantCulture)
+            : value.ToString("0.#", CultureInfo.InvariantCulture);
+    }
+
+    private void DrawExpensePie()
+    {
+        var slices = _data.ExpenseCategories
+            .Where(c => c.Amount > 0)
+            .OrderByDescending(c => c.Amount)
+            .Take(7)
+            .ToList();
+        var total = slices.Sum(s => s.Amount);
+        if (total <= 0)
+        {
+            _pdf.Note("No expense distribution is available for this scope.");
+            return;
+        }
+
+        _pdf.EnsureSpaceForCustomBlock(156);
+        var centerX = 112f;
+        var centerY = _pdf.Y - 72;
+        var radius = 54f;
+        var startAngle = -90.0;
+
+        for (var i = 0; i < slices.Count; i++)
+        {
+            var slice = slices[i];
+            var color = ChartPalette[i % ChartPalette.Length];
+            var sweep = (double)(slice.Amount / total * 360m);
+            _pdf.PieSlice(centerX, centerY, radius, startAngle, sweep, color.R, color.G, color.B);
+            startAngle += sweep;
+        }
+
+        _pdf.Circle(centerX, centerY, radius, 255, 255, 255);
+
+        var legendX = 196f;
+        var labelX = legendX + 18;
+        var percentRightX = 384f;
+        var amountRightX = 548f;
+        var legendY = _pdf.Y - 20;
+
+        _pdf.Text("Category", labelX, legendY + 14, 7, true, 100, 116, 139);
+        _pdf.TextRight("Share", percentRightX, legendY + 14, 7, true, 100, 116, 139);
+        _pdf.TextRight("Amount", amountRightX, legendY + 14, 7, true, 100, 116, 139);
+
+        for (var i = 0; i < slices.Count; i++)
+        {
+            var slice = slices[i];
+            var color = ChartPalette[i % ChartPalette.Length];
+            var pct = slice.Amount / total * 100m;
+            var y = legendY - i * 18;
+            if (i % 2 == 1)
+                _pdf.FillRect(legendX - 5, y - 12, amountRightX - legendX + 10, 16, 248, 250, 252);
+
+            _pdf.FillRect(legendX, y - 8, 9, 9, color.R, color.G, color.B);
+            _pdf.Text(PdfCanvas.TrimText(slice.Name, 24), labelX, y - 2, 8, false, 51, 65, 85);
+            _pdf.TextRight($"{Percent(pct)}%", percentRightX, y - 2, 8, false, 100, 116, 139);
+            _pdf.TextRight(Money(slice.Amount), amountRightX, y - 2, 8, false, 100, 116, 139);
+        }
+
+        _pdf.Y -= 168;
+    }
 }
 
 public sealed class DashboardReportData
 {
+    public bool IsOverall { get; init; }
     public string ScopeName { get; init; } = "Project";
+    public int TotalProjects { get; init; }
+    public int ActiveProjects { get; init; }
+    public int CompletedProjects { get; init; }
+    public decimal AverageProjectProgress { get; init; }
     public decimal TotalBudget { get; init; }
     public decimal TotalExpenses { get; init; }
     public int TotalWorkers { get; init; }
@@ -203,6 +303,7 @@ public sealed class DashboardReportData
     public decimal ConstructionProgress { get; init; }
     public decimal TotalMaterialPurchased { get; init; }
     public decimal TotalMaterialUsed { get; init; }
+    public List<ProjectReportRow> Projects { get; init; } = new();
     public List<PropertyReportRow> Properties { get; init; } = new();
     public List<NameCount> WorkerSkills { get; init; } = new();
     public List<NameAmount> ExpenseCategories { get; init; } = new();
@@ -211,6 +312,7 @@ public sealed class DashboardReportData
     public List<NameAmount> MonthlyTrend { get; init; } = new();
 }
 
+public sealed record ProjectReportRow(string Name, string Property, decimal Budget, decimal Spent, decimal Remaining, decimal ProgressPercent, string Status);
 public sealed record PropertyReportRow(string Name, string Type, string Location, string Area, string Status);
 public sealed record NameCount(string Name, int Count);
 public sealed record NameAmount(string Name, decimal Amount)
@@ -334,9 +436,69 @@ internal sealed class PdfCanvas
         Y -= 22;
     }
 
+    public void EnsureSpaceForCustomBlock(float height)
+    {
+        EnsureSpace(height);
+    }
+
+    public void PieSlice(float centerX, float centerY, float radius, double startAngleDeg, double sweepDeg, byte r, byte g, byte b)
+    {
+        if (sweepDeg <= 0)
+            return;
+
+        var start = DegreesToRadians(startAngleDeg);
+        var sweepRemaining = DegreesToRadians(Math.Min(sweepDeg, 360));
+        var x0 = centerX + radius * Math.Cos(start);
+        var y0 = centerY + radius * Math.Sin(start);
+        var path = new StringBuilder();
+        path.Append($"{r / 255.0:0.###} {g / 255.0:0.###} {b / 255.0:0.###} rg ");
+        path.Append($"{centerX:0.##} {centerY:0.##} m {x0:0.##} {y0:0.##} l ");
+
+        var current = start;
+        while (sweepRemaining > 0)
+        {
+            var segment = Math.Min(sweepRemaining, Math.PI / 2);
+            var next = current + segment;
+            var k = 4.0 / 3.0 * Math.Tan(segment / 4.0);
+
+            var p0x = centerX + radius * Math.Cos(current);
+            var p0y = centerY + radius * Math.Sin(current);
+            var p3x = centerX + radius * Math.Cos(next);
+            var p3y = centerY + radius * Math.Sin(next);
+            var p1x = p0x - radius * k * Math.Sin(current);
+            var p1y = p0y + radius * k * Math.Cos(current);
+            var p2x = p3x + radius * k * Math.Sin(next);
+            var p2y = p3y - radius * k * Math.Cos(next);
+
+            path.Append($"{p1x:0.##} {p1y:0.##} {p2x:0.##} {p2y:0.##} {p3x:0.##} {p3y:0.##} c ");
+            current = next;
+            sweepRemaining -= segment;
+        }
+
+        path.Append("h f");
+        _content.AppendLine(path.ToString());
+    }
+
+    public void Circle(float centerX, float centerY, float radius, byte r, byte g, byte b)
+    {
+        const double k = 0.5522847498307936;
+        var c = radius * k;
+        _content.AppendLine($"{r / 255.0:0.###} {g / 255.0:0.###} {b / 255.0:0.###} RG {centerX + radius:0.##} {centerY:0.##} m " +
+            $"{centerX + radius:0.##} {centerY + c:0.##} {centerX + c:0.##} {centerY + radius:0.##} {centerX:0.##} {centerY + radius:0.##} c " +
+            $"{centerX - c:0.##} {centerY + radius:0.##} {centerX - radius:0.##} {centerY + c:0.##} {centerX - radius:0.##} {centerY:0.##} c " +
+            $"{centerX - radius:0.##} {centerY - c:0.##} {centerX - c:0.##} {centerY - radius:0.##} {centerX:0.##} {centerY - radius:0.##} c " +
+            $"{centerX + c:0.##} {centerY - radius:0.##} {centerX + radius:0.##} {centerY - c:0.##} {centerX + radius:0.##} {centerY:0.##} c S");
+    }
+
     public void Text(string text, float x, float y, int size, bool bold, byte r, byte g, byte b)
     {
         _content.AppendLine($"BT /{(bold ? "F2" : "F1")} {size} Tf {r / 255.0:0.###} {g / 255.0:0.###} {b / 255.0:0.###} rg {x:0.##} {y:0.##} Td ({Escape(text)}) Tj ET");
+    }
+
+    public void TextRight(string text, float rightX, float y, int size, bool bold, byte r, byte g, byte b)
+    {
+        var x = rightX - ApproxTextWidth(text, size, bold);
+        Text(text, x, y, size, bold, r, g, b);
     }
 
     public void FillRect(float x, float y, float width, float height, byte r, byte g, byte b)
@@ -417,6 +579,16 @@ internal sealed class PdfCanvas
         var safe = new string((value ?? "").Select(ch => ch is >= ' ' and <= '~' ? ch : ' ').ToArray());
         return safe.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
     }
+
+    private static double DegreesToRadians(double value) => value * Math.PI / 180.0;
+
+    private static float ApproxTextWidth(string text, int size, bool bold)
+    {
+        var weight = bold ? 0.56f : 0.52f;
+        return (text?.Length ?? 0) * size * weight;
+    }
+
+    public static string TrimText(string value, int max) => Trim(value, max);
 
     private static string Trim(string value, int max) => value.Length <= max ? value : value[..Math.Max(0, max - 1)] + "...";
 }

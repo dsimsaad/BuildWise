@@ -389,6 +389,89 @@
             font-weight: 800;
         }
 
+        .timeline-summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .timeline-summary-card {
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            background: #F8FAFC;
+            padding: 11px 12px;
+            min-width: 0;
+        }
+
+        .timeline-summary-card span {
+            display: block;
+            color: #64748B;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+
+        .timeline-summary-card strong {
+            display: block;
+            color: #0F172A;
+            font-size: 0.88rem;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .timeline-viewport {
+            position: relative;
+        }
+
+        .timeline-scale {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 12px;
+            color: #94A3B8;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 10px;
+        }
+
+        .timeline-scale-dates {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .timeline-today {
+            position: absolute;
+            top: 28px;
+            bottom: 0;
+            width: 2px;
+            background: #F97316;
+            border-radius: 999px;
+            pointer-events: none;
+            opacity: 0.9;
+        }
+
+        .timeline-today span {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #FFF7ED;
+            color: #C2410C;
+            border: 1px solid #FED7AA;
+            border-radius: 999px;
+            padding: 3px 7px;
+            font-size: 0.66rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
         .timeline-row {
             display: grid;
             grid-template-columns: minmax(150px, 220px) 1fr;
@@ -417,11 +500,17 @@
             margin-top: 2px;
         }
 
+        .timeline-label .timeline-meta {
+            color: #94A3B8;
+            font-size: 0.68rem;
+        }
+
         .timeline-track {
             height: 24px;
             border-radius: 6px;
             background: #F1F5F9;
             overflow: hidden;
+            position: relative;
         }
 
         .timeline-bar {
@@ -429,7 +518,20 @@
             min-width: 4px;
             border-radius: 6px;
             background: #2563EB;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            color: #FFFFFF;
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding-right: 7px;
+            overflow: hidden;
+            white-space: nowrap;
         }
+
+        .timeline-bar.is-complete { background: #10B981; }
+        .timeline-bar.is-overdue { background: #EF4444; }
+        .timeline-bar.is-pending { background: #94A3B8; }
 
         .construction-empty {
             background: #FFFFFF;
@@ -513,7 +615,9 @@
         @@media (max-width: 800px) {
             .construction-hero,
             .phase-panel-header,
-            .timeline-row {
+            .timeline-row,
+            .timeline-scale,
+            .timeline-summary {
                 grid-template-columns: 1fr;
             }
 
@@ -926,6 +1030,8 @@
 
         function renderTimeline(phases) {
             const container = document.getElementById('timeline-container');
+            const allTasks = phases.flatMap(p => p.tasks
+                .map(t => ({ ...t, phaseName: p.phaseName })));
             const tasks = phases.flatMap(p => p.tasks
                 .filter(t => t.startDate && t.endDate)
                 .map(t => ({ ...t, phaseName: p.phaseName })));
@@ -936,30 +1042,64 @@
                 return;
             }
 
+            const dayMs = 86400000;
+            const parseDay = value => new Date(`${value}T00:00:00`);
+            const toDateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const starts = tasks.map(t => new Date(`${t.startDate}T00:00:00`));
             const ends = tasks.map(t => new Date(`${t.endDate}T00:00:00`));
             const min = new Date(Math.min(...starts));
             const max = new Date(Math.max(...ends));
-            const totalDays = Math.max(1, (max - min) / 86400000);
+            const totalDays = Math.max(1, Math.round((max - min) / dayMs) + 1);
+            const openTasks = tasks.filter(t => !isCompletedTask(t));
+            const activeTasks = openTasks.filter(t => parseDay(t.startDate) <= today && parseDay(t.endDate) >= today);
+            const overdueTasks = openTasks.filter(t => t.isOverdue);
+            const nextTask = openTasks
+                .filter(t => parseDay(t.endDate) >= today)
+                .sort((a, b) => parseDay(a.endDate) - parseDay(b.endDate))[0];
+            const todayInRange = today >= min && today <= max;
+            const todayLeft = todayInRange ? Math.max(0, Math.min(100, ((today - min) / dayMs) / totalDays * 100)) : null;
 
-            container.innerHTML = tasks
+            const rows = tasks
                 .sort((a, b) => new Date(`${a.startDate}T00:00:00`) - new Date(`${b.startDate}T00:00:00`))
                 .map(t => {
-                    const start = new Date(`${t.startDate}T00:00:00`);
-                    const end = new Date(`${t.endDate}T00:00:00`);
-                    const left = Math.max(0, ((start - min) / 86400000) / totalDays * 100);
-                    const width = Math.max(4, ((end - start) / 86400000 + 1) / totalDays * 100);
+                    const start = parseDay(t.startDate);
+                    const end = parseDay(t.endDate);
+                    const left = Math.max(0, ((start - min) / dayMs) / totalDays * 100);
+                    const width = Math.max(4, (Math.round((end - start) / dayMs) + 1) / totalDays * 100);
+                    const statusClass = isCompletedTask(t) ? 'is-complete' : t.isOverdue ? 'is-overdue' : String(t.status).toLowerCase() === 'pending' ? 'is-pending' : '';
+                    const duration = Math.max(1, Math.round((end - start) / dayMs) + 1);
                     return `
                         <div class="timeline-row">
                             <div class="timeline-label">
                                 <strong>${escapeHtml(t.taskName)}</strong>
                                 <span>${escapeHtml(t.phaseName)}</span>
+                                <span class="timeline-meta">${formatShortDate(t.startDate)} - ${formatShortDate(t.endDate)} | ${duration} day${duration === 1 ? '' : 's'}</span>
                             </div>
                             <div class="timeline-track">
-                                <div class="timeline-bar" style="width:${Math.min(100 - left, width)}%; margin-left:${Math.min(96, left)}%; background:${isCompletedTask(t) ? '#10B981' : t.isOverdue ? '#EF4444' : '#2563EB'}"></div>
+                                <div class="timeline-bar ${statusClass}" style="width:${Math.min(100 - left, width)}%; margin-left:${Math.min(96, left)}%;">
+                                    ${escapeHtml(t.status)}
+                                </div>
                             </div>
                         </div>`;
                 }).join('');
+
+            container.innerHTML = `
+                <div class="timeline-summary">
+                    <div class="timeline-summary-card"><span>Schedule Window</span><strong>${formatShortDate(toDateKey(min))} - ${formatShortDate(toDateKey(max))}</strong></div>
+                    <div class="timeline-summary-card"><span>Active Now</span><strong>${activeTasks.length} task${activeTasks.length === 1 ? '' : 's'}</strong></div>
+                    <div class="timeline-summary-card"><span>Next Deadline</span><strong>${nextTask ? `${escapeHtml(nextTask.taskName)} (${formatShortDate(nextTask.endDate)})` : 'No upcoming deadline'}</strong></div>
+                    <div class="timeline-summary-card"><span>Delayed</span><strong>${overdueTasks.length} task${overdueTasks.length === 1 ? '' : 's'}</strong></div>
+                </div>
+                <div class="timeline-viewport">
+                    <div class="timeline-scale">
+                        <span>Work item</span>
+                        <div class="timeline-scale-dates"><span>${formatShortDate(toDateKey(min))}</span><span>${formatShortDate(toDateKey(max))}</span></div>
+                    </div>
+                    ${todayInRange ? `<div class="timeline-today" style="left:${Math.min(98, Math.max(2, todayLeft))}%;"><span>Today</span></div>` : ''}
+                    ${rows}
+                </div>`;
         }
 
         function toggleCustomPhase() {

@@ -1474,6 +1474,8 @@ body.dashboard-body {
 .db-phase-chip-top span { color:#2563EB; font-size:0.82rem; font-weight:800; }
 .db-phase-track { height:7px; background:#F1F5F9; border-radius:999px; overflow:hidden; margin-bottom:8px; }
 .db-phase-fill { height:100%; background:#2563EB; border-radius:999px; }
+.db-phase-chip.is-completed .db-phase-fill { background:#10B981; }
+.db-phase-chip.is-completed .db-phase-chip-top span { color:#047857; }
 .db-phase-chip small, .db-construction-empty { color:var(--dash-text-muted); font-size:0.82rem; }
 .db-construction-empty { margin:0; }
 

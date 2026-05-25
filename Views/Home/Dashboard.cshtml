@@ -14,6 +14,7 @@
     var recentExpenses  = ViewBag.RecentExpensesList as List<TransactionLog> ?? new();
     var monthlyExpenses = ViewBag.MonthlyExpenses as System.Collections.IEnumerable;
     var advisorTriggers = ViewBag.AdvisorTriggers as List<DashboardAdvisorTrigger> ?? new();
+    var overallProjects = ViewBag.OverallProjects as List<ProjectDashboardSummary> ?? new();
     var phases = ViewBag.Phases as List<Phase> ?? new();
     var phaseProgress = phases
         .Select(p => new
@@ -35,8 +36,19 @@
         return $"PKR {val.ToString("N0", new CultureInfo("en-IN"))}";
     }
 
+    string FormatPercent(double value)
+    {
+        var abs = Math.Abs(value);
+        if (abs == 0) return "0";
+        if (abs < 1) return value.ToString("0.##", CultureInfo.InvariantCulture);
+        return value % 1 == 0
+            ? value.ToString("0", CultureInfo.InvariantCulture)
+            : value.ToString("0.#", CultureInfo.InvariantCulture);
+    }
+
     double budgetUsedPct = totalBudget > 0 ? (double)(totalExpenses / totalBudget * 100) : 0;
     bool isOverallDashboard = ViewBag.IsOverallDashboard == true;
+    decimal overallConstructionProgress = Convert.ToDecimal(ViewBag.OverallConstructionProgress ?? 0m);
 }
 
 <!-- ══════════════════════════════════════════════
@@ -44,8 +56,8 @@
      ══════════════════════════════════════════════ -->
 <div class="db-page-header">
     <div class="db-page-title-block">
-        <h1 id="dashboardProjectTitle">@(ViewBag.ActiveProjectName ?? "Global Dashboard")</h1>
-        <p class="db-subtitle">Overview of @(ViewBag.ActiveProjectName ?? "your projects and business performance")</p>
+        <h1 id="dashboardProjectTitle">@(isOverallDashboard ? "Overall Dashboard" : ViewBag.ActiveProjectName ?? "Global Dashboard")</h1>
+        <p class="db-subtitle">@(isOverallDashboard ? "Aggregated insights across every project, budget, expense, worker, and task." : $"Overview of {ViewBag.ActiveProjectName ?? "your project and business performance"}")</p>
     </div>
     <div class="db-header-actions">
         <button type="button" class="db-report-btn" id="openReportModal">
@@ -74,13 +86,13 @@
         <input type="hidden" name="Overall" value="@isOverallDashboard.ToString().ToLowerInvariant()" />
         <div class="db-report-dialog-head">
             <div>
-                <strong>Download Project Report</strong>
+                <strong>@(isOverallDashboard ? "Download Overall Report" : "Download Project Report")</strong>
                 <span>Select the sections to include in the PDF.</span>
             </div>
             <button type="button" class="db-report-close" data-report-close aria-label="Close report dialog">×</button>
         </div>
         <div class="db-report-options">
-            <label><input type="checkbox" name="IncludeProperty" value="true" checked /><input type="hidden" name="IncludeProperty" value="false" /><span>Property & project details</span></label>
+            <label><input type="checkbox" name="IncludeProperty" value="true" checked /><input type="hidden" name="IncludeProperty" value="false" /><span>@(isOverallDashboard ? "Projects & properties" : "Property & project details")</span></label>
             <label><input type="checkbox" name="IncludeWorkforce" value="true" checked /><input type="hidden" name="IncludeWorkforce" value="false" /><span>Workforce</span></label>
             <label><input type="checkbox" name="IncludeBudget" value="true" checked /><input type="hidden" name="IncludeBudget" value="false" /><span>Budget</span></label>
             <label><input type="checkbox" name="IncludeExpenses" value="true" checked /><input type="hidden" name="IncludeExpenses" value="false" /><span>Expenses</span></label>
@@ -177,35 +189,65 @@
         </div>
     </div>
 
-    <!-- Project Budget Card -->
+    <!-- Project Budget / Overall Projects Card -->
     <div class="db-kpi-card db-kpi-budget">
         <div class="db-kpi-inner">
             <div class="db-kpi-icon db-kpi-icon--purple">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="1" x2="12" y2="23"/>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
+                @if (isOverallDashboard)
+                {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 21h18"/>
+                        <path d="M5 21V8l7-5 7 5v13"/>
+                        <path d="M9 21v-6h6v6"/>
+                    </svg>
+                }
+                else
+                {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                }
             </div>
             <div class="db-kpi-body">
-                <span class="db-kpi-label">Project Budget</span>
-                <span class="db-kpi-value db-kpi-value--lg" id="statTotalBudget">@FormatMoney(totalBudget)</span>
+                <span class="db-kpi-label">@(isOverallDashboard ? "Total Projects" : "Project Budget")</span>
+                <span class="db-kpi-value db-kpi-value--lg" id="statPortfolioMetric">@(isOverallDashboard ? Convert.ToString(ViewBag.TotalProjects ?? 0) : FormatMoney(totalBudget))</span>
             </div>
             <div class="db-kpi-more-wrap">
                 <button class="db-kpi-more" data-menu="menuBudget" title="Options">•••</button>
                 <div class="db-kpi-dropdown" id="menuBudget">
-                    <a href="/Budget" class="db-kpi-dd-item">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.5"/></svg>
-                        Manage Budget
-                    </a>
-                    <a href="/Budget?tab=budgets" class="db-kpi-dd-item">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Add Budget
-                    </a>
-                    <div class="db-kpi-dd-sep"></div>
-                    <a href="/Advisor" class="db-kpi-dd-item">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-                        Budget Analytics
-                    </a>
+                    @if (isOverallDashboard)
+                    {
+                        <a href="/Projects" class="db-kpi-dd-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/></svg>
+                            View Projects
+                        </a>
+                        <a href="/Projects/Create" class="db-kpi-dd-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Add Project
+                        </a>
+                        <div class="db-kpi-dd-sep"></div>
+                        <a href="/Home/Dashboard?overall=true" class="db-kpi-dd-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            Portfolio Insights
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="/Budget" class="db-kpi-dd-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.5"/></svg>
+                            Manage Budget
+                        </a>
+                        <a href="/Budget?tab=budgets" class="db-kpi-dd-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Add Budget
+                        </a>
+                        <div class="db-kpi-dd-sep"></div>
+                        <a href="/Advisor" class="db-kpi-dd-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                            Budget Analytics
+                        </a>
+                    }
                 </div>
             </div>
         </div>
@@ -227,7 +269,7 @@
                 <div class="db-kpi-value-row">
                     <span class="db-kpi-value db-kpi-value--lg" id="statTotalExpenses">@FormatMoney(totalExpenses)</span>
                     <span class="db-kpi-badge @(budgetUsedPct > 90 ? "db-kpi-badge--red" : "db-kpi-badge--green")"
-                          id="statBudgetUsed">@budgetUsedPct.ToString("0")% Used</span>
+                          id="statBudgetUsed">@FormatPercent(budgetUsedPct)% Used</span>
                 </div>
             </div>
             <div class="db-kpi-more-wrap">
@@ -379,6 +421,58 @@
         </div>
     </div>
 }
+else if (isOverallDashboard)
+{
+    <div class="db-card db-construction-card db-overall-project-card">
+        <div class="db-card-header">
+            <span class="db-card-title">Overall Project Status</span>
+            <a href="/Projects" class="db-card-link">View Projects</a>
+        </div>
+        <div class="db-construction-body">
+            <div class="db-construction-stats">
+                <div class="db-construction-stat">
+                    <span>Total Projects</span>
+                    <strong>@(ViewBag.TotalProjects ?? 0)</strong>
+                </div>
+                <div class="db-construction-stat">
+                    <span>Active Projects</span>
+                    <strong>@(ViewBag.ActiveProjects ?? 0)</strong>
+                </div>
+                <div class="db-construction-stat">
+                    <span>Completed</span>
+                    <strong>@(ViewBag.ProjectsCompleted ?? 0)</strong>
+                </div>
+                <div class="db-construction-stat">
+                    <span>Overall Progress</span>
+                    <strong>@overallConstructionProgress.ToString("0")%</strong>
+                </div>
+            </div>
+
+            @if (overallProjects.Any())
+            {
+                <div class="db-phase-grid">
+                    @foreach (var project in overallProjects.Take(6))
+                    {
+                        <div class="db-phase-chip @(project.IsCompleted ? "is-completed" : "")">
+                            <div class="db-phase-chip-top">
+                                <strong>@project.ProjectName</strong>
+                                <span>@project.ProgressPercent.ToString("0")%</span>
+                            </div>
+                            <div class="db-phase-track">
+                                <div class="db-phase-fill" style="width:@project.ProgressPercent%"></div>
+                            </div>
+                            <small>@project.CompletedTasks/@project.TotalTasks tasks complete | @FormatMoney(project.TotalExpenses) spent</small>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="db-construction-empty">No projects have been created yet.</p>
+            }
+        </div>
+    </div>
+}
 
 <div class="db-card db-advisor-card">
     <div class="db-card-header">
@@ -522,6 +616,13 @@
         if (abs >= 100000) return formatCompact(100000, 'L');
         return `PKR ${amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
     }
+    function formatPercent(value) {
+        const amount = Number(value || 0);
+        const abs = Math.abs(amount);
+        if (abs === 0) return '0';
+        if (abs < 1) return amount.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        return amount.toLocaleString('en-IN', { maximumFractionDigits: amount % 1 === 0 ? 0 : 1 });
+    }
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, ch => ({
             '&': '&amp;',
@@ -552,7 +653,7 @@
         }
         const it   = catData[idx];
         const amt  = Number(it.total || 0);
-        const pct  = totalCatExp > 0 ? (amt / totalCatExp * 100).toFixed(1) : '0.0';
+        const pct  = totalCatExp > 0 ? formatPercent(amt / totalCatExp * 100) : '0';
         pieCenterLabel.textContent = it.category.toUpperCase();
         pieCenterValue.textContent = formatPKR(amt);
         pieCenterMeta.textContent  = `${pct}% allocation`;
@@ -627,7 +728,7 @@
         }
         wrap.innerHTML = catData.map((it, i) => {
             const amt  = Number(it.total || 0);
-            const pct  = totalCatExp > 0 ? (amt / totalCatExp * 100).toFixed(0) : '0';
+            const pct  = totalCatExp > 0 ? formatPercent(amt / totalCatExp * 100) : '0';
             const col  = PALETTE[i % PALETTE.length];
             return `
                 <button class="db-cat-box" data-idx="${i}" type="button">
@@ -775,10 +876,15 @@
         document.getElementById('statWorkersOnSite').textContent = `${ws} Active`;
         document.getElementById('statWorkersInactive').textContent = `${wi} Inactive`;
         document.getElementById('workersProgressBar').style.width = `${tw > 0 ? Math.min(100, ws * 100 / tw) : 0}%`;
-        document.getElementById('statTotalBudget').textContent   = formatPKR(tb);
+        const portfolioMetric = document.getElementById('statPortfolioMetric');
+        if (portfolioMetric) {
+            portfolioMetric.textContent = new URLSearchParams(window.location.search).get('overall') === 'true'
+                ? Number(data.totalProjects || 0).toLocaleString('en-IN')
+                : formatPKR(tb);
+        }
         document.getElementById('statTotalExpenses').textContent = formatPKR(te);
         const badgeEl = document.getElementById('statBudgetUsed');
-        badgeEl.textContent = `${pct.toFixed(0)}% Used`;
+        badgeEl.textContent = `${formatPercent(pct)}% Used`;
         badgeEl.className = `db-kpi-badge ${pct > 90 ? 'db-kpi-badge--red' : 'db-kpi-badge--green'}`;
         document.getElementById('expenseProgressBar').style.width = `${Math.min(100, pct)}%`;
     }
