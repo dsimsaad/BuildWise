@@ -1511,11 +1511,12 @@ body.dashboard-body {
 .db-kpi-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .db-kpi-label { font-size:0.74rem; font-weight:700; color:var(--dash-text-muted); text-transform:uppercase; letter-spacing:0.04em; }
 .db-kpi-value-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0; }
-.db-kpi-workforce .db-kpi-value-row { flex-wrap:nowrap; gap:6px; }
+.db-kpi-workforce .db-kpi-value-row { flex-wrap:wrap; gap:5px; max-width:100%; }
 .db-kpi-value { font-size:1.42rem; font-weight:700; color:var(--dash-navy); letter-spacing:-0.3px; line-height:1.1; }
 .db-kpi-value--lg { font-size:1.2rem; }
 .db-kpi-badge { font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:20px; white-space:nowrap; line-height:1.2; }
-.db-kpi-workforce .db-kpi-badge { font-size:0.68rem; padding:3px 6px; }
+.db-kpi-badge-pair { display:inline-flex; align-items:center; gap:5px; flex:0 1 auto; min-width:0; max-width:100%; }
+.db-kpi-workforce .db-kpi-badge { font-size:0.66rem; padding:3px 5px; }
 .db-kpi-badge--green { background:#ECFDF5; color:#059669; }
 .db-kpi-badge--red   { background:#FEF2F2; color:#DC2626; }
 .db-kpi-more { background:none; border:none; cursor:pointer; color:#CBD5E1; font-size:0.95rem; padding:4px; border-radius:6px; align-self:flex-start; transition:color 0.15s,background 0.15s; }
