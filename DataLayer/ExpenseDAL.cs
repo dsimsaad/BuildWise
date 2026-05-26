@@ -3,9 +3,7 @@ using BuildWise.Models;
 
 namespace BuildWise.DataLayer
 {
-    /// <summary>
-    /// Data Access Layer for ExpenseItems table
-    /// </summary>
+    // Reads and writes expense items.
     public class ExpenseDAL
     {
         private string connectionString;
@@ -256,9 +254,7 @@ SELECT
             }
         }
 
-        /// <summary>
-        /// Returns total expenses grouped by category
-        /// </summary>
+        // Gets expense totals by category.
         public List<BudgetItem> GetExpensesByCategory(int? projectId = null, int? userId = null)
         {
             List<BudgetItem> list = new List<BudgetItem>();

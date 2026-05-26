@@ -6,7 +6,7 @@
   contain-intrinsic-size: auto 720px;
 }
 
-/* === FAQ PAGE === */
+/* FAQ page */
 .faq-hero { padding: 76px 24px 44px; text-align: center; background: linear-gradient(180deg, #f0f5ff 0%, #fff 100%); border-bottom: 1px solid #f1f5f9; }
 .faq-hero h1 { font-size: clamp(28px, 5vw, 46px); font-weight: 800; color: #0f172a; letter-spacing: -1.5px; line-height: 1.1; margin: 0 0 14px; }
 .faq-hero p { font-size: 15px; color: #64748b; max-width: 480px; margin: 0 auto; line-height: 1.65; }
@@ -38,7 +38,7 @@
 .dash-content.marketing-page-content .faq-cta { border-radius: 18px !important; }
 .dash-content.marketing-page-content .faq-cta a { border-radius: 10px !important; }
 
-/* === CONTACT PAGE === */
+/* Contact page */
 .contact-section { padding: 80px 24px 100px; position: relative; z-index: 1; }
 .contact-wrapper { max-width: 1100px; margin: 0 auto; display: flex; gap: 64px; align-items: flex-start; }
 .contact-info { flex: 0 0 320px; }

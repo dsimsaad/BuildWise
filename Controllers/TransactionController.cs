@@ -6,7 +6,7 @@ using System.Text;
 namespace BuildWise.Controllers
 {
     [Authorize]
-    public class TransactionController : Controller
+    public class TransactionController : BaseController
     {
         private readonly TransactionBLL _bll;
 
@@ -21,17 +21,10 @@ namespace BuildWise.Controllers
             return View();
         }
 
-        private int? GetSelectedProjectId()
-        {
-            return HttpContext.Session.GetInt32("SelectedProjectId");
-        }
-
         [HttpGet]
         public IActionResult GetTransactions(string category, string type, DateTime? fromDate, DateTime? toDate, string range = "month")
         {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-            int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
-
+            int userId = GetCurrentUserId();
             var selectedProjectId = GetSelectedProjectId();
             ApplyDefaultRange(range, ref fromDate, ref toDate);
             var list = _bll.GetFilteredTransactions(category, type, fromDate, toDate, selectedProjectId, userId);
@@ -48,9 +41,7 @@ namespace BuildWise.Controllers
         [HttpGet]
         public IActionResult DownloadReport(string category, string type, DateTime? fromDate, DateTime? toDate, string range = "month")
         {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-            int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
-
+            int userId = GetCurrentUserId();
             var selectedProjectId = GetSelectedProjectId();
             ApplyDefaultRange(range, ref fromDate, ref toDate);
             var transactions = _bll.GetFilteredTransactions(category, type, fromDate, toDate, selectedProjectId, userId);

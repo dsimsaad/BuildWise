@@ -3,9 +3,7 @@ using BuildWise.Models;
 
 namespace BuildWise.DataLayer
 {
-    /// <summary>
-    /// Data Access Layer for PhaseTasks table
-    /// </summary>
+    // Reads and writes phase tasks.
     public class TaskDAL
     {
         private string connectionString;

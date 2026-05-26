@@ -1,5 +1,4 @@
 using System;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +11,7 @@ using BuildWise.BusinessLayer;
 namespace BuildWise.Controllers
 {
     [Authorize]
-    public class MaterialsController : Controller
+    public class MaterialsController : BaseController
     {
         private readonly MaterialBLL _materialBll;
         private readonly ExpenseBLL _expenseBll;
@@ -26,17 +25,7 @@ namespace BuildWise.Controllers
             _expenseBll = new ExpenseBLL(connectionString);
         }
 
-        private int GetCurrentUserId()
-        {
-            return int.Parse(User.FindFirstValue("UserId") ?? "0");
-        }
-
-        private int? GetSelectedProjectId()
-        {
-            return HttpContext.Session.GetInt32("SelectedProjectId");
-        }
-
-        // Dashboard/Index for Purchases
+        // Purchase list page.
         public async Task<IActionResult> Index()
         {
             var userId = GetCurrentUserId();
@@ -82,11 +71,7 @@ namespace BuildWise.Controllers
                 return RedirectToAction("Index", "Projects");
             }
 
-            ModelState.Remove("Material");
-            ModelState.Remove("Unit");
-            ModelState.Remove("Project");
-            ModelState.Remove("Supplier");
-            ModelState.Remove("MaterialUsages");
+            RemoveModelStateEntries("Material", "Unit", "Project", "Supplier", "MaterialUsages");
 
             bool materialAllowed = await _context.Materials
                 .AsNoTracking()
@@ -177,7 +162,7 @@ namespace BuildWise.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Catalog Management
+        // Catalog actions.
         public async Task<IActionResult> Catalog()
         {
             var userId = GetCurrentUserId();
@@ -195,9 +180,7 @@ namespace BuildWise.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddMaterial([Bind("MaterialName,DefaultUnitId,Description")] Material material)
         {
-            ModelState.Remove("DefaultUnit");
-            ModelState.Remove("User");
-            ModelState.Remove("MaterialPurchases");
+            RemoveModelStateEntries("DefaultUnit", "User", "MaterialPurchases");
 
             if (ModelState.IsValid)
             {

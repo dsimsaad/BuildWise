@@ -7,7 +7,7 @@ using System.Globalization;
 namespace BuildWise.Controllers
 {
     [Authorize]
-    public class BudgetController : Controller
+    public class BudgetController : BaseController
     {
         private readonly string _connectionString;
         private readonly BudgetBLL _budgetBll;
@@ -27,17 +27,6 @@ namespace BuildWise.Controllers
         public IActionResult Index()
         {
             return View();
-        }
-
-        private int? GetSelectedProjectId()
-        {
-            return HttpContext.Session.GetInt32("SelectedProjectId");
-        }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
         private bool UserOwnsProject(int projectId, int userId)

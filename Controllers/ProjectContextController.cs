@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace BuildWise.Controllers;
 
 [Authorize]
-public class ProjectContextController : Controller
+public class ProjectContextController : BaseController
 {
     private readonly BuildWiseDbContext _context;
 
@@ -18,11 +18,10 @@ public class ProjectContextController : Controller
     [HttpPost]
     public async Task<IActionResult> SetActiveProject(int projectId)
     {
-        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-        if (userIdClaim == null) return Unauthorized();
-        int userId = int.Parse(userIdClaim.Value);
+        int userId = GetCurrentUserId();
+        if (userId == 0) return Unauthorized();
 
-        // Verify ownership before setting the session
+        // Check project ownership.
         bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == projectId && p.UserId == userId);
         
         if (ownsProject)
@@ -31,11 +30,11 @@ public class ProjectContextController : Controller
         }
         else
         {
-            // If they don't own it, ensure we don't accidentally leave an old project selected
+            // Clear an invalid project selection.
             HttpContext.Session.Remove("SelectedProjectId");
         }
         
-        // Return to the previous page or dashboard
+        // Go back to the previous page.
         var returnUrl = Request.Headers["Referer"].ToString();
         if (string.IsNullOrEmpty(returnUrl))
         {

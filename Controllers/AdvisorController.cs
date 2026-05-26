@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace BuildWise.Controllers
 {
     [Authorize]
-    public class AdvisorController : Controller
+    public class AdvisorController : BaseController
     {
         private readonly AdvisorBLL _bll;
 
@@ -20,17 +20,10 @@ namespace BuildWise.Controllers
             return View();
         }
 
-        private int? GetSelectedProjectId()
-        {
-            return HttpContext.Session.GetInt32("SelectedProjectId");
-        }
-
         [HttpGet]
         public IActionResult GetAnalysis()
         {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-            int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
-
+            int userId = GetCurrentUserId();
             var results = _bll.GetAnalysis(GetSelectedProjectId(), userId);
             return Json(results);
         }

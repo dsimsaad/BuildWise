@@ -3,9 +3,7 @@ using BuildWise.Models;
 
 namespace BuildWise.DataLayer
 {
-    /// <summary>
-    /// Data Access Layer for BudgetItems table
-    /// </summary>
+    // Reads and writes budget items.
     public class BudgetDAL
     {
         private string connectionString;

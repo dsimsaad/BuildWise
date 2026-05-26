@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using BuildWise.Models;
 using BuildWise.BusinessLayer;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using BuildWise.Services;
@@ -12,7 +11,7 @@ using BuildWise.Services;
 namespace BuildWise.Controllers
 {
     [Authorize]
-    public class WorkersController : Controller
+    public class WorkersController : BaseController
     {
         private readonly BuildWiseDbContext _context;
         private readonly ExpenseBLL _expenseBll;
@@ -24,12 +23,6 @@ namespace BuildWise.Controllers
             _context = context;
             _expenseBll = new ExpenseBLL(configuration.GetConnectionString("BuildWise") ?? "");
             _workerProjectSchema = workerProjectSchema;
-        }
-
-        private int GetUserId()
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
         // GET: Workers
@@ -111,7 +104,7 @@ namespace BuildWise.Controllers
             await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
 
             int userId = GetUserId();
-            ModelState.Remove(nameof(worker.DailyWage));
+            RemoveModelStateEntries(nameof(worker.DailyWage));
 
             worker.ProjectId ??= HttpContext.Session.GetInt32("SelectedProjectId");
             worker.SkillType = SkillChoice == "Custom" ? CustomSkill?.Trim() : SkillChoice?.Trim();

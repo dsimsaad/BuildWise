@@ -54,9 +54,7 @@
     decimal dashboardProgress = isOverallDashboard ? overallConstructionProgress : Convert.ToDecimal(ViewBag.ProjectProgress ?? constructionProgress);
 }
 
-<!-- ══════════════════════════════════════════════
-     PAGE HEADER
-     ══════════════════════════════════════════════ -->
+<!-- Page header -->
 <div class="db-page-header">
     <div class="db-page-title-block">
         <h1 id="dashboardProjectTitle">@(isOverallDashboard ? "Overall Dashboard" : ViewBag.ActiveProjectName ?? "Global Dashboard")</h1>
@@ -103,12 +101,10 @@
     </form>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     TOP STAT CARDS
-     ══════════════════════════════════════════════ -->
+<!-- Stat cards -->
 <div class="db-kpi-row">
 
-    <!-- Project Progress Card -->
+    <!-- Project progress card -->
     <div class="db-kpi-card db-kpi-progress-card">
         <div class="db-kpi-inner">
             <div class="db-kpi-icon db-kpi-icon--teal">
@@ -140,7 +136,7 @@
         </div>
     </div>
 
-    <!-- Total Properties Card -->
+    <!-- Total properties card -->
     <div class="db-kpi-card db-kpi-properties">
         <div class="db-kpi-inner">
             <div class="db-kpi-icon db-kpi-icon--blue">
@@ -173,7 +169,7 @@
         </div>
     </div>
 
-    <!-- Workforce Card -->
+    <!-- Workforce card -->
     <div class="db-kpi-card db-kpi-workforce">
         <div class="db-kpi-inner">
             <div class="db-kpi-icon db-kpi-icon--green">
@@ -219,7 +215,7 @@
         </div>
     </div>
 
-    <!-- Project Budget / Overall Projects Card -->
+    <!-- Budget or projects card -->
     <div class="db-kpi-card db-kpi-budget">
         <div class="db-kpi-inner">
             <div class="db-kpi-icon db-kpi-icon--purple">
@@ -286,7 +282,7 @@
         </div>
     </div>
 
-    <!-- Total Expenses Card -->
+    <!-- Total expenses card -->
     <div class="db-kpi-card db-kpi-expenses">
         <div class="db-kpi-inner">
             <div class="db-kpi-icon db-kpi-icon--orange">
@@ -330,12 +326,10 @@
 
 </div>
 
-<!-- ══════════════════════════════════════════════
-     MIDDLE ROW: Expense Distribution + Recent Expenses
-     ══════════════════════════════════════════════ -->
+<!-- Middle row -->
 <div class="db-mid-row">
 
-    <!-- Left: Expense Distribution Donut -->
+    <!-- Expense distribution -->
     <div class="db-card db-card--distribution">
         <div class="db-card-header">
             <span class="db-card-title">Expense Distribution</span>
@@ -345,7 +339,7 @@
             </a>
         </div>
         <div class="db-dist-body">
-            <!-- Donut -->
+            <!-- Donut chart -->
             <div class="db-donut-wrap">
                 <canvas id="expenseCategoryChart"></canvas>
                 <div class="db-donut-center">
@@ -354,14 +348,14 @@
                     <small class="db-donut-meta" id="dashPieCenterMeta">0 categories</small>
                 </div>
             </div>
-            <!-- Category boxes — rendered by JS, 2-column grid to the right of donut -->
+            <!-- Category boxes -->
             <div class="db-cat-grid" id="dashboardCategoryBoxes">
                 <div class="db-cat-empty">Loading categories…</div>
             </div>
         </div>
     </div>
 
-    <!-- Right: Recent Expenses -->
+    <!-- Recent expenses -->
     <div class="db-card db-card--recent">
         <div class="db-card-header">
             <span class="db-card-title">Recent Expenses</span>
@@ -402,9 +396,7 @@
 
 </div>
 
-<!-- ══════════════════════════════════════════════
-     BOTTOM ROW: Monthly Trend + Feature Cards
-     ══════════════════════════════════════════════ -->
+<!-- Bottom row -->
 @if (ViewBag.SelectedProjectId != null)
 {
     <div class="db-card db-construction-card">
@@ -575,7 +567,7 @@ else if (isOverallDashboard)
 
 <div class="db-bottom-row">
 
-    <!-- Monthly Spend Trend -->
+    <!-- Monthly spend trend -->
     <div class="db-card db-card--trend">
         <div class="db-card-header">
             <span class="db-card-title">Monthly Spending Trend</span>
@@ -590,7 +582,7 @@ else if (isOverallDashboard)
         </div>
     </div>
 
-    <!-- Feature Quick-Access Cards -->
+    <!-- Quick access cards -->
     <div class="db-feature-cards">
 
         <a href="/Budget" class="db-feat-card">
@@ -642,12 +634,10 @@ else if (isOverallDashboard)
     </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     SCRIPTS
-     ══════════════════════════════════════════════ -->
+<!-- Section -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // ── Design Tokens ──
+    // Design tokens.
     Chart.defaults.font.family = "'Inter', sans-serif";
     Chart.defaults.color = '#64748B';
 
@@ -655,9 +645,7 @@ else if (isOverallDashboard)
                      '#06B6D4','#84CC16','#F97316','#EC4899','#64748B',
                      '#22C55E','#A855F7','#3B82F6','#10B981'];
 
-    // ─────────────────────────────────────────────
     // Helpers
-    // ─────────────────────────────────────────────
     function normalizeCategoryData(items) {
         return (items || [])
             .map(i => ({ category: i.category ?? i.Category, total: Number(i.total ?? i.Total ?? i.amount ?? i.Amount ?? 0) }))
@@ -697,9 +685,7 @@ else if (isOverallDashboard)
         }[ch]));
     }
 
-    // ─────────────────────────────────────────────
-    // PIE CENTER
-    // ─────────────────────────────────────────────
+    // Pie center.
     let catData = normalizeCategoryData(@Html.Raw(Json.Serialize(ViewBag.CategoryExpenses)));
     let totalCatExp = sumCategories(catData);
     let activePieIdx = null;
@@ -723,9 +709,7 @@ else if (isOverallDashboard)
         pieCenterMeta.textContent  = `${pct}% allocation`;
     }
 
-    // ─────────────────────────────────────────────
-    // PIE CHART
-    // ─────────────────────────────────────────────
+    // Pie chart.
     const pieCtx = document.getElementById('expenseCategoryChart').getContext('2d');
     const pieChart = new Chart(pieCtx, {
         type: 'doughnut',
@@ -754,7 +738,7 @@ else if (isOverallDashboard)
         }
     });
 
-    // Always reset to total — called on mouse-out from both chart and category boxes
+    // Reset the chart to the total view.
     function resetPie() {
         activePieIdx = null;
         syncCategoryBoxes(null);
@@ -778,12 +762,10 @@ else if (isOverallDashboard)
         pieChart.update();
     }
 
-    // Explicit canvas mouseleave — reliable fallback for chart hover-out
+    // Reset when the mouse leaves the chart.
     document.getElementById('expenseCategoryChart').addEventListener('mouseleave', resetPie);
 
-    // ─────────────────────────────────────────────
-    // CATEGORY BOXES
-    // ─────────────────────────────────────────────
+    // Category boxes.
     function renderCategoryBoxes() {
         const wrap = document.getElementById('dashboardCategoryBoxes');
         if (!catData.length) {
@@ -813,9 +795,7 @@ else if (isOverallDashboard)
         });
     }
 
-    // ─────────────────────────────────────────────
-    // MONTHLY TREND CHART
-    // ─────────────────────────────────────────────
+    // Monthly trend chart.
     let rawMonthly = @Html.Raw(Json.Serialize(ViewBag.MonthlyExpenses));
 
     function buildMonthlyDataset(raw, periods) {
@@ -923,9 +903,7 @@ else if (isOverallDashboard)
         });
     });
 
-    // ─────────────────────────────────────────────
-    // STAT CARD LIVE UPDATE
-    // ─────────────────────────────────────────────
+    // Stat card live update.
     function updateStatCards(data) {
         const tb  = Number(data.totalBudget   || 0);
         const te  = Number(data.totalExpenses  || 0);
@@ -985,9 +963,7 @@ else if (isOverallDashboard)
         }).join('');
     }
 
-    // ─────────────────────────────────────────────
-    // LIVE REFRESH
-    // ─────────────────────────────────────────────
+    // Live refresh.
     async function refreshDashboard() {
         try {
             const overall = new URLSearchParams(window.location.search).get('overall') === 'true';
@@ -995,9 +971,9 @@ else if (isOverallDashboard)
             if (!res.ok) return;
             const data = await res.json();
             updateStatCards(data);
-            // Only update the expense chart if the API actually returned categories.
-            // This prevents the live-refresh from wiping server-rendered category boxes
-            // when the API response differs from the initial page-load data.
+            // Update categories only when the API sends them.
+            // Keep the first page data visible.
+
             const apiCats = data.categoryExpenses || [];
             if (apiCats.length > 0) {
                 updateExpenseChart(apiCats);
@@ -1007,20 +983,18 @@ else if (isOverallDashboard)
         } catch {}
     }
 
-    // ─────────────────────────────────────────────
-    // KPI DROPDOWN MENUS
-    // ─────────────────────────────────────────────
+    // Kpi dropdown menus.
     document.querySelectorAll('.db-kpi-more').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             const menuId = this.dataset.menu;
             const menu   = document.getElementById(menuId);
             const isOpen = menu.classList.contains('is-open');
-            // close all
+            // Close all menus.
             document.querySelectorAll('.db-kpi-dropdown').forEach(m => m.classList.remove('is-open'));
             document.querySelectorAll('.db-kpi-more').forEach(b => b.classList.remove('is-active'));
             document.querySelectorAll('.db-kpi-card').forEach(c => c.classList.remove('is-menu-open'));
-            // toggle clicked
+            // Toggle the clicked menu.
             if (!isOpen) {
                 menu.classList.add('is-open');
                 this.classList.add('is-active');
@@ -1029,16 +1003,14 @@ else if (isOverallDashboard)
         });
     });
 
-    // close menus on outside click
+    // Close menus on outside click.
     document.addEventListener('click', () => {
         document.querySelectorAll('.db-kpi-dropdown').forEach(m => m.classList.remove('is-open'));
         document.querySelectorAll('.db-kpi-more').forEach(b => b.classList.remove('is-active'));
         document.querySelectorAll('.db-kpi-card').forEach(c => c.classList.remove('is-menu-open'));
     });
 
-    // ─────────────────────────────────────────────
-    // REPORT DOWNLOAD MODAL
-    // ─────────────────────────────────────────────
+    // Report download modal.
     const reportModal = document.getElementById('reportModal');
     document.getElementById('openReportModal')?.addEventListener('click', () => {
         reportModal.classList.add('is-open');
@@ -1057,13 +1029,11 @@ else if (isOverallDashboard)
         }
     });
 
-    // ─────────────────────────────────────────────
-    // INIT
-    // ─────────────────────────────────────────────
-    // Render category boxes immediately from server-side data — no waiting for API
+    // Init.
+    // Render category boxes from page data first.
     renderCategoryBoxes();
     setPieCenter(null);
-    // Delay the first refresh so server-rendered boxes are visible before any update
+    // Wait before the first refresh.
     setTimeout(refreshDashboard, 2000);
     setInterval(refreshDashboard, 15000);
 </script>

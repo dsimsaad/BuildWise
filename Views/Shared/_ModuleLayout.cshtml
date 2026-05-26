@@ -14,7 +14,7 @@
 </head>
 <body class="dashboard-body">
     <div class="dash-container">
-        <!-- ══════════════ SIDEBAR ══════════════ -->
+        <!-- Sidebar -->
         <aside class="dash-sidebar">
             <div class="sidebar-header">
                 <a href="/Home/Dashboard" class="sidebar-brand-link">
@@ -33,9 +33,9 @@
                     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="8" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="15" width="7" height="6" rx="1.5"></rect></svg>
                     <span>Dashboard</span>
                 </a>
-                
+
                 <div class="nav-group-title">Management</div>
-                
+
                 <a href="/Properties" class="sidebar-link @(controller == "Properties" ? "active" : "")">
                     <svg viewBox="0 0 24 24"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M9 21v-6h6v6"></path></svg>
                     <span>Properties</span>
@@ -62,7 +62,7 @@
                 </a>
 
                 <div class="nav-group-title">Analysis</div>
-                
+
                 <a href="/Construction" class="sidebar-link @(controller == "Construction" ? "active" : "")">
                     <svg viewBox="0 0 24 24"><path d="M3 21h18"></path><path d="M5 21V9l7-5 7 5v12"></path><path d="M9 21v-5h6v5"></path></svg>
                     <span>Construction</span>
@@ -73,7 +73,7 @@
                 </a>
 
                 <div class="nav-group-title">Support</div>
-                
+
                 <a href="/Home/FAQ" class="sidebar-link @(action == "FAQ" ? "active" : "")">
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.2 9.3a2.8 2.8 0 1 1 4.8 2c-.7.7-1.4 1.1-1.8 2"></path><circle cx="12" cy="16.8" r="0.8" fill="currentColor" stroke="none"></circle></svg>
                     <span>FAQs</span>
@@ -85,7 +85,7 @@
             </nav>
         </aside>
 
-        <!-- ══════════════ MAIN AREA ══════════════ -->
+        <!-- Main area -->
         <main class="dash-main">
             <!-- Topbar -->
             <header class="dash-topbar">
@@ -105,7 +105,7 @@
                             <p>Project Manager</p>
                         </div>
 
-                        <!-- Dropdown Menu -->
+                        <!-- Dropdown menu -->
                         <div class="profile-menu">
                             <a asp-controller="Account" asp-action="Profile" class="profile-menu-item">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -122,7 +122,7 @@
                 </div>
             </header>
 
-            <!-- Content Area -->
+            <!-- Content area -->
             <div class="dash-content @ViewData["DashboardContentClass"]">
                 @RenderBody()
             </div>

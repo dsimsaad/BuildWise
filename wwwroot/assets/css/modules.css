@@ -1,7 +1,4 @@
-/* ════════════════════════════════════════════════════════════════════════════
-   BUILDWISE MODULE DESIGN SYSTEM
-   Consistent styling for Budget, Transaction, Advisor, Construction modules
-   ════════════════════════════════════════════════════════════════════════════ */
+/* Module styles */
 
 :root {
     --card-bg: #FFFFFF;
@@ -23,9 +20,7 @@
     --radius-lg: 8px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MODULE HEADER
-   ═══════════════════════════════════════════════════════════════ */
+/* Module header */
 .module-header {
     display: flex;
     justify-content: space-between;
@@ -47,9 +42,7 @@
     font-size: 0.875rem;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SUMMARY / STAT CARDS
-   ═══════════════════════════════════════════════════════════════ */
+/* Summary cards */
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -127,9 +120,7 @@
     letter-spacing: -0.3px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CONTENT GRID LAYOUT
-   ═══════════════════════════════════════════════════════════════ */
+/* Content grid */
 .content-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -143,9 +134,7 @@
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MODULE CARDS
-   ═══════════════════════════════════════════════════════════════ */
+/* Module cards */
 .module-card {
     background: var(--card-bg);
     border: var(--card-border);
@@ -183,9 +172,7 @@
     flex: 0 1 auto;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   FORMS
-   ═══════════════════════════════════════════════════════════════ */
+/* Forms */
 .form-group {
     margin-bottom: 16px;
 }
@@ -233,9 +220,7 @@ select.form-control {
     padding-right: 36px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   BUTTONS
-   ═══════════════════════════════════════════════════════════════ */
+/* Buttons */
 .btn-primary {
     background: linear-gradient(135deg, #2563EB 0%, var(--accent) 100%);
     color: #FFFFFF;
@@ -324,9 +309,7 @@ select.form-control {
     text-decoration: none;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   TABLES — Clean, modern data tables
-   ═══════════════════════════════════════════════════════════════ */
+/* Tables */
 .table-responsive {
     overflow-x: auto;
 }
@@ -412,9 +395,7 @@ select.form-control {
     box-shadow: none;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   BADGES — Status indicators
-   ═══════════════════════════════════════════════════════════════ */
+/* Badges */
 .badge {
     padding: 4px 10px;
     border-radius: 3px;
@@ -430,9 +411,7 @@ select.form-control {
 .badge-danger { background: #FEE2E2; color: #991B1B; }
 .badge-info { background: #DBEAFE; color: #1E40AF; }
 
-/* ═══════════════════════════════════════════════════════════════
-   PROPERTY / MATERIAL CARDS
-   ═══════════════════════════════════════════════════════════════ */
+/* Property and material cards */
 .entity-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -637,9 +616,7 @@ select.form-control {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   PROGRESS BAR
-   ═══════════════════════════════════════════════════════════════ */
+/* Progress bar */
 .progress-container {
     height: 8px;
     background: #F1F5F9;
@@ -655,9 +632,7 @@ select.form-control {
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   COST ADVISOR ALERTS
-   ═══════════════════════════════════════════════════════════════ */
+/* Cost advisor alerts */
 .advisor-card {
     padding: 16px 20px;
     border-radius: 3px;
@@ -680,9 +655,7 @@ select.form-control {
 .advisor-card.info { background: #EFF6FF; border-left-color: #3B82F6; color: #1E40AF; }
 .advisor-card.success { background: #F0FDF4; border-left-color: #22C55E; color: #166534; }
 
-/* ═══════════════════════════════════════════════════════════════
-   TAB BUTTONS
-   ═══════════════════════════════════════════════════════════════ */
+/* Buttons */
 .tab-buttons {
     display: flex;
     gap: 8px;
@@ -716,9 +689,7 @@ select.form-control {
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* ═══════════════════════════════════════════════════════════════
-   FILTER BAR
-   ═══════════════════════════════════════════════════════════════ */
+/* Filter bar */
 .filter-bar {
     background: var(--card-bg);
     border: var(--card-border);
@@ -763,18 +734,14 @@ select.form-control {
     letter-spacing: 0.04em;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CHART CONTAINER
-   ═══════════════════════════════════════════════════════════════ */
+/* Chart area */
 .chart-container {
     position: relative;
     height: 300px;
     width: 100%;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SCAFFOLD PAGES (Projects/Workers CRUD)
-   ═══════════════════════════════════════════════════════════════ */
+/* Scaffold pages */
 .scaffold-page {
     max-width: 1200px;
     margin: 0 auto;
@@ -801,7 +768,7 @@ select.form-control {
     margin: 0 0 24px 0;
 }
 
-/* Modern Table for Scaffold */
+/* Scaffold table */
 .scaffold-table {
     width: 100%;
     border-collapse: collapse;
@@ -858,7 +825,7 @@ select.form-control {
 .scaffold-table .action-links a:last-child { color: var(--danger); }
 .scaffold-table .action-links a:last-child:hover { color: #DC2626; }
 
-/* Scaffold Form Card */
+/* Scaffold form card */
 .scaffold-form-card {
     background: var(--card-bg);
     border: var(--card-border);
@@ -935,7 +902,7 @@ select.form-control {
     transform: translateY(-1px);
 }
 
-/* Scaffold Detail Card */
+/* Scaffold detail card */
 .scaffold-detail-card {
     background: var(--card-bg);
     border: var(--card-border);
@@ -967,7 +934,7 @@ select.form-control {
     margin: 0;
 }
 
-/* Create New Button */
+/* Create button */
 .btn-create {
     display: inline-flex;
     align-items: center;
@@ -1002,7 +969,7 @@ select.form-control {
     text-decoration: none;
 }
 
-/* Back Link */
+/* Back link */
 .back-link {
     display: inline-flex;
     align-items: center;
@@ -1028,9 +995,7 @@ select.form-control {
     text-decoration: none;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ANIMATIONS
-   ═══════════════════════════════════════════════════════════════ */
+/* Animations */
 @keyframes fadeInDown {
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
@@ -1050,10 +1015,7 @@ select.form-control {
     to { transform: rotate(360deg); }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   PROFESSIONAL FORM POLISH
-   Keeps older page-specific styles aligned with the sharper blue module theme.
-   ═══════════════════════════════════════════════════════════════ */
+/* Form polish */
 .module-card,
 .scaffold-form-card,
 .scaffold-detail-card,

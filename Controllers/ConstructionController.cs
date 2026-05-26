@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BuildWise.Controllers
 {
     [Authorize]
-    public class ConstructionController : Controller
+    public class ConstructionController : BaseController
     {
         private readonly BuildWiseDbContext _context;
         private readonly PropertyPhaseSchemaService _propertyPhaseSchema;
@@ -50,17 +50,6 @@ namespace BuildWise.Controllers
             ViewBag.ProjectProperties = await GetProjectPropertiesAsync(projectId.Value, userId);
 
             return View();
-        }
-
-        private int? GetSelectedProjectId()
-        {
-            return HttpContext.Session.GetInt32("SelectedProjectId");
-        }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
         private async System.Threading.Tasks.Task<int?> GetValidSelectedProjectIdAsync(int userId)

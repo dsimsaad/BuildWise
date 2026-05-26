@@ -1,4 +1,4 @@
-/* === SHARED === */
+/* Shared styles */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -26,7 +26,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scroll Reveal */
+/* Scroll reveal */
 .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.55s ease, transform 0.55s ease; }
 .reveal.active { opacity: 1; transform: translateY(0); }
 .reveal:nth-child(2) { transition-delay: 0.08s; }
@@ -54,7 +54,7 @@ body {
   }
 }
 
-/* Dashboard Mockup Float */
+/* Dashboard mockup */
 @keyframes float-mockup {
   0% { transform: translateY(0); box-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.15); }
   50% { transform: translateY(-12px); box-shadow: 0 32px 72px -12px rgba(15, 23, 42, 0.25); }
@@ -62,10 +62,10 @@ body {
 }
 
 .hero-dashboard-mockup.active {
-  /* animation removed as requested */
+  /* Keep this still. */
 }
 
-/* Global Nav */
+/* Navigation */
 nav {
   position: sticky;
   top: 0;
@@ -164,7 +164,7 @@ nav {
   .mobile-nav-overlay .btn-nav { margin-top: 10px; justify-content: center; width: 100%; }
 }
 
-/* Global Footer */
+/* Footer */
 footer {
   background: var(--white);
   border-top: 1px solid var(--border);
@@ -189,7 +189,7 @@ footer {
 @media (max-width: 900px) { .footer-top { grid-template-columns: repeat(2, 1fr); } .cta-inner { flex-direction: column; text-align: center; } }
 @media (max-width: 680px) { .footer-top { grid-template-columns: 1fr; } }
 
-/* Utility */
+/* Helpers */
 .bg-building-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -207,7 +207,7 @@ footer {
 .back-to-top:hover { background: var(--accent); transform: translateY(-5px); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
 .back-to-top svg { width: 20px; height: 20px; stroke-width: 3; }
 
-/* === INDEX PAGE === */
+/* Home page */
 .hero { background: #ffffff; padding: 100px 24px 0; min-height: 700px; position: relative; overflow: hidden; }
 .bg-shape { position: absolute; z-index: 0; pointer-events: none; }
 .shape-1 { top: 10%; left: -5%; width: 400px; height: 400px; background: linear-gradient(135deg, rgba(235, 244, 255, 0.8) 0%, rgba(219, 234, 254, 0.4) 100%); transform: rotate(-15deg); border-radius: 60px; }
@@ -388,7 +388,7 @@ footer {
   .feature-card::after { content: ''; position: absolute; bottom: -15px; right: -15px; width: 70px; height: 70px; background: #1E3A8A; opacity: 0.04; border-radius: 50%; pointer-events: none; }
 }
 
-/* === FEATURES PAGE === */
+/* Features page */
 .feat-hero { padding: 120px 24px 80px; text-align: center; background: #f8faff; }
 .feat-hero .hero-inner { max-width: 900px; margin: 0 auto; }
 .feat-hero .hero-eyebrow { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #1D4ED8; text-transform: uppercase; margin-bottom: 24px; background: #EFF6FF; padding: 8px 24px; border-radius: 100px; border: 1px solid rgba(29,78,216,0.1); }
@@ -424,7 +424,7 @@ footer {
 .cta-outline { background: transparent; color: #fff; padding: 15px 34px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.25); font-size: 15px; font-weight: 700; text-decoration: none; transition: all .2s; display: inline-flex; align-items: center; gap: 8px; }
 .cta-outline:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
 
-/* === FAQ PAGE === */
+/* FAQ page */
 .dash-content.marketing-page-content { padding: 0; background: #fff; }
 .faq-hero { padding: 76px 24px 44px; text-align: center; background: linear-gradient(180deg, #f0f5ff 0%, #fff 100%); border-bottom: 1px solid #f1f5f9; }
 .faq-hero h1 { font-size: clamp(28px, 5vw, 46px); font-weight: 800; color: #0f172a; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 14px; }
@@ -458,7 +458,7 @@ footer {
 .faq-cta a { display: inline-block; background: #fff; color: #0F172A; padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; transition: all .2s; }
 .faq-cta a:hover { background: #EFF6FF; transform: translateY(-1px); }
 
-/* === CONTACT PAGE === */
+/* Contact page */
 .contact-body { background: #f8faff; position: relative; }
 .contact-section {
   padding: 80px 24px 100px;
@@ -500,7 +500,7 @@ footer {
 }
 
 
-/* === AUTH PAGES (LIGHT PROFESSIONAL BACKGROUND) === */
+/* Auth pages */
 .login-body {
   background: #eef2fb;
   display: flex;
@@ -514,7 +514,7 @@ footer {
   position: relative;
 }
 
-/* Light professional background shapes */
+/* Background shapes */
 .auth-bg-wrap { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: linear-gradient(145deg, #eef2fb 0%, #e8f0fe 40%, #f0f4ff 100%); }
 .auth-bg-shape { position: absolute; border-radius: 50%; opacity: 0.55; }
 .auth-shape-1 { width: 520px; height: 520px; background: radial-gradient(circle, rgba(29,78,216,0.12) 0%, transparent 70%); top: -120px; left: -120px; }
@@ -540,13 +540,13 @@ footer {
 .glass-input-wrapper input { width: 100%; background: none; border: none; padding: 12px 14px 12px 42px; color: #0f172a; font-size: 14px; outline: none; }
 .glass-input-wrapper input.has-eye { padding-right: 42px; }
 .glass-input-wrapper input::placeholder { color: #94a3b8; }
-/* Hide default browser password reveal/clear buttons */
+/* Hide browser password buttons */
 .glass-input-wrapper input::-ms-reveal,
 .glass-input-wrapper input::-ms-clear {
     display: none;
 }
 
-/* Eye (toggle-password) button — sits inside the password box */
+/* Password toggle button */
 .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: color 0.2s; }
 .toggle-password:hover { color: #1D4ED8; }
 
@@ -576,7 +576,7 @@ footer {
 .loading-spinner { width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Inline Error Message */
+/* Inline error message */
 .error-message-box {
     display: none;
     background: rgba(239, 68, 68, 0.08);
@@ -590,7 +590,7 @@ footer {
     text-align: center;
 }
 
-/* === FORGOT PASSWORD MODAL === */
+/* Forgot password modal */
 .forgot-modal-overlay {
     display: none;
     position: fixed;

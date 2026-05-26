@@ -3,14 +3,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BuildWise.Models;
 using BuildWise.Services;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace BuildWise.Controllers
 {
     [Authorize]
-    public class ProjectsController : Controller
+    public class ProjectsController : BaseController
     {
         private readonly BuildWiseDbContext _context;
         private readonly IMemoryCache _cache;
@@ -19,12 +18,6 @@ namespace BuildWise.Controllers
         {
             _context = context;
             _cache = cache;
-        }
-
-        private int GetUserId()
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
         private void ClearProjectSelectorCache(int userId)
@@ -173,13 +166,14 @@ namespace BuildWise.Controllers
                 ModelState.AddModelError(nameof(Project.ProjectName), "Project name is required.");
             }
 
-            ModelState.Remove(nameof(Project.Property));
-            ModelState.Remove(nameof(Project.User));
-            ModelState.Remove(nameof(Project.PropertyId));
-            ModelState.Remove(nameof(Project.UserId));
-            ModelState.Remove(nameof(Project.StartDate));
-            ModelState.Remove(nameof(Project.CreatedAt));
-            ModelState.Remove(nameof(Project.UpdatedAt));
+            RemoveModelStateEntries(
+                nameof(Project.Property),
+                nameof(Project.User),
+                nameof(Project.PropertyId),
+                nameof(Project.UserId),
+                nameof(Project.StartDate),
+                nameof(Project.CreatedAt),
+                nameof(Project.UpdatedAt));
 
             if (ModelState.IsValid)
             {

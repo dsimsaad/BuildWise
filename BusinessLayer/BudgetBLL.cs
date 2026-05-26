@@ -3,9 +3,7 @@ using BuildWise.DataLayer;
 
 namespace BuildWise.BusinessLayer
 {
-    /// <summary>
-    /// Business Logic Layer for Budget management
-    /// </summary>
+    // Handles budget rules.
     public class BudgetBLL
     {
         private BudgetDAL dal;
@@ -29,7 +27,7 @@ namespace BuildWise.BusinessLayer
 
         public bool AddBudget(BudgetItem item)
         {
-            // Simple validation: Category must not be empty, Amount must be positive
+            // Check category and amount.
             if (string.IsNullOrWhiteSpace(item.Category) || item.Amount <= 0)
             {
                 return false;

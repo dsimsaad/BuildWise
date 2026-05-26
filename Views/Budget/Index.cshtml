@@ -300,7 +300,7 @@
         <h1>Budget & Expenses</h1>
         <p>Track your project finances, monitor costs, and prevent overspending.</p>
     </div>
-    
+
     <div class="segmented-control">
         <button class="seg-btn active" data-tab="overview" type="button">Overview</button>
         <button class="seg-btn" data-tab="budgets" type="button">Manage Budgets</button>
@@ -312,7 +312,7 @@
     <strong>No Project Selected!</strong> Please select a project from the top navigation dropdown to manage budgets and expenses.
 </div>
 
-<!-- Summary Cards -->
+<!-- Summary cards -->
 <div class="summary-grid" style="margin-bottom: 32px;">
     <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
         <div class="sum-icon" style="background: #EFF6FF; color: #1D4ED8;">
@@ -352,9 +352,9 @@
     </div>
 </div>
 
-<!-- Overview Tab -->
+<!-- Overview tab -->
 <div id="tab-overview" class="tab-section active">
-    
+
     <div class="budget-limit-card">
         <div class="budget-limit-inner">
             <div class="budget-limit-title">
@@ -406,7 +406,7 @@
     </div>
 </div>
 
-<!-- Budgets Tab -->
+<!-- Budgets tab -->
 <div id="tab-budgets" class="tab-section">
     <div class="split-grid">
         <div class="scaffold-form-card" style="margin: 0; position: sticky; top: 24px;">
@@ -453,7 +453,7 @@
                             </tr>
                         </thead>
                         <tbody id="budget-list">
-                            <!-- JS populated -->
+                            <!-- Filled by JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -462,7 +462,7 @@
     </div>
 </div>
 
-<!-- Expenses Tab -->
+<!-- Expenses tab -->
 <div id="tab-expenses" class="tab-section">
     <div class="split-grid">
         <div class="scaffold-form-card" style="margin: 0; position: sticky; top: 24px;">
@@ -519,7 +519,7 @@
                             </tr>
                         </thead>
                         <tbody id="expense-list">
-                            <!-- JS populated -->
+                            <!-- Filled by JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -539,7 +539,7 @@
         function switchTab(tabId, trigger = null) {
             document.querySelectorAll('.tab-section').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
-            
+
             document.getElementById('tab-' + tabId).classList.add('active');
             const activeButton = trigger || document.querySelector(`.seg-btn[data-tab="${tabId}"]`);
             if (activeButton) activeButton.classList.add('active');
@@ -706,7 +706,7 @@
             currentBudgets = data.budgets || [];
             currentExpenses = data.expenses || [];
             refreshBudgetCategoryOptions(document.getElementById('budget-id').value ? document.getElementById('budget-category').value : '');
-            
+
             if (!data.selectedProjectId) {
                 document.getElementById('no-project-warning').style.display = 'block';
                 document.querySelectorAll('button[type="submit"], .btn-primary').forEach(b => b.disabled = true);
@@ -715,20 +715,20 @@
                 document.querySelectorAll('button[type="submit"], .btn-primary').forEach(b => b.disabled = false);
             }
 
-            // Update Stats
+            // Update stats.
             const displayTotalBudget = data.projectTotalBudget > 0 ? data.projectTotalBudget : data.totalBudget;
-            
+
             document.getElementById('input-total-project-budget').value = data.projectTotalBudget;
             document.getElementById('stat-total-budget').innerText = formatPKR(displayTotalBudget);
             document.getElementById('stat-total-spent').innerText = formatPKR(data.totalSpent);
             const remaining = displayTotalBudget - data.totalSpent;
             document.getElementById('stat-remaining').innerText = formatPKR(remaining);
             document.getElementById('stat-remaining').style.color = remaining < 0 ? '#EF4444' : '#10B981';
-            
+
             const percent = displayTotalBudget > 0 ? (data.totalSpent / displayTotalBudget * 100).toFixed(1) : 0;
             document.getElementById('stat-percent').innerText = `${percent}%`;
 
-            // Populating Budget Table
+            // Fill the budget table.
             const budgetList = document.getElementById('budget-list');
             if (data.budgets.length === 0) {
                 budgetList.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #94A3B8; padding: 32px;">No budgets allocated yet.</td></tr>';
@@ -751,7 +751,7 @@
                 `).join('');
             }
 
-            // Populating Expense Table
+            // Fill the expense table.
             const expenseList = document.getElementById('expense-list');
             if (data.expenses.length === 0) {
                 expenseList.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94A3B8; padding: 32px;">No expenses recorded yet.</td></tr>';
@@ -842,11 +842,11 @@
                         }
                     ]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
                     indexAxis: 'y',
-                    scales: { 
+                    scales: {
                         x: {
                             beginAtZero: true,
                             grid: { color: '#EEF2F7', drawTicks: false },
@@ -897,11 +897,11 @@
                         spacing: 2
                     }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
                     cutout: '66%',
-                    plugins: { 
+                    plugins: {
                         legend: { display: false },
                         tooltip: {
                             enabled: true,
@@ -947,14 +947,14 @@
                 body: JSON.stringify(payload)
             });
             const result = await req.json();
-            
+
             if (!result.success) {
                 alert(result.message || 'Failed to add budget.');
                 btn.innerText = originalText;
                 btn.disabled = false;
                 return;
             }
-            
+
             await loadData();
             resetBudgetForm();
             btn.innerText = originalText;
@@ -966,7 +966,7 @@
             const expenseId = document.getElementById('expense-id').value;
             const categorySelect = document.getElementById('expense-category').value;
             const category = categorySelect === 'custom' ? document.getElementById('expense-custom').value : categorySelect;
-            
+
             const btn = e.target.querySelector('button[type="submit"]');
             const originalText = btn.innerText;
             btn.innerText = expenseId ? 'Updating...' : 'Recording...';
@@ -986,14 +986,14 @@
                 body: JSON.stringify(payload)
             });
             const result = await req.json();
-            
+
             if (!result.success) {
                 alert(result.message || 'Failed to add expense.');
                 btn.innerText = originalText;
                 btn.disabled = false;
                 return;
             }
-            
+
             await loadData();
             resetExpenseForm();
             btn.innerText = originalText;
@@ -1027,7 +1027,7 @@
         async function saveTotalProjectBudget() {
             const amount = parseFloat(document.getElementById('input-total-project-budget').value);
             if (isNaN(amount)) return;
-            
+
             const btn = event.target;
             const originalText = btn.innerText;
             btn.innerText = 'Updating...';
@@ -1039,13 +1039,13 @@
                 body: JSON.stringify(amount)
             });
             const result = await req.json();
-            
+
             if (!result.success) {
                 alert(result.message || 'Failed to update total budget.');
             } else {
                 await loadData();
             }
-            
+
             btn.innerText = originalText;
             btn.disabled = false;
         }

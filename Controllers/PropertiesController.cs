@@ -1,5 +1,4 @@
 using System;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +11,7 @@ using BuildWise.Services;
 namespace BuildWise.Controllers
 {
     [Authorize]
-    public class PropertiesController : Controller
+    public class PropertiesController : BaseController
     {
         private readonly PropertyBLL _propertyBll;
         private readonly BuildWiseDbContext _context; // For dropdowns
@@ -23,11 +22,6 @@ namespace BuildWise.Controllers
             _propertyBll = propertyBll;
             _context = context;
             _propertyPhaseSchema = propertyPhaseSchema;
-        }
-
-        private int GetCurrentUserId()
-        {
-            return int.Parse(User.FindFirstValue("UserId") ?? "0");
         }
 
         public async Task<IActionResult> Index()
@@ -61,14 +55,7 @@ namespace BuildWise.Controllers
             var userId = GetCurrentUserId();
             property.UserId = userId;
             
-            // Remove navigation properties from model state validation
-            ModelState.Remove("User");
-            ModelState.Remove("Project");
-            ModelState.Remove("Type");
-            ModelState.Remove("Status");
-            ModelState.Remove("AreaUnit");
-            ModelState.Remove("Projects");
-            ModelState.Remove("Phases");
+            RemovePropertyModelStateEntries();
 
             await ValidateProjectSelectionAsync(property.ProjectId, userId);
 
@@ -107,13 +94,7 @@ namespace BuildWise.Controllers
 
             var userId = GetCurrentUserId();
 
-            ModelState.Remove("User");
-            ModelState.Remove("Project");
-            ModelState.Remove("Type");
-            ModelState.Remove("Status");
-            ModelState.Remove("AreaUnit");
-            ModelState.Remove("Projects");
-            ModelState.Remove("Phases");
+            RemovePropertyModelStateEntries();
 
             await ValidateProjectSelectionAsync(property.ProjectId, userId);
 
@@ -157,6 +138,11 @@ namespace BuildWise.Controllers
             ViewData["TypeId"] = new SelectList(_context.Set<PropertyType>().AsNoTracking(), "TypeId", "TypeName", property?.TypeId);
             ViewData["StatusId"] = new SelectList(_context.Set<PropertyStatus>().AsNoTracking(), "StatusId", "StatusName", property?.StatusId);
             ViewData["AreaUnitId"] = new SelectList(_context.Set<AreaUnit>().AsNoTracking(), "UnitId", "UnitName", property?.AreaUnitId);
+        }
+
+        private void RemovePropertyModelStateEntries()
+        {
+            RemoveModelStateEntries("User", "Project", "Type", "Status", "AreaUnit", "Projects", "Phases");
         }
 
         private async System.Threading.Tasks.Task ValidateProjectSelectionAsync(int? projectId, int userId)

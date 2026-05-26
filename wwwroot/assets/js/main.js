@@ -1,4 +1,4 @@
-// === LOGIN PAGE TOGGLE ===
+// Login page toggle.
 const container = document.getElementById("container");
 const signUpBtn = document.getElementById("signUp");
 const signInBtn = document.getElementById("signIn");
@@ -13,7 +13,7 @@ if (container && signUpBtn && signInBtn) {
     });
 }
 
-// === MOBILE MENU ===
+// Mobile menu.
 const mobileToggle = document.getElementById("mobile-toggle");
 const mobileMenu = document.getElementById("mobile-menu");
 
@@ -23,7 +23,7 @@ if (mobileToggle && mobileMenu) {
         mobileToggle.classList.toggle("active");
     });
 
-    // Close menu when clicking a link
+    // Close menu after a link click.
     const mobileLinks = mobileMenu.querySelectorAll("a");
     mobileLinks.forEach(link => {
         link.addEventListener("click", () => {
@@ -33,7 +33,7 @@ if (mobileToggle && mobileMenu) {
     });
 }
 
-// === SCROLL REVEAL ANIMATION ===
+// Scroll reveal.
 const revealElements = document.querySelectorAll(".reveal");
 if (revealElements.length && "IntersectionObserver" in window) {
     const revealObserver = new IntersectionObserver((entries) => {
@@ -53,7 +53,7 @@ if (revealElements.length && "IntersectionObserver" in window) {
     revealElements.forEach(el => el.classList.add("active"));
 }
 
-// === LAZY LOAD ANIMATED ICON RUNTIME ===
+// Load animated icons.
 const lordIcons = document.querySelectorAll("lord-icon");
 if (lordIcons.length) {
     const loadLordIconRuntime = () => {
@@ -84,7 +84,7 @@ if (lordIcons.length) {
     }
 }
 
-// === BACK TO TOP BUTTON ===
+// Back to top button.
 const backToTopBtn = document.getElementById("backToTop");
 
 if (backToTopBtn) {
@@ -105,7 +105,7 @@ if (backToTopBtn) {
     });
 }
 
-// === DASHBOARD SCROLL ANIMATION (index.html) ===
+// Dashboard scroll animation.
 const scrollContainer = document.getElementById('scroll-container');
 const scrollWrapper = document.getElementById('scroll-wrapper');
 const heroHeader = document.getElementById('hero-header');
@@ -114,11 +114,11 @@ if (scrollContainer && scrollWrapper) {
     const updateScrollAnimation = () => {
         const rect = scrollContainer.getBoundingClientRect();
         const windowHeight = window.innerHeight;
-        
+
         let progress = 0;
         const start = windowHeight;
         const end = windowHeight * 0.2;
-        
+
         if (rect.top <= start && rect.top >= end) {
             progress = (start - rect.top) / (start - end);
         } else if (rect.top < end) {
@@ -127,16 +127,16 @@ if (scrollContainer && scrollWrapper) {
 
         const easeProgress = 1 - Math.pow(1 - progress, 3);
         const rotateX = 20 - (easeProgress * 20);
-        
+
         const isMobile = window.innerWidth <= 768;
         const startScale = isMobile ? 0.7 : 1.05;
         const endScale = isMobile ? 0.9 : 1.0;
         const scale = startScale + (endScale - startScale) * easeProgress;
-        
+
         const translateY = 0 - (easeProgress * 100);
 
         scrollWrapper.style.transform = `translateY(${translateY}px) rotateX(${rotateX}deg) scale(${scale})`;
-        
+
         if (heroHeader) {
             heroHeader.style.transform = `translateY(${translateY}px)`;
         }
@@ -156,7 +156,7 @@ if (scrollContainer && scrollWrapper) {
     updateScrollAnimation();
 }
 
-// === HIGHLIGHT ACTIVE NAV LINK ===
+// Highlight active nav link.
 const navLinks = document.querySelectorAll(".nav-links a, .mobile-nav-overlay a");
 const currentPath = window.location.pathname.split("/").pop() || "index.html";
 

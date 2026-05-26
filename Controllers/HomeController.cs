@@ -4,13 +4,12 @@ using BuildWise.Models;
 using BuildWise.BusinessLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using System.Globalization;
 using BuildWise.Services;
 
 namespace BuildWise.Controllers;
 
-public class HomeController : Controller
+public class HomeController : BaseController
 {
     private readonly BuildWiseDbContext _context;
     private readonly IConfiguration _configuration;
@@ -93,14 +92,12 @@ public class HomeController : Controller
     {
         await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
         await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
-        await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
 
-        // 1. Get current User ID from claims
-        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-        if (userIdClaim == null) return RedirectToAction("Index", "Account");
-        int userId = int.Parse(userIdClaim.Value);
+        // Get the current user.
+        int userId = GetCurrentUserId();
+        if (userId == 0) return RedirectToAction("Index", "Account");
 
-        // 2. Fetch Selected Project and Verify Ownership
+        // Load the selected project.
         int? selectedProjectId = overall ? null : HttpContext.Session.GetInt32("SelectedProjectId");
         if (overall)
         {
@@ -133,7 +130,7 @@ public class HomeController : Controller
         }
         ViewBag.SelectedProjectId = selectedProjectId;
 
-        // 3. Base Queries Filtered by User
+        // Build user-scoped queries.
         var projectQuery = _context.Projects.AsNoTracking().Where(p => p.UserId == userId);
         var taskQuery    = _context.Tasks.AsNoTracking().Where(t => t.Phase.Project.UserId == userId);
         var vwDashQuery  = from v in _context.VwProjectDashboards.AsNoTracking()
@@ -153,7 +150,7 @@ public class HomeController : Controller
         var transactionBll = new TransactionBLL(connectionString);
         var advisorBll = new AdvisorBLL(connectionString);
 
-        // 4. Populate Stats
+        // Fill dashboard stats.
         if (selectedProjectId.HasValue)
         {
             var activeStats = await vwDashQuery.FirstOrDefaultAsync(v => v.ProjectId == selectedProjectId);
@@ -246,7 +243,7 @@ public class HomeController : Controller
             ViewBag.Projects = allStats;
         }
 
-        // 5. Common Data
+        // Fill shared dashboard data.
         ViewBag.RecentExpensesList = transactionBll
             .GetFilteredTransactions("", "", null, null, selectedProjectId, userId)
             .Where(t => !string.Equals(t.Category, "Project Budget", StringComparison.OrdinalIgnoreCase))
@@ -287,11 +284,10 @@ public class HomeController : Controller
         await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
         await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
 
-        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-        if (userIdClaim == null) return Unauthorized();
-        int userId = int.Parse(userIdClaim.Value);
+        int userId = GetCurrentUserId();
+        if (userId == 0) return Unauthorized();
 
-        int? selectedProjectId = overall ? null : HttpContext.Session.GetInt32("SelectedProjectId");
+        int? selectedProjectId = overall ? null : GetSelectedProjectId();
         if (selectedProjectId.HasValue)
         {
             bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId);
@@ -369,11 +365,10 @@ public class HomeController : Controller
     {
         await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
 
-        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-        if (userIdClaim == null) return Unauthorized();
-        int userId = int.Parse(userIdClaim.Value);
+        int userId = GetCurrentUserId();
+        if (userId == 0) return Unauthorized();
 
-        int? selectedProjectId = options.Overall ? null : HttpContext.Session.GetInt32("SelectedProjectId");
+        int? selectedProjectId = options.Overall ? null : GetSelectedProjectId();
         if (selectedProjectId.HasValue)
         {
             bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId);

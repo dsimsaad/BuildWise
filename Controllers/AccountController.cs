@@ -11,19 +11,13 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace BuildWise.Controllers
 {
-    public class AccountController : Controller
+    public class AccountController : BaseController
     {
         private readonly BuildWiseDbContext _context;
 
         public AccountController(BuildWiseDbContext context)
         {
             _context = context;
-        }
-
-        private int GetUserId()
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
         private async Task<Project> EnsureDefaultProjectAsync(User user)
@@ -133,14 +127,14 @@ namespace BuildWise.Controllers
                     return BadRequest(new { success = false, message = "Firebase authentication is not configured on the server. Add firebase-admin-sdk.json to the project root or set Firebase:ServiceAccountPath." });
                 }
 
-                // 1. Verify the ID Token
+                // Verify the token.
                 var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(request.IdToken);
                 string email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString()! : "";
                 
-                // Determine the best name to use
+                // Pick the display name.
                 string name = request.Name ?? request.FullName ?? "";
                 
-                // If name from request is empty or just the email, look in claims
+                // Use claims when the request name is missing.
                 if (string.IsNullOrWhiteSpace(name) || name.Contains("@"))
                 {
                     if (decodedToken.Claims.ContainsKey("name") && !decodedToken.Claims["name"].ToString()!.Contains("@"))
@@ -149,7 +143,7 @@ namespace BuildWise.Controllers
                     }
                 }
 
-                // Final fallback: Email prefix
+                // Fall back to the email prefix.
                 if (string.IsNullOrWhiteSpace(name) || name.Contains("@"))
                 {
                     name = email.Contains("@") ? email.Split('@')[0] : "User";
@@ -160,12 +154,12 @@ namespace BuildWise.Controllers
                     return BadRequest(new { success = false, message = "Email not found in token or claims." });
                 }
 
-                // 2. Check if user exists in local SQL DB
+                // Check the local user.
                 var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
 
                 if (user == null)
                 {
-                    // Create new user if they don't exist
+                    // Create the user if needed.
                     user = new User
                     {
                         Email = email,
@@ -182,7 +176,7 @@ namespace BuildWise.Controllers
                 var activeProject = await EnsureDefaultProjectAsync(user);
                 HttpContext.Session.SetInt32("SelectedProjectId", activeProject.ProjectId);
 
-                // 3. Create Local Cookie Session
+                // Create the local session.
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.FullName),
@@ -299,7 +293,7 @@ namespace BuildWise.Controllers
             [JsonPropertyName("name")]
             public string? Name { get; set; }
             
-            // Adding a fallback property name in case the serializer is picky
+            // Add a fallback property name.
             [JsonPropertyName("fullName")]
             public string? FullName { get; set; }
         }
