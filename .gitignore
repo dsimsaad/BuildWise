@@ -63,3 +63,9 @@ secrets.json
 
 ## Publish output
 publish/
+
+## Local runtime artifacts
+App_Data/DataProtection-Keys/
+run.out.log
+run.err.log
+test-*-screenshot.png

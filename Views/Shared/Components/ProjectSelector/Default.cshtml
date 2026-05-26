@@ -264,4 +264,57 @@
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    @@media (max-width: 760px) {
+        .project-selector-wrapper {
+            margin-right: 0;
+            width: 100%;
+        }
+
+        .project-selector-trigger {
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            min-height: 38px;
+            padding: 7px 10px;
+        }
+
+        .project-selector-info {
+            max-width: 100%;
+        }
+
+        .project-selector-info .value {
+            max-width: 100%;
+            font-size: 0.8rem;
+        }
+
+        .project-tag {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.58rem;
+            padding: 2px 6px;
+        }
+
+        .project-dropdown {
+            position: fixed;
+            top: 58px;
+            left: 12px;
+            right: 12px;
+            width: auto;
+            max-height: min(420px, calc(100vh - 150px));
+            border-radius: 8px;
+            z-index: 2600;
+        }
+
+        .dropdown-item {
+            min-height: 42px;
+        }
+
+        .project-action-link {
+            width: 34px;
+            height: 34px;
+        }
+    }
 </style>

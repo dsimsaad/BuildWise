@@ -1801,3 +1801,357 @@ body.dashboard-body {
     background: #F1F5F9;
     margin: 4px 6px;
 }
+
+/* Mobile app layout */
+@media (max-width: 760px) {
+    body.dashboard-body {
+        padding-bottom: 74px;
+        background: #F6F9FE;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: clip;
+    }
+
+    html {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: clip;
+    }
+
+    .dash-container,
+    .dash-wrapper,
+    .dash-main,
+    .dash-content {
+        width: 100%;
+        max-width: 100%;
+        display: block;
+        overflow-x: clip;
+        box-sizing: border-box;
+    }
+
+    .dash-sidebar {
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 68px;
+        border-right: 0;
+        border-top: 1px solid var(--dash-border);
+        border-bottom: 0;
+        box-shadow: 0 -10px 28px -22px rgba(15, 23, 42, 0.45);
+        z-index: 2400;
+    }
+
+    .sidebar-header {
+        display: none;
+    }
+
+    .sidebar-nav {
+        position: static;
+        height: 100%;
+        min-height: 0;
+        max-height: none;
+        padding: 7px 8px 8px;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 4px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        overscroll-behavior-x: contain;
+        overscroll-behavior-y: none;
+        background: #FFFFFF;
+        border-bottom: 0;
+        box-shadow: none;
+        scrollbar-width: none;
+        touch-action: pan-x;
+    }
+
+    .sidebar-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-group-title {
+        display: none !important;
+    }
+
+    .sidebar-link {
+        flex: 0 0 70px;
+        width: 70px;
+        height: 52px;
+        min-height: 52px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 4px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .sidebar-link span {
+        display: block !important;
+        max-width: 62px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.62rem;
+        line-height: 1;
+        font-weight: 700;
+    }
+
+    .sidebar-link svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    .sidebar-link.active {
+        border-color: #BFDBFE;
+        background: #EFF6FF;
+    }
+
+    .sidebar-link.active::before {
+        display: none;
+    }
+
+    .dash-main {
+        margin-left: 0;
+        padding-top: 0;
+        min-width: 0;
+    }
+
+    .dash-topbar {
+        height: auto;
+        min-height: 60px;
+        top: 0;
+        padding: 10px 12px;
+        gap: 8px;
+        align-items: center;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .dash-topbar > div:first-child {
+        min-width: 0;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .topbar-right {
+        width: 40px;
+        min-width: 40px;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .user-profile {
+        padding: 3px;
+        width: 40px;
+        justify-content: center;
+    }
+
+    .user-avatar {
+        width: 34px;
+        height: 34px;
+    }
+
+    .user-info {
+        display: none;
+    }
+
+    .profile-menu {
+        position: fixed;
+        top: 58px;
+        right: 12px;
+        width: min(220px, calc(100vw - 24px));
+        z-index: 2600;
+    }
+
+    .dash-content {
+        padding: 14px 12px 88px;
+        min-width: 0;
+    }
+
+    .content-header,
+    .db-page-header {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 14px;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .content-header h1,
+    .db-title-block h1,
+    .db-page-title-block h1 {
+        font-size: 1.25rem;
+        line-height: 1.2;
+    }
+
+    .db-subtitle {
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .db-page-header > div:last-child,
+    .db-page-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .db-report-btn,
+    .db-overall-btn,
+    .db-report-btn.db-slide-btn,
+    .db-overall-btn.db-slide-btn {
+        flex: 1 1 150px;
+        justify-content: center;
+        min-width: 0;
+    }
+
+    .db-kpi-row,
+    .db-mid-row,
+    .db-bottom-row {
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .db-kpi-inner {
+        padding: 15px 13px 12px;
+        gap: 10px;
+    }
+
+    .db-kpi-icon {
+        width: 38px;
+        height: 38px;
+    }
+
+    .db-kpi-value {
+        font-size: 1.28rem;
+    }
+
+    .db-kpi-value--lg {
+        font-size: 1.08rem;
+    }
+
+    .dashboard-body .db-kpi-dropdown {
+        right: 10px;
+        min-width: min(190px, calc(100vw - 24px));
+        max-width: calc(100vw - 24px);
+    }
+
+    .db-card-header {
+        padding: 16px 14px 0;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .db-construction-body,
+    .db-advisor-body,
+    .db-dist-body {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .db-construction-stats,
+    .db-phase-grid,
+    .db-advisor-trigger-grid,
+    .db-cat-grid,
+    .db-feature-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .db-feature-cards {
+        display: grid;
+    }
+
+    .db-feat-card,
+    .db-advisor-trigger,
+    .db-upcoming-item {
+        align-items: flex-start;
+    }
+
+    .db-upcoming-item {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .db-donut-wrap {
+        min-width: 0;
+        height: 210px;
+    }
+
+    .db-donut-center {
+        width: 128px;
+    }
+
+    .db-table {
+        min-width: 380px;
+    }
+
+    .db-card--recent {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .db-chart-area {
+        height: 210px;
+        padding-inline: 8px;
+    }
+
+    .db-report-modal {
+        align-items: flex-end;
+        padding: 12px;
+    }
+
+    .db-report-dialog {
+        width: 100%;
+        max-height: calc(100vh - 24px);
+        overflow-y: auto;
+        border-radius: 10px 10px 6px 6px;
+    }
+
+    .db-report-dialog-head,
+    .db-report-options,
+    .db-report-dialog-actions {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .db-report-options {
+        grid-template-columns: 1fr;
+    }
+
+    .db-report-dialog-actions {
+        flex-direction: column-reverse;
+    }
+
+    .db-report-secondary,
+    .db-report-primary {
+        width: 100%;
+        min-height: 42px;
+    }
+}
+
+@media (max-width: 420px) {
+    .dash-content {
+        padding-inline: 10px;
+    }
+
+    .sidebar-link {
+        flex-basis: 64px;
+        width: 64px;
+    }
+
+    .sidebar-link span {
+        max-width: 58px;
+        font-size: 0.58rem;
+    }
+
+    .db-kpi-badge-pair {
+        flex-wrap: wrap;
+    }
+}

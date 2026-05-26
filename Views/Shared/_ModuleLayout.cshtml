@@ -147,15 +147,24 @@
 
         const sidebarNav = document.querySelector('.sidebar-nav');
         if (sidebarNav) {
-            const sidebarScrollKey = 'buildwise.sidebar.scrollTop';
-            const savedScrollTop = Number(sessionStorage.getItem(sidebarScrollKey) || 0);
-            if (savedScrollTop > 0) {
-                sidebarNav.scrollTop = savedScrollTop;
+            const sidebarScrollKey = window.matchMedia('(max-width: 760px)').matches
+                ? 'buildwise.sidebar.scrollLeft'
+                : 'buildwise.sidebar.scrollTop';
+            const savedScroll = Number(sessionStorage.getItem(sidebarScrollKey) || 0);
+            if (savedScroll > 0) {
+                if (window.matchMedia('(max-width: 760px)').matches) {
+                    sidebarNav.scrollLeft = savedScroll;
+                } else {
+                    sidebarNav.scrollTop = savedScroll;
+                }
             }
 
             let scrollTimer;
             sidebarNav.addEventListener('scroll', function () {
-                sessionStorage.setItem(sidebarScrollKey, String(sidebarNav.scrollTop));
+                const currentScroll = window.matchMedia('(max-width: 760px)').matches
+                    ? sidebarNav.scrollLeft
+                    : sidebarNav.scrollTop;
+                sessionStorage.setItem(sidebarScrollKey, String(currentScroll));
                 sidebarNav.classList.add('is-scrolling');
                 clearTimeout(scrollTimer);
                 scrollTimer = setTimeout(function () {

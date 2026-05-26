@@ -77,3 +77,91 @@
   .contact-info { flex: 1; width: 100%; }
   .form-row { grid-template-columns: 1fr; gap: 0; }
 }
+
+@media (max-width: 640px) {
+  .dash-content.marketing-page-content {
+    overflow-x: hidden;
+  }
+
+  .faq-hero {
+    padding: 46px 18px 30px;
+  }
+
+  .faq-hero h1,
+  .contact-info h1 {
+    letter-spacing: 0;
+  }
+
+  .faq-body {
+    padding: 24px 14px 64px;
+  }
+
+  .faq-filters {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .faq-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-btn {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .faq-question {
+    padding: 18px 4px;
+    font-size: 14px;
+  }
+
+  .faq-answer-inner {
+    padding: 0 28px 18px 4px;
+    font-size: 13px;
+  }
+
+  .faq-cta {
+    margin-top: 36px;
+    padding: 28px 20px;
+  }
+
+  .contact-section {
+    padding: 46px 14px 72px;
+  }
+
+  .contact-wrapper {
+    gap: 28px;
+  }
+
+  .contact-info h1 {
+    font-size: 34px;
+  }
+
+  .contact-info > p {
+    margin-bottom: 26px;
+  }
+
+  .details-card,
+  .contact-form-card {
+    padding: 22px;
+  }
+
+  .contact-form-card h2 {
+    margin-bottom: 22px;
+    font-size: 20px;
+  }
+
+  .detail-item {
+    gap: 12px;
+  }
+
+  .input-group input,
+  .input-group textarea {
+    font-size: 16px;
+  }
+}

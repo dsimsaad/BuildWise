@@ -969,6 +969,299 @@ select.form-control {
     text-decoration: none;
 }
 
+/* Mobile module layout */
+@media (max-width: 760px) {
+    .module-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .budget-header {
+        align-items: stretch !important;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 16px !important;
+    }
+
+    .module-title h1,
+    .scaffold-page h1 {
+        font-size: 1.28rem;
+        line-height: 1.2;
+    }
+
+    .module-title p,
+    .scaffold-page h4 {
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .module-header .entity-actions,
+    .entity-actions {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+
+    .module-header .btn-create,
+    .module-header .btn-primary,
+    .module-header .btn-secondary,
+    .entity-actions .btn-create,
+    .entity-actions .btn-primary,
+    .entity-actions .btn-secondary {
+        flex: 0 1 auto;
+        min-width: 0;
+        margin-bottom: 0;
+        justify-content: center;
+    }
+
+    .module-header .btn-create,
+    .module-header .btn-primary,
+    .module-header .btn-secondary,
+    .entity-actions .btn-create,
+    .entity-actions .btn-primary,
+    .entity-actions .btn-secondary,
+    .btn-create,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .back-link,
+    .cssbuttons-io-button {
+        min-height: 36px;
+        height: 36px;
+        width: auto;
+        max-width: 100%;
+        padding: 0 12px;
+        border-radius: 7px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1;
+        box-shadow: none;
+    }
+
+    .cssbuttons-io-button {
+        padding-left: 14px;
+        padding-right: 42px;
+    }
+
+    .cssbuttons-io-button .icon {
+        width: 28px;
+        height: 28px;
+        right: 4px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(29, 78, 216, 0.18);
+    }
+
+    .cssbuttons-io-button .icon svg {
+        width: 14px;
+    }
+
+    .cssbuttons-io-button:hover .icon {
+        width: 28px;
+    }
+
+    .module-header .entity-actions .btn-create,
+    .module-header .entity-actions .btn-secondary {
+        flex: 1 1 0;
+    }
+
+    .module-header .entity-actions .btn-secondary:first-child:nth-last-child(2),
+    .module-header .entity-actions .btn-secondary:first-child:nth-last-child(2) ~ .btn-create {
+        max-width: none;
+    }
+
+    .segmented-control {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 3px;
+        padding: 3px;
+        border-radius: 8px;
+    }
+
+    .seg-btn {
+        min-width: 0;
+        min-height: 34px;
+        padding: 6px 5px;
+        border-radius: 7px;
+        font-size: 0.62rem;
+        line-height: 1.15;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .summary-grid,
+    .entity-grid,
+    .form-grid,
+    .detail-grid,
+    .content-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+
+    .sum-card {
+        min-height: 82px;
+        padding: 14px;
+    }
+
+    .sum-icon {
+        width: 38px;
+        height: 38px;
+    }
+
+    .sum-info p {
+        font-size: 1.12rem;
+    }
+
+    .module-card,
+    .scaffold-form-card,
+    .scaffold-detail-card,
+    .empty-state,
+    .entity-card,
+    .filter-bar {
+        border-radius: 8px !important;
+    }
+
+    .card-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+        padding: 16px 14px;
+    }
+
+    .card-body,
+    .scaffold-form-card,
+    .scaffold-detail-card {
+        padding: 16px;
+        max-width: none;
+        width: 100%;
+    }
+
+    .scaffold-form-card[style] {
+        position: static !important;
+        top: auto !important;
+    }
+
+    .filter-bar {
+        display: grid;
+        grid-template-columns: 1fr;
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .filter-group {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .filter-bar .btn-primary,
+    .filter-bar .btn-secondary {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+    }
+
+    .tab-buttons {
+        overflow-x: auto;
+        padding-bottom: 4px;
+        margin-bottom: 16px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .tab-buttons::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab-btn {
+        flex: 0 0 auto;
+        min-height: 38px;
+        padding: 8px 14px;
+        white-space: nowrap;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+
+    .modern-table,
+    .scaffold-table {
+        min-width: 640px;
+    }
+
+    .modern-table th,
+    .modern-table td,
+    .scaffold-table th,
+    .scaffold-table td {
+        padding: 11px 12px;
+        white-space: nowrap;
+    }
+
+    .action-btns,
+    .scaffold-table .action-links {
+        gap: 8px;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .form-actions .btn-primary,
+    .form-actions .btn-secondary,
+    .form-actions .btn-danger,
+    .form-actions .back-link {
+        width: 100%;
+        min-height: 40px;
+        justify-content: center;
+    }
+
+    .detail-row,
+    .scaffold-detail-card dl {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .detail-row {
+        padding: 12px 0;
+    }
+
+    .scaffold-detail-card dt {
+        border-bottom: 0;
+        padding-bottom: 2px;
+    }
+
+    .scaffold-detail-card dd {
+        padding-top: 0;
+    }
+
+    .advisor-card {
+        padding: 14px;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 420px) {
+    .module-header .entity-actions,
+    .entity-actions {
+        flex-wrap: wrap;
+    }
+
+    .entity-meta li {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+    }
+}
+
 /* Back link */
 .back-link {
     display: inline-flex;
@@ -1256,4 +1549,70 @@ button.cssbuttons-io-button {
     border-radius: var(--radius-lg) !important;
     border: 1px solid #D6E3F5 !important;
     box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24) !important;
+}
+
+@media (max-width: 760px) {
+    .module-header .entity-actions,
+    .entity-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .module-header .entity-actions > .btn-create,
+    .module-header .entity-actions > .btn-primary,
+    .module-header .entity-actions > .btn-secondary,
+    .module-header .entity-actions > .cssbuttons-io-button,
+    .entity-actions > .btn-create,
+    .entity-actions > .btn-primary,
+    .entity-actions > .btn-secondary,
+    .entity-actions > .cssbuttons-io-button {
+        flex: 0 1 auto;
+        width: auto;
+        min-width: 126px;
+        max-width: 100%;
+        height: 36px;
+        min-height: 36px;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-radius: 7px !important;
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1;
+        box-shadow: none;
+    }
+
+    .module-header .entity-actions:has(> :nth-child(2)) > .btn-create,
+    .module-header .entity-actions:has(> :nth-child(2)) > .btn-primary,
+    .module-header .entity-actions:has(> :nth-child(2)) > .btn-secondary,
+    .module-header .entity-actions:has(> :nth-child(2)) > .cssbuttons-io-button,
+    .entity-actions:has(> :nth-child(2)) > .btn-create,
+    .entity-actions:has(> :nth-child(2)) > .btn-primary,
+    .entity-actions:has(> :nth-child(2)) > .btn-secondary,
+    .entity-actions:has(> :nth-child(2)) > .cssbuttons-io-button {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .module-header .entity-actions > .cssbuttons-io-button,
+    .entity-actions > .cssbuttons-io-button {
+        padding-left: 12px;
+        padding-right: 40px;
+    }
+
+    .module-header .entity-actions > .cssbuttons-io-button .icon,
+    .entity-actions > .cssbuttons-io-button .icon {
+        width: 28px;
+        height: 28px;
+        right: 4px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(29, 78, 216, 0.18);
+    }
+
+    .module-header .entity-actions > .cssbuttons-io-button:hover .icon,
+    .entity-actions > .cssbuttons-io-button:hover .icon {
+        width: 28px;
+    }
 }

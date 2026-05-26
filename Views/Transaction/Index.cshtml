@@ -45,6 +45,110 @@
                 width: 100%;
             }
         }
+
+        @@media (max-width: 760px) {
+            .ledger-filter-bar {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+                padding: 14px;
+                align-items: stretch;
+            }
+
+            .ledger-filter-bar .filter-group {
+                width: 100%;
+            }
+
+            .ledger-filter-bar .filter-group:nth-child(5) {
+                grid-column: span 2;
+            }
+
+            .ledger-filter-bar .form-control {
+                min-height: 38px;
+                font-size: 0.78rem;
+            }
+
+            .ledger-filter-bar .btn-primary,
+            .ledger-filter-bar .btn-secondary {
+                width: 100%;
+                min-width: 0;
+                min-height: 38px;
+            }
+
+            .ledger-table-card .card-body {
+                padding: 12px;
+            }
+
+            .ledger-table-card .table-responsive {
+                overflow-x: hidden;
+            }
+
+            .ledger-table-card .modern-table {
+                min-width: 0;
+                border-collapse: separate;
+                border-spacing: 0 10px;
+            }
+
+            .ledger-table-card .modern-table thead {
+                display: none;
+            }
+
+            .ledger-table-card .modern-table,
+            .ledger-table-card .modern-table tbody,
+            .ledger-table-card .modern-table tr,
+            .ledger-table-card .modern-table td {
+                display: block;
+                width: 100%;
+            }
+
+            .ledger-table-card .modern-table tr {
+                border: 1px solid #D6E3F5;
+                border-radius: 8px;
+                background: #FFFFFF;
+                box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+                overflow: hidden;
+            }
+
+            .ledger-table-card .modern-table td {
+                display: grid;
+                grid-template-columns: minmax(96px, 38%) minmax(0, 1fr);
+                gap: 10px;
+                align-items: start;
+                padding: 10px 12px;
+                border-bottom: 1px solid #EEF2F7;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+
+            .ledger-table-card .modern-table td:last-child {
+                border-bottom: 0;
+            }
+
+            .ledger-table-card .modern-table td::before {
+                content: attr(data-label);
+                color: #64748B;
+                font-size: 0.68rem;
+                font-weight: 800;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+            }
+
+            .ledger-table-card .desc-cell {
+                max-width: none;
+                white-space: normal;
+                overflow: visible;
+                text-overflow: clip;
+            }
+        }
+
+        @@media (max-width: 420px) {
+            .ledger-filter-bar {
+                grid-template-columns: 1fr;
+            }
+
+            .ledger-filter-bar .filter-group:nth-child(5) {
+                grid-column: auto;
+            }
+        }
     </style>
 }
 
@@ -126,7 +230,7 @@
     </a>
 </div>
 
-<div class="module-card">
+<div class="module-card ledger-table-card">
     <div class="card-header">
         <h2>Historical Transaction Log</h2>
         <span class="badge badge-info">Read Only</span>
@@ -185,12 +289,12 @@
 
                 return `
                     <tr>
-                        <td><small>${new Date(t.transactionDate).toLocaleString()}</small></td>
-                        <td><span class="badge ${badgeClass}">${t.transactionType}</span></td>
-                        <td><strong>${t.category}</strong></td>
-                        <td>${formatPKR(t.amount)}</td>
-                        <td style="color:var(--text-muted)">${t.budgetEffect}% effect</td>
-                        <td class="desc-cell" title="${t.description || ''}">${t.description || '-'}</td>
+                        <td data-label="Date & Time"><small>${new Date(t.transactionDate).toLocaleString()}</small></td>
+                        <td data-label="Type"><span class="badge ${badgeClass}">${t.transactionType}</span></td>
+                        <td data-label="Category"><strong>${t.category}</strong></td>
+                        <td data-label="Amount">${formatPKR(t.amount)}</td>
+                        <td data-label="Budget Effect" style="color:var(--text-muted)">${t.budgetEffect}% effect</td>
+                        <td data-label="Description" class="desc-cell" title="${t.description || ''}">${t.description || '-'}</td>
                     </tr>
                 `;
             }).join('');
