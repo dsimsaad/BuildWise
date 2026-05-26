@@ -3,6 +3,7 @@
     ViewData["Title"] = "Add Phase";
     Layout = "_ModuleLayout";
     var phaseTypes = ViewBag.PhaseTypes as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var properties = ViewBag.ProjectProperties as IEnumerable<BuildWise.Models.Property> ?? Enumerable.Empty<BuildWise.Models.Property>();
 }
 
 @section Styles {
@@ -36,6 +37,18 @@
                         }
                     </select>
                     <span asp-validation-for="PhaseTypeId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="PropertyId">Property</label>
+                    <select asp-for="PropertyId" class="form-control" required>
+                        <option value="">Select property</option>
+                        @foreach (var property in properties)
+                        {
+                            <option value="@property.PropertyId">@property.PropertyName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="PropertyId" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BuildWise.Models;
 using BuildWise.BusinessLayer;
+using BuildWise.Services;
 
 namespace BuildWise.Controllers
 {
@@ -15,11 +16,13 @@ namespace BuildWise.Controllers
     {
         private readonly PropertyBLL _propertyBll;
         private readonly BuildWiseDbContext _context; // For dropdowns
+        private readonly PropertyPhaseSchemaService _propertyPhaseSchema;
 
-        public PropertiesController(PropertyBLL propertyBll, BuildWiseDbContext context)
+        public PropertiesController(PropertyBLL propertyBll, BuildWiseDbContext context, PropertyPhaseSchemaService propertyPhaseSchema)
         {
             _propertyBll = propertyBll;
             _context = context;
+            _propertyPhaseSchema = propertyPhaseSchema;
         }
 
         private int GetCurrentUserId()
@@ -65,6 +68,7 @@ namespace BuildWise.Controllers
             ModelState.Remove("Status");
             ModelState.Remove("AreaUnit");
             ModelState.Remove("Projects");
+            ModelState.Remove("Phases");
 
             await ValidateProjectSelectionAsync(property.ProjectId, userId);
 
@@ -109,6 +113,7 @@ namespace BuildWise.Controllers
             ModelState.Remove("Status");
             ModelState.Remove("AreaUnit");
             ModelState.Remove("Projects");
+            ModelState.Remove("Phases");
 
             await ValidateProjectSelectionAsync(property.ProjectId, userId);
 
@@ -117,6 +122,7 @@ namespace BuildWise.Controllers
                 try
                 {
                     await _propertyBll.UpdatePropertyAsync(property, userId);
+                    await SyncConstructionAfterPropertyStatusChangeAsync(property.PropertyId, userId);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -165,6 +171,55 @@ namespace BuildWise.Controllers
             {
                 ModelState.AddModelError(nameof(Property.ProjectId), "Select a valid project.");
             }
+        }
+
+        private async System.Threading.Tasks.Task SyncConstructionAfterPropertyStatusChangeAsync(int propertyId, int userId)
+        {
+            await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
+
+            var property = await _context.Properties
+                .Include(p => p.Status)
+                .FirstOrDefaultAsync(p => p.PropertyId == propertyId && p.UserId == userId);
+            if (property?.ProjectId == null)
+                return;
+
+            if (string.Equals(property.Status.StatusName, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                var completedTaskStatusId = await _context.TaskStatuses
+                    .Where(s => s.StatusName == "Completed")
+                    .Select(s => (byte?)s.StatusId)
+                    .FirstOrDefaultAsync() ?? 3;
+                var phases = await _context.Phases
+                    .Include(p => p.Tasks)
+                    .Where(p => p.PropertyId == propertyId && p.ProjectId == property.ProjectId.Value)
+                    .ToListAsync();
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                foreach (var phase in phases)
+                {
+                    phase.IsCompleted = true;
+                    phase.EndDate ??= today;
+                    foreach (var task in phase.Tasks)
+                    {
+                        task.StatusId = completedTaskStatusId;
+                        task.UpdatedAt = DateTime.Now;
+                    }
+                }
+            }
+
+            var propertyStatuses = await _context.Properties
+                .Where(p => p.UserId == userId && p.ProjectId == property.ProjectId.Value)
+                .Select(p => p.Status.StatusName)
+                .ToListAsync();
+            var allCompleted = propertyStatuses.Any() && propertyStatuses.All(s => string.Equals(s, "Completed", StringComparison.OrdinalIgnoreCase));
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == property.ProjectId.Value && p.UserId == userId);
+            if (project != null)
+            {
+                project.IsCompleted = allCompleted;
+                project.ActualEndDate = allCompleted ? DateOnly.FromDateTime(DateTime.Today) : null;
+                project.UpdatedAt = DateTime.Now;
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

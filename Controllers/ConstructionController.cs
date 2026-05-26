@@ -1,4 +1,5 @@
 using BuildWise.Models;
+using BuildWise.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,15 +10,18 @@ namespace BuildWise.Controllers
     public class ConstructionController : Controller
     {
         private readonly BuildWiseDbContext _context;
+        private readonly PropertyPhaseSchemaService _propertyPhaseSchema;
 
-        public ConstructionController(BuildWiseDbContext context)
+        public ConstructionController(BuildWiseDbContext context, PropertyPhaseSchemaService propertyPhaseSchema)
         {
             _context = context;
+            _propertyPhaseSchema = propertyPhaseSchema;
         }
 
         public async System.Threading.Tasks.Task<IActionResult> Index()
         {
             var userId = GetCurrentUserId();
+            await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
             var projectId = await GetValidSelectedProjectIdAsync(userId);
             if (projectId == null)
             {
@@ -43,6 +47,7 @@ namespace BuildWise.Controllers
             ViewBag.ProjectName = project?.ProjectName ?? "Selected Project";
             ViewBag.PropertyCount = project?.Properties.Count ?? 0;
             ViewBag.IsProjectCompleted = project?.IsCompleted == true;
+            ViewBag.ProjectProperties = await GetProjectPropertiesAsync(projectId.Value, userId);
 
             return View();
         }
@@ -92,20 +97,28 @@ namespace BuildWise.Controllers
         public async System.Threading.Tasks.Task<IActionResult> GetProgressData()
         {
             var userId = GetCurrentUserId();
+            await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
             var projectId = await GetValidSelectedProjectIdAsync(userId);
             if (projectId == null)
             {
                 return Json(new { phases = Array.Empty<object>(), overallProgress = 0, message = "Please select a project first." });
             }
 
+            await SyncCompletedPropertyPhasesAsync(projectId.Value, userId);
+
             var phases = await _context.Phases
                 .AsNoTracking()
                 .Include(p => p.PhaseType)
+                .Include(p => p.Property)
                 .Include(p => p.Tasks)
                     .ThenInclude(t => t.Status)
                 .Where(p => p.ProjectId == projectId.Value)
-                .OrderBy(p => p.Sequence)
+                .OrderBy(p => p.PropertyId == null ? 1 : 0)
+                .ThenBy(p => p.Property != null ? p.Property.PropertyName : "")
+                .ThenBy(p => p.Sequence)
                 .ToListAsync();
+
+            var properties = await GetProjectPropertiesAsync(projectId.Value, userId);
 
             var today = DateOnly.FromDateTime(DateTime.Today);
             var phaseDtos = phases.Select(p =>
@@ -126,6 +139,8 @@ namespace BuildWise.Controllers
                 {
                     phaseId = p.PhaseId,
                     phaseTypeId = p.PhaseTypeId,
+                    propertyId = p.PropertyId,
+                    propertyName = p.Property?.PropertyName ?? "Unassigned",
                     phaseName = displayName,
                     sequence = p.Sequence,
                     startDate = p.StartDate?.ToString("yyyy-MM-dd"),
@@ -143,19 +158,38 @@ namespace BuildWise.Controllers
                         status = t.Status?.StatusName ?? "Pending",
                         startDate = t.StartDate?.ToString("yyyy-MM-dd"),
                         endDate = t.EndDate?.ToString("yyyy-MM-dd"),
-                        estimatedCost = t.EstimatedCost ?? 0,
                         isOverdue = t.EndDate.HasValue && t.EndDate.Value < today && !IsCompleted(t.Status?.StatusName, t.StatusId)
                     }).ToList()
                 };
             }).ToList();
 
-            var overallProgress = phaseDtos.Count > 0
-                ? Math.Round(phaseDtos.Average(p => p.progress), 2)
-                : 0m;
+            var propertyProgress = properties
+                .Select(property =>
+                {
+                    var propertyPhases = phaseDtos.Where(p => p.propertyId == property.PropertyId).ToList();
+                    var propertyCompleted = string.Equals(property.Status?.StatusName, "Completed", StringComparison.OrdinalIgnoreCase);
+                    var progress = propertyPhases.Count > 0
+                        ? Math.Round(propertyPhases.Average(p => p.progress), 2)
+                        : propertyCompleted ? 100m : 0m;
+                    return new
+                    {
+                        propertyId = property.PropertyId,
+                        propertyName = property.PropertyName,
+                        status = property.Status?.StatusName ?? "",
+                        phaseCount = propertyPhases.Count,
+                        progress
+                    };
+                })
+                .ToList();
+
+            var overallProgress = propertyProgress.Any()
+                ? Math.Round(propertyProgress.Average(p => p.progress), 2)
+                : phaseDtos.Count > 0 ? Math.Round(phaseDtos.Average(p => p.progress), 2) : 0m;
 
             return Json(new
             {
                 phases = phaseDtos,
+                properties = propertyProgress,
                 overallProgress
             });
         }
@@ -164,13 +198,10 @@ namespace BuildWise.Controllers
         public async System.Threading.Tasks.Task<IActionResult> QuickSetup()
         {
             var userId = GetCurrentUserId();
+            await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
             var projectId = await GetValidSelectedProjectIdAsync(userId);
             if (projectId == null)
                 return Json(new { success = false, message = "Please select a project first." });
-
-            var hasPhases = await _context.Phases.AnyAsync(p => p.ProjectId == projectId.Value);
-            if (hasPhases)
-                return Json(new { success = false, message = "This project already has phases. Add more phases manually if needed." });
 
             var preferredOrder = new[] { "Foundation", "Grey Structure", "Plumbing", "Electrical", "Tiling", "Painting", "Finishing" };
             var phaseTypes = await _context.PhaseTypes
@@ -185,6 +216,16 @@ namespace BuildWise.Controllers
 
             if (!orderedTypes.Any())
                 return Json(new { success = false, message = "Construction phase types are not configured." });
+
+            var properties = await GetProjectPropertiesAsync(projectId.Value, userId);
+            var propertyIds = properties.Select(p => (int?)p.PropertyId).ToList();
+            if (!propertyIds.Any())
+                return Json(new { success = false, message = "Add or link at least one property before creating construction phases." });
+
+            var existingPhaseKeys = await _context.Phases
+                .Where(p => p.ProjectId == projectId.Value)
+                .Select(p => new { p.PropertyId, p.PhaseTypeId })
+                .ToListAsync();
 
             var pendingStatusId = await _context.TaskStatuses
                 .Where(s => s.StatusName == "Pending")
@@ -201,35 +242,57 @@ namespace BuildWise.Controllers
                 ["Finishing"] = new[] { "Doors and windows", "Fixtures", "Final inspection" }
             };
 
-            foreach (var item in orderedTypes)
+            var nextSequence = (await _context.Phases
+                .Where(p => p.ProjectId == projectId.Value)
+                .Select(p => (byte?)p.Sequence)
+                .MaxAsync() ?? 0) + 1;
+            var created = 0;
+
+            foreach (var propertyId in propertyIds)
             {
-                var phase = new Phase
+                foreach (var item in orderedTypes)
                 {
-                    ProjectId = projectId.Value,
-                    PhaseTypeId = item.type.PhaseTypeId,
-                    Sequence = (byte)(item.index + 1),
-                    IsCompleted = false
-                };
+                    if (existingPhaseKeys.Any(p => p.PropertyId == propertyId && p.PhaseTypeId == item.type.PhaseTypeId))
+                        continue;
 
-                if (taskTemplates.TryGetValue(item.type.PhaseName, out var templates))
-                {
-                    foreach (var template in templates)
+                    var phase = new Phase
                     {
-                        phase.Tasks.Add(new Models.Task
-                        {
-                            TaskName = template,
-                            StatusId = pendingStatusId,
-                            EstimatedCost = 0,
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now
-                        });
-                    }
-                }
+                        ProjectId = projectId.Value,
+                        PropertyId = propertyId,
+                        PhaseTypeId = item.type.PhaseTypeId,
+                        Sequence = (byte)Math.Min(byte.MaxValue, nextSequence++),
+                        IsCompleted = false
+                    };
 
-                _context.Phases.Add(phase);
+                    if (taskTemplates.TryGetValue(item.type.PhaseName, out var templates))
+                    {
+                        foreach (var template in templates)
+                        {
+                            phase.Tasks.Add(new Models.Task
+                            {
+                                TaskName = template,
+                                StatusId = pendingStatusId,
+                                EstimatedCost = 0,
+                                CreatedAt = DateTime.Now,
+                                UpdatedAt = DateTime.Now
+                            });
+                        }
+                    }
+
+                    _context.Phases.Add(phase);
+                    created++;
+                }
             }
 
+            if (created == 0)
+                return Json(new { success = false, message = "All linked properties already have the standard phase sequence." });
+
             await _context.SaveChangesAsync();
+            foreach (var propertyId in propertyIds.Where(id => id.HasValue).Select(id => id.GetValueOrDefault()).Distinct())
+            {
+                await RefreshPropertyAndProjectCompletionAsync(propertyId, projectId.Value, userId);
+            }
+
             return Json(new { success = true });
         }
 
@@ -237,11 +300,12 @@ namespace BuildWise.Controllers
         public async System.Threading.Tasks.Task<IActionResult> AddPhase([FromBody] PhaseRequest request)
         {
             var userId = GetCurrentUserId();
+            await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
             var projectId = await GetValidSelectedProjectIdAsync(userId);
             if (projectId == null)
                 return Json(new { success = false, message = "Please select a project first." });
 
-            var result = await CreatePhaseAsync(request, projectId.Value);
+            var result = await CreatePhaseAsync(request, projectId.Value, userId);
             if (!result.Success)
                 return Json(new { success = false, message = result.Message });
 
@@ -252,6 +316,7 @@ namespace BuildWise.Controllers
         public async System.Threading.Tasks.Task<IActionResult> AddPhase()
         {
             var userId = GetCurrentUserId();
+            await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
             var projectId = await GetValidSelectedProjectIdAsync(userId);
             if (projectId == null)
             {
@@ -271,6 +336,7 @@ namespace BuildWise.Controllers
         public async System.Threading.Tasks.Task<IActionResult> AddPhasePage(PhaseRequest request)
         {
             var userId = GetCurrentUserId();
+            await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
             var projectId = await GetValidSelectedProjectIdAsync(userId);
             if (projectId == null)
             {
@@ -278,7 +344,7 @@ namespace BuildWise.Controllers
                 return RedirectToAction("Index", "Projects");
             }
 
-            var result = await CreatePhaseAsync(request, projectId.Value);
+            var result = await CreatePhaseAsync(request, projectId.Value, userId);
             if (result.Success)
                 return RedirectToAction(nameof(Index));
 
@@ -299,13 +365,22 @@ namespace BuildWise.Controllers
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.ProjectId == projectId && p.UserId == userId);
             ViewBag.ProjectName = project?.ProjectName ?? "Selected Project";
+            ViewBag.ProjectProperties = await GetProjectPropertiesAsync(projectId, userId);
         }
 
-        private async System.Threading.Tasks.Task<(bool Success, string? Message)> CreatePhaseAsync(PhaseRequest request, int projectId)
+        private async System.Threading.Tasks.Task<(bool Success, string? Message)> CreatePhaseAsync(PhaseRequest request, int projectId, int userId)
         {
             var phaseType = await _context.PhaseTypes.FirstOrDefaultAsync(p => p.PhaseTypeId == request.PhaseTypeId);
             if (phaseType == null)
                 return (false, "Please select a valid phase type.");
+
+            if (!request.PropertyId.HasValue)
+                return (false, "Please select the property this phase belongs to.");
+
+            var propertyValid = await _context.Properties.AnyAsync(p =>
+                p.PropertyId == request.PropertyId.Value && p.ProjectId == projectId && p.UserId == userId);
+            if (!propertyValid)
+                return (false, "Please select a valid property for this project.");
 
             var sequence = request.Sequence;
             if (sequence <= 0)
@@ -335,6 +410,7 @@ namespace BuildWise.Controllers
             _context.Phases.Add(new Phase
             {
                 ProjectId = projectId,
+                PropertyId = request.PropertyId,
                 PhaseTypeId = request.PhaseTypeId,
                 CustomPhaseName = isCustomPhase && !string.IsNullOrWhiteSpace(customName) ? customName : null,
                 Sequence = sequence,
@@ -345,6 +421,7 @@ namespace BuildWise.Controllers
             });
 
             await _context.SaveChangesAsync();
+            await RefreshPropertyAndProjectCompletionAsync(request.PropertyId, projectId, userId);
             return (true, null);
         }
 
@@ -364,6 +441,14 @@ namespace BuildWise.Controllers
             if (phaseType == null)
                 return Json(new { success = false, message = "Please select a valid phase type." });
 
+            if (!request.PropertyId.HasValue)
+                return Json(new { success = false, message = "Please select the property this phase belongs to." });
+
+            var propertyValid = await _context.Properties.AnyAsync(p =>
+                p.PropertyId == request.PropertyId.Value && p.ProjectId == phase.ProjectId && p.UserId == userId);
+            if (!propertyValid)
+                return Json(new { success = false, message = "Please select a valid property for this project." });
+
             var sequence = request.Sequence <= 0 ? phase.Sequence : request.Sequence;
             var sequenceTaken = await _context.Phases.AnyAsync(p =>
                 p.ProjectId == phase.ProjectId && p.Sequence == sequence && p.PhaseId != phase.PhaseId);
@@ -374,8 +459,10 @@ namespace BuildWise.Controllers
             if (phaseType.PhaseName.Equals("Custom", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(customName))
                 return Json(new { success = false, message = "Custom phase name is required." });
 
+            var previousPropertyId = phase.PropertyId;
             var isCustomPhase = phaseType.PhaseName.Equals("Custom", StringComparison.OrdinalIgnoreCase);
             phase.PhaseTypeId = request.PhaseTypeId;
+            phase.PropertyId = request.PropertyId;
             phase.CustomPhaseName = isCustomPhase && !string.IsNullOrWhiteSpace(customName) ? customName : null;
             phase.Sequence = sequence;
             phase.StartDate = request.StartDate;
@@ -392,6 +479,9 @@ namespace BuildWise.Controllers
             phase.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
 
             await _context.SaveChangesAsync();
+            await RefreshPropertyAndProjectCompletionAsync(previousPropertyId, phase.ProjectId, userId);
+            if (previousPropertyId != phase.PropertyId)
+                await RefreshPropertyAndProjectCompletionAsync(phase.PropertyId, phase.ProjectId, userId);
             return Json(new { success = true });
         }
 
@@ -451,6 +541,8 @@ namespace BuildWise.Controllers
             if (phase == null)
                 return Forbid();
 
+            var projectId = phase.ProjectId;
+            var propertyId = phase.PropertyId;
             var hasMaterialUsage = await _context.MaterialUsages.AnyAsync(u => u.PhaseId == id);
             var hasExpenses = await _context.Expenses.AnyAsync(e => e.PhaseId == id);
             if (hasMaterialUsage || hasExpenses)
@@ -465,6 +557,7 @@ namespace BuildWise.Controllers
             _context.Tasks.RemoveRange(phase.Tasks);
             _context.Phases.Remove(phase);
             await _context.SaveChangesAsync();
+            await RefreshPropertyAndProjectCompletionAsync(propertyId, projectId, userId);
             return Json(new { success = true });
         }
 
@@ -472,33 +565,48 @@ namespace BuildWise.Controllers
         public async System.Threading.Tasks.Task<IActionResult> AddTask([FromBody] TaskRequest request)
         {
             var userId = GetCurrentUserId();
-            if (!await PhaseBelongsToUserAsync(request.PhaseId, userId))
+            var result = await CreateTaskAsync(request, userId);
+            if (!result.Allowed)
+                return Forbid();
+            if (!result.Success)
+                return Json(new { success = false, message = result.Message });
+
+            return Json(new { success = true });
+        }
+
+        [HttpGet]
+        public async System.Threading.Tasks.Task<IActionResult> AddTask(int phaseId)
+        {
+            var userId = GetCurrentUserId();
+            var allowed = await PopulateAddTaskPageAsync(phaseId, userId);
+            if (!allowed)
                 return Forbid();
 
-            if (string.IsNullOrWhiteSpace(request.TaskName))
-                return Json(new { success = false, message = "Task name is required." });
-
-            var statusId = await ResolveStatusIdAsync(request.StatusId, request.Status);
-            var dateError = ValidateDateRange(request.StartDate, request.EndDate, "task");
-            if (dateError != null)
-                return Json(new { success = false, message = dateError });
-
-            _context.Tasks.Add(new Models.Task
+            return View(new TaskRequest
             {
-                PhaseId = request.PhaseId,
-                TaskName = request.TaskName.Trim(),
-                Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
-                StatusId = statusId,
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
-                EstimatedCost = request.EstimatedCost,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                PhaseId = phaseId,
+                StatusId = await ResolveStatusIdAsync(null, "Pending"),
+                StartDate = DateOnly.FromDateTime(DateTime.Today)
             });
+        }
 
-            await _context.SaveChangesAsync();
-            await RefreshPhaseCompletionAsync(request.PhaseId);
-            return Json(new { success = true });
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async System.Threading.Tasks.Task<IActionResult> AddTaskPage(TaskRequest request)
+        {
+            var userId = GetCurrentUserId();
+            var result = await CreateTaskAsync(request, userId);
+            if (!result.Allowed)
+                return Forbid();
+
+            if (!result.Success)
+            {
+                ModelState.AddModelError("", result.Message ?? "Unable to add task.");
+                await PopulateAddTaskPageAsync(request.PhaseId, userId);
+                return View("AddTask", request);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
@@ -576,25 +684,242 @@ namespace BuildWise.Controllers
             return null;
         }
 
+        private async System.Threading.Tasks.Task<(bool Allowed, bool Success, string? Message)> CreateTaskAsync(TaskRequest request, int userId)
+        {
+            if (!await PhaseBelongsToUserAsync(request.PhaseId, userId))
+                return (false, false, null);
+
+            if (string.IsNullOrWhiteSpace(request.TaskName))
+                return (true, false, "Task name is required.");
+
+            var dateError = ValidateDateRange(request.StartDate, request.EndDate, "task");
+            if (dateError != null)
+                return (true, false, dateError);
+
+            var statusId = await ResolveStatusIdAsync(request.StatusId, request.Status);
+            _context.Tasks.Add(new Models.Task
+            {
+                PhaseId = request.PhaseId,
+                TaskName = request.TaskName.Trim(),
+                Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
+                StatusId = statusId,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                EstimatedCost = request.EstimatedCost,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            });
+
+            await _context.SaveChangesAsync();
+            await RefreshPhaseCompletionAsync(request.PhaseId);
+            return (true, true, null);
+        }
+
+        private async System.Threading.Tasks.Task<bool> PopulateAddTaskPageAsync(int phaseId, int userId)
+        {
+            var phase = await _context.Phases
+                .AsNoTracking()
+                .Include(p => p.Project)
+                .Include(p => p.Property)
+                .Include(p => p.PhaseType)
+                .Include(p => p.Tasks)
+                    .ThenInclude(t => t.Status)
+                .FirstOrDefaultAsync(p => p.PhaseId == phaseId && p.Project.UserId == userId);
+            if (phase == null)
+                return false;
+
+            ViewBag.ProjectName = phase.Project.ProjectName;
+            ViewBag.PropertyName = phase.Property?.PropertyName ?? "Unassigned";
+            ViewBag.PhaseName = string.IsNullOrWhiteSpace(phase.CustomPhaseName) ? phase.PhaseType.PhaseName : phase.CustomPhaseName;
+            ViewBag.PhaseSequence = phase.Sequence;
+            ViewBag.ExistingTasks = phase.Tasks.OrderBy(t => t.CreatedAt).ToList();
+            ViewBag.TaskStatuses = await _context.TaskStatuses
+                .AsNoTracking()
+                .OrderBy(s => s.StatusId)
+                .ToListAsync();
+            return true;
+        }
+
         private async System.Threading.Tasks.Task RefreshPhaseCompletionAsync(int phaseId)
         {
             var phase = await _context.Phases
+                .Include(p => p.Project)
                 .Include(p => p.Tasks)
                     .ThenInclude(t => t.Status)
                 .FirstOrDefaultAsync(p => p.PhaseId == phaseId);
-            if (phase == null || !phase.Tasks.Any())
+            if (phase == null)
                 return;
 
-            phase.IsCompleted = phase.Tasks.All(t => IsCompleted(t.Status?.StatusName, t.StatusId));
-            phase.EndDate = phase.IsCompleted
-                ? phase.EndDate ?? DateOnly.FromDateTime(DateTime.Today)
-                : null;
+            if (phase.Tasks.Any())
+            {
+                phase.IsCompleted = phase.Tasks.All(t => IsCompleted(t.Status?.StatusName, t.StatusId));
+                phase.EndDate = phase.IsCompleted
+                    ? phase.EndDate ?? DateOnly.FromDateTime(DateTime.Today)
+                    : null;
+                await _context.SaveChangesAsync();
+            }
+
+            await RefreshPropertyAndProjectCompletionAsync(phase.PropertyId, phase.ProjectId, phase.Project.UserId);
+        }
+
+        private async System.Threading.Tasks.Task RefreshPropertyAndProjectCompletionAsync(int? propertyId, int projectId, int userId)
+        {
+            if (propertyId.HasValue)
+            {
+                var property = await _context.Properties
+                    .Include(p => p.Status)
+                    .FirstOrDefaultAsync(p => p.PropertyId == propertyId.Value && p.ProjectId == projectId && p.UserId == userId);
+
+                if (property != null)
+                {
+                    var phases = await _context.Phases
+                        .Include(p => p.Tasks)
+                            .ThenInclude(t => t.Status)
+                        .Where(p => p.ProjectId == projectId && p.PropertyId == property.PropertyId)
+                        .ToListAsync();
+
+                    if (phases.Any())
+                    {
+                        var allConstructionComplete = phases.All(PhaseIsComplete);
+                        var propertyCompleted = string.Equals(property.Status.StatusName, "Completed", StringComparison.OrdinalIgnoreCase);
+
+                        if (allConstructionComplete && !propertyCompleted)
+                        {
+                            var completedStatusId = await ResolvePropertyStatusIdAsync("Completed");
+                            if (completedStatusId.HasValue)
+                                property.StatusId = completedStatusId.Value;
+                        }
+                        else if (!allConstructionComplete && propertyCompleted)
+                        {
+                            var openStatusId = await ResolveOpenPropertyStatusIdAsync();
+                            if (openStatusId.HasValue)
+                                property.StatusId = openStatusId.Value;
+                        }
+
+                        if (_context.ChangeTracker.HasChanges())
+                        {
+                            property.UpdatedAt = DateTime.Now;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
+            }
+
+            await SyncProjectCompletionFromPropertiesAsync(projectId, userId);
+        }
+
+        private static bool PhaseIsComplete(Phase phase)
+        {
+            return phase.Tasks.Any()
+                ? phase.Tasks.All(t => IsCompleted(t.Status?.StatusName, t.StatusId))
+                : phase.IsCompleted;
+        }
+
+        private async System.Threading.Tasks.Task<byte?> ResolvePropertyStatusIdAsync(params string[] preferredNames)
+        {
+            foreach (var name in preferredNames)
+            {
+                var statusId = await _context.PropertyStatuses
+                    .Where(s => s.StatusName == name)
+                    .Select(s => (byte?)s.StatusId)
+                    .FirstOrDefaultAsync();
+                if (statusId.HasValue)
+                    return statusId;
+            }
+
+            return null;
+        }
+
+        private async System.Threading.Tasks.Task<byte?> ResolveOpenPropertyStatusIdAsync()
+        {
+            var preferredStatusId = await ResolvePropertyStatusIdAsync("Under Construction", "Planned", "On Hold");
+            if (preferredStatusId.HasValue)
+                return preferredStatusId;
+
+            return await _context.PropertyStatuses
+                .Where(s => s.StatusName != "Completed")
+                .OrderBy(s => s.StatusId)
+                .Select(s => (byte?)s.StatusId)
+                .FirstOrDefaultAsync();
+        }
+
+        private async System.Threading.Tasks.Task<List<Property>> GetProjectPropertiesAsync(int projectId, int userId)
+        {
+            return await _context.Properties
+                .AsNoTracking()
+                .Include(p => p.Status)
+                .Where(p => p.UserId == userId && p.ProjectId == projectId)
+                .OrderBy(p => p.PropertyName)
+                .ToListAsync();
+        }
+
+        private async System.Threading.Tasks.Task SyncCompletedPropertyPhasesAsync(int projectId, int userId)
+        {
+            var completedStatusIds = await _context.PropertyStatuses
+                .Where(s => s.StatusName == "Completed")
+                .Select(s => s.StatusId)
+                .ToListAsync();
+            if (!completedStatusIds.Any())
+                return;
+
+            var completedPropertyIds = await _context.Properties
+                .Where(p => p.UserId == userId && p.ProjectId == projectId && completedStatusIds.Contains(p.StatusId))
+                .Select(p => p.PropertyId)
+                .ToListAsync();
+            if (!completedPropertyIds.Any())
+                return;
+
+            var completedTaskStatusId = await ResolveStatusIdAsync(null, "Completed");
+            var phases = await _context.Phases
+                .Include(p => p.Tasks)
+                .Where(p => p.ProjectId == projectId && p.PropertyId.HasValue && completedPropertyIds.Contains(p.PropertyId.Value))
+                .ToListAsync();
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            foreach (var phase in phases)
+            {
+                phase.IsCompleted = true;
+                phase.EndDate ??= today;
+                foreach (var task in phase.Tasks)
+                {
+                    if (task.StatusId != completedTaskStatusId)
+                    {
+                        task.StatusId = completedTaskStatusId;
+                        task.UpdatedAt = DateTime.Now;
+                    }
+                }
+            }
+
+            if (phases.Any())
+                await _context.SaveChangesAsync();
+
+            await SyncProjectCompletionFromPropertiesAsync(projectId, userId);
+        }
+
+        private async System.Threading.Tasks.Task SyncProjectCompletionFromPropertiesAsync(int projectId, int userId)
+        {
+            var propertyRows = await _context.Properties
+                .Where(p => p.UserId == userId && p.ProjectId == projectId)
+                .Select(p => new { p.Status.StatusName })
+                .ToListAsync();
+            if (!propertyRows.Any())
+                return;
+
+            var allCompleted = propertyRows.All(p => string.Equals(p.StatusName, "Completed", StringComparison.OrdinalIgnoreCase));
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.ProjectId == projectId && p.UserId == userId);
+            if (project == null || project.IsCompleted == allCompleted)
+                return;
+
+            project.IsCompleted = allCompleted;
+            project.ActualEndDate = allCompleted ? DateOnly.FromDateTime(DateTime.Today) : null;
+            project.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
         }
 
         public class PhaseRequest
         {
             public int PhaseId { get; set; }
+            public int? PropertyId { get; set; }
             public byte PhaseTypeId { get; set; }
             public string? CustomPhaseName { get; set; }
             public byte Sequence { get; set; }

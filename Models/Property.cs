@@ -29,6 +29,8 @@ public partial class Property
 
     public virtual Project? Project { get; set; }
 
+    public virtual ICollection<Phase> Phases { get; set; } = new List<Phase>();
+
     public virtual ICollection<Project> Projects { get; set; } = new List<Project>();
 
     public virtual PropertyStatus Status { get; set; } = null!;

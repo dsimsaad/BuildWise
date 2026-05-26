@@ -15,11 +15,13 @@
     var monthlyExpenses = ViewBag.MonthlyExpenses as System.Collections.IEnumerable;
     var advisorTriggers = ViewBag.AdvisorTriggers as List<DashboardAdvisorTrigger> ?? new();
     var overallProjects = ViewBag.OverallProjects as List<ProjectDashboardSummary> ?? new();
+    var todoTasks = ViewBag.ToDoTasks as List<BuildWise.Models.Task> ?? new();
     var phases = ViewBag.Phases as List<Phase> ?? new();
     var phaseProgress = phases
         .Select(p => new
         {
             Name = string.IsNullOrWhiteSpace(p.CustomPhaseName) ? p.PhaseType.PhaseName : p.CustomPhaseName,
+            PropertyName = p.Property?.PropertyName,
             TotalTasks = p.Tasks.Count,
             CompletedTasks = p.Tasks.Count(t => t.StatusId == 3),
             Progress = p.Tasks.Count > 0 ? Math.Round(p.Tasks.Count(t => t.StatusId == 3) * 100m / p.Tasks.Count, 0) : (p.IsCompleted ? 100m : 0m)
@@ -49,6 +51,7 @@
     double budgetUsedPct = totalBudget > 0 ? (double)(totalExpenses / totalBudget * 100) : 0;
     bool isOverallDashboard = ViewBag.IsOverallDashboard == true;
     decimal overallConstructionProgress = Convert.ToDecimal(ViewBag.OverallConstructionProgress ?? 0m);
+    decimal dashboardProgress = isOverallDashboard ? overallConstructionProgress : Convert.ToDecimal(ViewBag.ProjectProgress ?? constructionProgress);
 }
 
 <!-- ══════════════════════════════════════════════
@@ -61,14 +64,14 @@
     </div>
     <div class="db-header-actions">
         <button type="button" class="db-report-btn db-slide-btn db-slide-btn--wide" id="openReportModal">
-            <span class="db-slide-text-one">Download Report</span>
-            <span class="db-slide-text-two">Download Report</span>
+            <svg class="db-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>
+            <span>Download Report</span>
         </button>
         <a asp-controller="Home" asp-action="Dashboard" asp-route-overall="@(isOverallDashboard ? null : "true")"
            class="db-overall-btn db-slide-btn db-slide-btn--wide @(isOverallDashboard ? "is-active" : "")"
            aria-pressed="@(isOverallDashboard.ToString().ToLowerInvariant())">
-            <span class="db-slide-text-one">Overall Status</span>
-            <span class="db-slide-text-two">Overall Status</span>
+            <svg class="db-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><path d="M3 3v18h18"></path><path d="M7 14l3-3 3 2 5-6"></path></svg>
+            <span>Overall Status</span>
         </a>
     </div>
 </div>
@@ -104,6 +107,38 @@
      TOP STAT CARDS
      ══════════════════════════════════════════════ -->
 <div class="db-kpi-row">
+
+    <!-- Project Progress Card -->
+    <div class="db-kpi-card db-kpi-progress-card">
+        <div class="db-kpi-inner">
+            <div class="db-kpi-icon db-kpi-icon--teal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v18h18"/>
+                    <path d="M7 14l3-3 3 2 5-6"/>
+                </svg>
+            </div>
+            <div class="db-kpi-body">
+                <span class="db-kpi-label">Project Progress</span>
+                <div class="db-kpi-value-row">
+                    <span class="db-kpi-value" id="statProjectProgress">@dashboardProgress.ToString("0")%</span>
+                    <span class="db-kpi-badge db-kpi-badge--green">@(ViewBag.TasksCompleted ?? 0)/@(ViewBag.TotalTasks ?? 0) Tasks</span>
+                </div>
+            </div>
+            <div class="db-kpi-more-wrap">
+                <button class="db-kpi-more" data-menu="menuProjectProgress" title="Options">•••</button>
+                <div class="db-kpi-dropdown" id="menuProjectProgress">
+                    <a href="/Construction" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 2 5-6"/></svg>
+                        Construction Page
+                    </a>
+                    <a href="/Construction/AddPhase" class="db-kpi-dd-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Phase
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Total Properties Card -->
     <div class="db-kpi-card db-kpi-properties">
@@ -303,8 +338,8 @@
         <div class="db-card-header">
             <span class="db-card-title">Expense Distribution</span>
             <a href="/Budget" class="db-card-link db-slide-btn">
-                <span class="db-slide-text-one">Manage Expenses</span>
-                <span class="db-slide-text-two">Manage Expenses</span>
+                <span>Manage Expenses</span>
+                <svg class="db-link-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
             </a>
         </div>
         <div class="db-dist-body">
@@ -329,8 +364,8 @@
         <div class="db-card-header">
             <span class="db-card-title">Recent Expenses</span>
             <a href="/Transaction" class="db-card-link db-slide-btn">
-                <span class="db-slide-text-one">View All</span>
-                <span class="db-slide-text-two">View All</span>
+                <span>View All</span>
+                <svg class="db-link-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
             </a>
         </div>
         <table class="db-table">
@@ -374,16 +409,12 @@
         <div class="db-card-header">
             <span class="db-card-title">Construction Status</span>
             <a href="/Construction" class="db-card-link db-slide-btn">
-                <span class="db-slide-text-one">Manage Progress</span>
-                <span class="db-slide-text-two">Manage Progress</span>
+                <span>Manage Progress</span>
+                <svg class="db-link-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
             </a>
         </div>
         <div class="db-construction-body">
             <div class="db-construction-stats">
-                <div class="db-construction-stat">
-                    <span>Project Progress</span>
-                    <strong>@constructionProgress.ToString("0")%</strong>
-                </div>
                 <div class="db-construction-stat">
                     <span>Total Tasks</span>
                     <strong>@(ViewBag.TotalTasks ?? 0)</strong>
@@ -393,8 +424,8 @@
                     <strong>@(ViewBag.TasksInProgress ?? 0)</strong>
                 </div>
                 <div class="db-construction-stat">
-                    <span>Overdue</span>
-                    <strong class="db-stat-danger">@(ViewBag.TasksOverdue ?? 0)</strong>
+                    <span>Pending</span>
+                    <strong>@(ViewBag.TasksToDo ?? 0)</strong>
                 </div>
             </div>
 
@@ -411,7 +442,7 @@
                             <div class="db-phase-track">
                                 <div class="db-phase-fill" style="width:@phase.Progress%"></div>
                             </div>
-                            <small>@phase.CompletedTasks/@phase.TotalTasks tasks complete</small>
+                            <small>@(string.IsNullOrWhiteSpace(phase.PropertyName) ? "Unassigned" : phase.PropertyName) | @phase.CompletedTasks/@phase.TotalTasks tasks complete</small>
                         </div>
                     }
                 </div>
@@ -480,8 +511,8 @@ else if (isOverallDashboard)
     <div class="db-card-header">
         <span class="db-card-title">Cost Advisor Triggers</span>
         <a href="/Advisor" class="db-card-link db-slide-btn">
-            <span class="db-slide-text-one">Open Advisor</span>
-            <span class="db-slide-text-two">Open Advisor</span>
+            <span>Open Advisor</span>
+            <svg class="db-link-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
         </a>
     </div>
     <div class="db-advisor-body">
@@ -513,6 +544,32 @@ else if (isOverallDashboard)
         }
     </div>
 </div>
+
+@if (ViewBag.SelectedProjectId != null && todoTasks.Any())
+{
+    <div class="db-card db-upcoming-card">
+        <div class="db-card-header">
+            <span class="db-card-title">Upcoming Tasks</span>
+            <a href="/Construction" class="db-card-link db-slide-btn">
+                <span>Open Schedule</span>
+                <svg class="db-link-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+            </a>
+        </div>
+        <div class="db-upcoming-list">
+            @foreach (var task in todoTasks.Take(6))
+            {
+                var phaseName = string.IsNullOrWhiteSpace(task.Phase.CustomPhaseName) ? task.Phase.PhaseType.PhaseName : task.Phase.CustomPhaseName;
+                <div class="db-upcoming-item">
+                    <div>
+                        <strong>@task.TaskName</strong>
+                        <span>@(task.Phase.Property?.PropertyName ?? "Unassigned") | @phaseName</span>
+                    </div>
+                    <small>@(task.EndDate.HasValue ? task.EndDate.Value.ToString("MMM dd") : "No deadline")</small>
+                </div>
+            }
+        </div>
+    </div>
+}
 
 <div class="db-bottom-row">
 

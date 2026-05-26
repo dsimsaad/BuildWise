@@ -1,0 +1,182 @@
+@model BuildWise.Controllers.ConstructionController.TaskRequest
+@{
+    ViewData["Title"] = "Add Task";
+    Layout = "_ModuleLayout";
+
+    var statuses = ViewBag.TaskStatuses as IEnumerable<BuildWise.Models.TaskStatus> ?? Enumerable.Empty<BuildWise.Models.TaskStatus>();
+    var existingTasks = ViewBag.ExistingTasks as IEnumerable<BuildWise.Models.Task> ?? Enumerable.Empty<BuildWise.Models.Task>();
+    string FormatDate(DateOnly? value) => value.HasValue ? value.Value.ToString("MMM dd, yyyy") : "-";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/modules.css" asp-append-version="true">
+    <style>
+        .task-create-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.25fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .phase-context {
+            display: grid;
+            gap: 14px;
+        }
+
+        .phase-context-card {
+            background: #FFFFFF;
+            border: 1px solid #D6E3F5;
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 8px 24px -22px rgba(15, 23, 42, 0.42), 0 1px 4px rgba(29, 78, 216, 0.04);
+        }
+
+        .phase-context-card span {
+            display: block;
+            color: #64748B;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+
+        .phase-context-card strong {
+            display: block;
+            color: #0F172A;
+            font-size: 1rem;
+        }
+
+        .task-list-mini {
+            display: grid;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .task-list-item {
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            background: #F8FBFF;
+            padding: 10px 12px;
+        }
+
+        .task-list-item strong {
+            display: block;
+            color: #0F172A;
+            font-size: 0.86rem;
+            margin-bottom: 3px;
+        }
+
+        .task-list-item span {
+            color: #64748B;
+            font-size: 0.76rem;
+            font-weight: 600;
+        }
+
+        @@media (max-width: 980px) {
+            .task-create-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+<div class="module-header">
+    <div class="module-title">
+        <h1>Add Task</h1>
+        <p>@ViewBag.ProjectName</p>
+    </div>
+    <a asp-action="Index" class="btn-secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M19 12H5"></path><path d="m12 19-7-7 7-7"></path></svg>
+        Back to Construction
+    </a>
+</div>
+
+<div class="task-create-layout">
+    <aside class="phase-context">
+        <div class="phase-context-card">
+            <span>Property</span>
+            <strong>@ViewBag.PropertyName</strong>
+        </div>
+        <div class="phase-context-card">
+            <span>Phase</span>
+            <strong>@ViewBag.PhaseName</strong>
+        </div>
+        <div class="phase-context-card">
+            <span>Auto Sequence</span>
+            <strong>Phase @ViewBag.PhaseSequence</strong>
+        </div>
+        <div class="phase-context-card">
+            <span>Current Tasks</span>
+            <strong>@existingTasks.Count() task@(existingTasks.Count() == 1 ? "" : "s")</strong>
+            <div class="task-list-mini">
+                @if (existingTasks.Any())
+                {
+                    foreach (var task in existingTasks.Take(6))
+                    {
+                        <div class="task-list-item">
+                            <strong>@task.TaskName</strong>
+                            <span>@(task.Status?.StatusName ?? "Pending") | @FormatDate(task.StartDate) - @FormatDate(task.EndDate)</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="task-list-item">
+                        <strong>No tasks yet</strong>
+                        <span>Create the first measurable work item for this phase.</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </aside>
+
+    <div class="module-card">
+        <div class="card-header">
+            <h2>Task Details</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="AddTaskPage" method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="PhaseId" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label asp-for="TaskName">Task Name</label>
+                        <input asp-for="TaskName" class="form-control" placeholder="e.g. Excavation layout" required />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="StatusId">Status</label>
+                        <select asp-for="StatusId" class="form-control">
+                            @foreach (var status in statuses)
+                            {
+                                <option value="@status.StatusId">@status.StatusName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="StartDate">Start Date</label>
+                        <input asp-for="StartDate" class="form-control" type="date" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="EndDate">Deadline</label>
+                        <input asp-for="EndDate" class="form-control" type="date" />
+                    </div>
+                    <div class="form-group full-width">
+                        <label asp-for="Description">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="4" placeholder="Notes, scope, or handoff details"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a asp-action="Index" class="btn-secondary">Cancel</a>
+                    <button type="submit" class="btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                        Add Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

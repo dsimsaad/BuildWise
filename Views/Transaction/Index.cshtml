@@ -19,6 +19,32 @@
         .modern-table td {
             vertical-align: middle;
         }
+
+        .ledger-filter-bar {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(132px, 1fr)) 104px 104px;
+            align-items: end;
+        }
+
+        .ledger-filter-bar .filter-group {
+            min-width: 0;
+        }
+
+        .ledger-filter-bar .btn-primary,
+        .ledger-filter-bar .btn-secondary {
+            width: 104px;
+        }
+
+        @@media (max-width: 1180px) {
+            .ledger-filter-bar {
+                grid-template-columns: repeat(3, minmax(150px, 1fr));
+            }
+
+            .ledger-filter-bar .btn-primary,
+            .ledger-filter-bar .btn-secondary {
+                width: 100%;
+            }
+        }
     </style>
 }
 
@@ -46,7 +72,7 @@
     </div>
 </div>
 
-<div class="filter-bar">
+<div class="filter-bar ledger-filter-bar">
     <div class="filter-group">
         <label>Category</label>
         <select id="filter-category" class="form-control" onchange="loadTransactions()">
@@ -74,14 +100,30 @@
         </select>
     </div>
     <div class="filter-group">
+        <label>Range</label>
+        <select id="filter-range" class="form-control" onchange="selectPresetRange()">
+            <option value="month">This Month</option>
+            <option value="year">This Year</option>
+            <option value="all">All Time</option>
+            <option value="custom">Custom Dates</option>
+        </select>
+    </div>
+    <div class="filter-group">
         <label>From Date</label>
-        <input type="date" id="filter-from" class="form-control" onchange="loadTransactions()">
+        <input type="date" id="filter-from" class="form-control">
     </div>
     <div class="filter-group">
         <label>To Date</label>
-        <input type="date" id="filter-to" class="form-control" onchange="loadTransactions()">
+        <input type="date" id="filter-to" class="form-control">
     </div>
-    <button class="btn-primary" onclick="resetFilters()">Reset</button>
+    <button class="btn-primary" id="transaction-filter-action" onclick="handleFilterAction()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"></path></svg>
+        <span>Filter</span>
+    </button>
+    <a class="btn-secondary" id="download-transaction-report" href="/Transaction/DownloadReport">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>
+        Report
+    </a>
 </div>
 
 <div class="module-card">
@@ -112,21 +154,26 @@
 
 @section Scripts {
     <script>
+        let customDateFilterActive = false;
+
         async function loadTransactions() {
             const category = document.getElementById('filter-category').value;
             const type = document.getElementById('filter-type').value;
+            const range = document.getElementById('filter-range').value;
             const from = document.getElementById('filter-from').value;
             const to = document.getElementById('filter-to').value;
 
-            let url = `/Transaction/GetTransactions?category=${category}&type=${type}`;
-            if (from) url += `&fromDate=${from}`;
-            if (to) url += `&toDate=${to}`;
+            const params = new URLSearchParams({ category, type, range });
+            if (customDateFilterActive && from) params.set('fromDate', from);
+            if (customDateFilterActive && to) params.set('toDate', to);
 
-            const res = await fetch(url);
+            const res = await fetch(`/Transaction/GetTransactions?${params.toString()}`);
             const data = await res.json();
 
             document.getElementById('stat-count').innerText = data.totalCount;
             document.getElementById('stat-amount').innerText = formatPKR(data.totalAmount);
+            updateFilterAction();
+            updateReportLink();
 
             const list = document.getElementById('transaction-list');
             list.innerHTML = data.transactions.map(t => {
@@ -149,12 +196,26 @@
             }).join('');
         }
 
+        function selectPresetRange() {
+            const range = document.getElementById('filter-range').value;
+            customDateFilterActive = false;
+            if (range !== 'custom') {
+                document.getElementById('filter-from').value = "";
+                document.getElementById('filter-to').value = "";
+                loadTransactions();
+                return;
+            }
+
+            updateFilterAction();
+        }
+
         function applyFiltersFromQuery() {
             const params = new URLSearchParams(window.location.search);
             const category = params.get('category');
             const type = params.get('type');
             const fromDate = params.get('fromDate');
             const toDate = params.get('toDate');
+            const range = params.get('range');
 
             if (category) {
                 const categorySelect = document.getElementById('filter-category');
@@ -164,16 +225,57 @@
                 categorySelect.value = category;
             }
             if (type) document.getElementById('filter-type').value = type;
-            if (fromDate) document.getElementById('filter-from').value = fromDate;
-            if (toDate) document.getElementById('filter-to').value = toDate;
+            if (range) document.getElementById('filter-range').value = range;
+            if (fromDate || toDate) {
+                document.getElementById('filter-range').value = 'custom';
+                customDateFilterActive = true;
+                if (fromDate) document.getElementById('filter-from').value = fromDate;
+                if (toDate) document.getElementById('filter-to').value = toDate;
+            }
+        }
+
+        function handleFilterAction() {
+            if (customDateFilterActive) {
+                resetFilters();
+                return;
+            }
+
+            document.getElementById('filter-range').value = 'custom';
+            customDateFilterActive = true;
+            loadTransactions();
         }
 
         function resetFilters() {
             document.getElementById('filter-category').value = "";
             document.getElementById('filter-type').value = "";
+            document.getElementById('filter-range').value = "month";
             document.getElementById('filter-from').value = "";
             document.getElementById('filter-to').value = "";
+            customDateFilterActive = false;
             loadTransactions();
+        }
+
+        function updateFilterAction() {
+            const button = document.getElementById('transaction-filter-action');
+            const label = button.querySelector('span');
+            const icon = button.querySelector('svg');
+            label.textContent = customDateFilterActive ? 'Reset' : 'Filter';
+            icon.innerHTML = customDateFilterActive
+                ? '<path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path>'
+                : '<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"></path>';
+        }
+
+        function updateReportLink() {
+            const params = new URLSearchParams({
+                category: document.getElementById('filter-category').value,
+                type: document.getElementById('filter-type').value,
+                range: document.getElementById('filter-range').value
+            });
+            const from = document.getElementById('filter-from').value;
+            const to = document.getElementById('filter-to').value;
+            if (customDateFilterActive && from) params.set('fromDate', from);
+            if (customDateFilterActive && to) params.set('toDate', to);
+            document.getElementById('download-transaction-report').href = `/Transaction/DownloadReport?${params.toString()}`;
         }
 
         applyFiltersFromQuery();

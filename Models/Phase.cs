@@ -8,6 +8,7 @@ public partial class Phase
     public int PhaseId { get; set; }
 
     public int ProjectId { get; set; }
+    public int? PropertyId { get; set; }
     public byte PhaseTypeId { get; set; }
 
     public string? CustomPhaseName { get; set; }
@@ -28,6 +29,8 @@ public partial class Phase
     public virtual PhaseType PhaseType { get; set; } = null!;
 
     public virtual Project Project { get; set; } = null!;
+
+    public virtual Property? Property { get; set; }
 
     public virtual ICollection<Task> Tasks { get; set; } = new List<Task>();
 }

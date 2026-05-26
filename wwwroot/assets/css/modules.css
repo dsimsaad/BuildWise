@@ -60,13 +60,32 @@
 .sum-card {
     background: var(--card-bg);
     border: var(--card-border);
-    padding: 18px 20px;
+    padding: 16px 18px;
     border-radius: var(--radius);
     box-shadow: var(--card-shadow);
     display: flex;
     align-items: center;
     gap: 14px;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
+    min-height: 94px;
+    position: relative;
+    overflow: hidden;
+}
+
+.sum-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: var(--accent);
+}
+
+.sum-card:nth-child(2)::before { background: var(--success); }
+.sum-card:nth-child(3)::before { background: var(--warning); }
+.sum-card:nth-child(4)::before { background: var(--purple); }
+
+.sum-card > * {
+    position: relative;
 }
 
 .sum-card:hover {
@@ -75,9 +94,9 @@
 }
 
 .sum-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 3px;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -97,7 +116,7 @@
     margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    font-weight: 500;
+    font-weight: 700;
 }
 
 .sum-info p {
@@ -218,9 +237,9 @@ select.form-control {
    BUTTONS
    ═══════════════════════════════════════════════════════════════ */
 .btn-primary {
-    background: var(--accent);
+    background: linear-gradient(135deg, #2563EB 0%, var(--accent) 100%);
     color: #FFFFFF;
-    border: none;
+    border: 1px solid #1D4ED8;
     min-height: 34px;
     padding: 7px 12px;
     border-radius: var(--radius);
@@ -230,15 +249,25 @@ select.form-control {
     transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     font-family: inherit;
     text-decoration: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.btn-compact {
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 0.76rem;
 }
 
 .btn-primary:hover {
-    background: var(--accent-hover);
+    background: linear-gradient(135deg, #1D4ED8 0%, var(--accent-hover) 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2);
+    color: #FFFFFF;
+    text-decoration: none;
 }
 
 .btn-secondary {
@@ -254,6 +283,7 @@ select.form-control {
     transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     font-family: inherit;
     text-decoration: none;
@@ -261,8 +291,10 @@ select.form-control {
 
 .btn-secondary:hover {
     border-color: var(--accent);
+    background: #F8FBFF;
     color: var(--accent);
     transform: translateY(-1px);
+    text-decoration: none;
 }
 
 .btn-danger {
@@ -278,6 +310,7 @@ select.form-control {
     transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     font-family: inherit;
     text-decoration: none;
@@ -287,6 +320,8 @@ select.form-control {
     background: #DC2626;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.18);
+    color: #FFFFFF;
+    text-decoration: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -697,6 +732,22 @@ select.form-control {
     align-items: flex-end;
 }
 
+.filter-bar .btn-primary,
+.filter-bar .btn-secondary {
+    height: 41px;
+    min-height: 41px;
+    min-width: 104px;
+    padding: 0 14px;
+    margin: 0;
+    align-self: flex-end;
+}
+
+.filter-bar .btn-primary svg,
+.filter-bar .btn-secondary svg {
+    width: 15px;
+    height: 15px;
+}
+
 .filter-group {
     flex: 1;
     min-width: 140px;
@@ -922,7 +973,7 @@ select.form-control {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: var(--accent);
+    background: linear-gradient(135deg, #2563EB 0%, var(--accent) 100%);
     color: #FFFFFF;
     min-height: 34px;
     padding: 7px 12px;
@@ -932,9 +983,10 @@ select.form-control {
     text-decoration: none;
     transition: all 0.15s;
     margin-bottom: 20px;
-    border: 0;
+    border: 1px solid #1D4ED8;
     cursor: pointer;
     font-family: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .btn-create svg {
@@ -943,7 +995,7 @@ select.form-control {
 }
 
 .btn-create:hover {
-    background: var(--accent-hover);
+    background: linear-gradient(135deg, #1D4ED8 0%, var(--accent-hover) 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2);
     color: #FFFFFF;

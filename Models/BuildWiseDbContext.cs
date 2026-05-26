@@ -419,6 +419,7 @@ public partial class BuildWiseDbContext : DbContext
             entity.ToTable(tb => tb.HasTrigger("trg_AutoCompleteProject"));
 
             entity.HasIndex(e => e.ProjectId, "IX_Phases_ProjectID");
+            entity.HasIndex(e => e.PropertyId, "IX_Phases_PropertyID");
 
             entity.HasIndex(e => new { e.ProjectId, e.Sequence }, "UQ_Phase_Project_Seq").IsUnique();
 
@@ -433,6 +434,7 @@ public partial class BuildWiseDbContext : DbContext
                 .HasComment("FK to PhaseType — Foundation, Grey Structure, Finishing etc")
                 .HasColumnName("PhaseTypeID");
             entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
+            entity.Property(e => e.PropertyId).HasColumnName("PropertyID");
             entity.Property(e => e.Sequence)
                 .HasDefaultValue((byte)1)
                 .HasComment("Ordering of phases within the project (1 = first)");
@@ -445,6 +447,10 @@ public partial class BuildWiseDbContext : DbContext
             entity.HasOne(d => d.Project).WithMany(p => p.Phases)
                 .HasForeignKey(d => d.ProjectId)
                 .HasConstraintName("FK__Phases__ProjectI__09A971A2");
+
+            entity.HasOne(d => d.Property).WithMany(p => p.Phases)
+                .HasForeignKey(d => d.PropertyId)
+                .HasConstraintName("FK_Phases_Properties_PropertyID");
         });
 
         modelBuilder.Entity<PhaseType>(entity =>

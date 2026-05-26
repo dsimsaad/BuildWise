@@ -1,6 +1,7 @@
 @{
     ViewData["Title"] = "Construction";
     Layout = "_ModuleLayout";
+    var projectProperties = ViewBag.ProjectProperties as IEnumerable<BuildWise.Models.Property> ?? Enumerable.Empty<BuildWise.Models.Property>();
 }
 
 @section Styles {
@@ -12,10 +13,10 @@
         }
 
         .construction-hero {
-            background: linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 64%, #F0FDFA 100%);
+            background: #FFFFFF;
             border: 1px solid #D6E3F5;
             border-radius: 8px;
-            box-shadow: 0 10px 30px -26px rgba(15, 23, 42, 0.5), 0 1px 4px rgba(29, 78, 216, 0.05);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -20px rgba(29, 78, 216, 0.35);
             padding: 22px;
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
@@ -107,19 +108,26 @@
 
         .construction-stats {
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 16px;
         }
 
         .construction-stat {
             background: #FFFFFF;
             border: 1px solid #D6E3F5;
-            border-radius: 8px;
-            padding: 15px 16px;
-            box-shadow: 0 8px 24px -22px rgba(15, 23, 42, 0.42), 0 1px 4px rgba(29, 78, 216, 0.04);
+            border-radius: 6px;
+            padding: 16px 18px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -20px rgba(29, 78, 216, 0.35);
             min-width: 0;
+            min-height: 94px;
             position: relative;
             overflow: hidden;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .construction-stat:hover {
+            box-shadow: 0 8px 26px -22px rgba(15, 23, 42, 0.45), 0 2px 8px rgba(29, 78, 216, 0.06);
+            transform: translateY(-2px);
         }
 
         .construction-stat::before {
@@ -133,8 +141,7 @@
         .construction-stat:nth-child(2)::before { background: #14B8A6; }
         .construction-stat:nth-child(3)::before { background: #8B5CF6; }
         .construction-stat:nth-child(4)::before { background: #10B981; }
-        .construction-stat:nth-child(5)::before { background: #EF4444; }
-        .construction-stat:nth-child(6)::before { background: #F59E0B; }
+        .construction-stat:nth-child(5)::before { background: #F59E0B; }
 
         .construction-stat span,
         .construction-stat strong {
@@ -144,8 +151,8 @@
         .construction-stat span {
             display: block;
             color: #64748B;
-            font-size: 0.72rem;
-            font-weight: 800;
+            font-size: 0.75rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.04em;
             margin-bottom: 8px;
@@ -155,7 +162,7 @@
         .construction-stat strong {
             display: block;
             color: #0F172A;
-            font-size: 1.35rem;
+            font-size: 1.34rem;
             line-height: 1.1;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -168,6 +175,59 @@
             align-items: start;
         }
 
+        .property-progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+        }
+
+        .property-progress-card,
+        .property-phase-group {
+            background: #FFFFFF;
+            border: 1px solid #D6E3F5;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -20px rgba(29, 78, 216, 0.35);
+            overflow: hidden;
+        }
+
+        .property-progress-card {
+            padding: 14px 16px;
+        }
+
+        .property-progress-top,
+        .property-phase-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .property-progress-card strong,
+        .property-phase-head strong {
+            color: #0F172A;
+            font-size: 0.9rem;
+        }
+
+        .property-progress-card span,
+        .property-phase-head span {
+            color: #64748B;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+
+        .property-phase-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid #E2E8F0;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%);
+        }
+
+        .property-phase-list {
+            display: grid;
+            gap: 12px;
+            padding: 14px;
+            background: #F8FBFF;
+        }
+
         .phase-stack {
             display: grid;
             gap: 14px;
@@ -176,24 +236,10 @@
         .phase-panel {
             background: #FFFFFF;
             border: 1px solid #D6E3F5;
-            border-radius: 8px;
-            box-shadow: 0 8px 24px -22px rgba(15, 23, 42, 0.42), 0 1px 4px rgba(29, 78, 216, 0.04);
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
             overflow: hidden;
             transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
-        }
-
-        .phase-panel.is-dragging {
-            opacity: 0.68;
-            transform: scale(0.995);
-        }
-
-        .phase-panel.is-drag-over {
-            border-color: #2563EB;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08), 0 12px 28px -22px rgba(37, 99, 235, 0.48);
-        }
-
-        .phase-panel.is-order-saving {
-            border-color: #BFDBFE;
         }
 
         .phase-panel-header {
@@ -223,41 +269,6 @@
             justify-content: center;
             font-weight: 800;
             flex: 0 0 auto;
-        }
-
-        .phase-drag-handle {
-            width: 38px;
-            height: 32px;
-            border: 1px solid #BFDBFE;
-            border-radius: 8px;
-            background: #EFF6FF;
-            color: #1D4ED8;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: grab;
-            flex: 0 0 auto;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-            transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-            touch-action: none;
-        }
-
-        .phase-drag-handle:hover,
-        .phase-drag-handle:focus {
-            color: #1E40AF;
-            border-color: #93C5FD;
-            background: #DBEAFE;
-            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.12);
-            outline: none;
-        }
-
-        .phase-drag-handle svg {
-            width: 15px;
-            height: 15px;
-        }
-
-        .phase-drag-handle:active {
-            cursor: grabbing;
         }
 
         .phase-title {
@@ -367,10 +378,16 @@
             font-size: 0.74rem;
             font-weight: 800;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            text-decoration: none;
         }
 
         .mini-action:hover {
             background: #F8FAFC;
+            text-decoration: none;
         }
 
         .mini-action.primary {
@@ -396,7 +413,7 @@
             border: 1px solid #D6E3F5;
             border-radius: 8px;
             padding: 18px;
-            box-shadow: 0 8px 24px -22px rgba(15, 23, 42, 0.42), 0 1px 4px rgba(29, 78, 216, 0.04);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -20px rgba(29, 78, 216, 0.35);
         }
 
         .timeline-head {
@@ -695,9 +712,10 @@
         <div class="construction-stat"><span>Tasks</span><strong id="stat-tasks">0</strong></div>
         <div class="construction-stat"><span>In Progress</span><strong id="stat-progress">0</strong></div>
         <div class="construction-stat"><span>Completed</span><strong id="stat-completed">0</strong></div>
-        <div class="construction-stat"><span>Overdue</span><strong id="stat-overdue">0</strong></div>
-        <div class="construction-stat"><span>Est. Cost</span><strong id="stat-cost">PKR 0</strong></div>
+        <div class="construction-stat"><span>Pending</span><strong id="stat-pending">0</strong></div>
     </section>
+
+    <section class="property-progress-grid" id="property-progress-container"></section>
 
     <section class="construction-layout">
         <div class="phase-stack" id="phases-container"></div>
@@ -722,6 +740,16 @@
                 <div class="form-group">
                     <label>Phase Type</label>
                     <select id="phase-type-id" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Property</label>
+                    <select id="phase-property-id" class="form-control" required>
+                        <option value="">Select property</option>
+                        @foreach (var property in projectProperties)
+                        {
+                            <option value="@property.PropertyId">@property.PropertyName</option>
+                        }
+                    </select>
                 </div>
                 <div class="form-group full-width" id="custom-phase-group">
                     <label>Custom Phase Name</label>
@@ -752,7 +780,7 @@
 
 <div id="taskModal" class="construction-modal">
     <div class="construction-modal-body">
-        <h2 id="task-modal-title">Add Task</h2>
+        <h2 id="task-modal-title">Edit Task</h2>
         <div id="task-error" class="inline-error"></div>
         <form id="task-form">
             <input type="hidden" id="task-id">
@@ -765,10 +793,6 @@
                 <div class="form-group">
                     <label>Status</label>
                     <select id="task-status-id" class="form-control"></select>
-                </div>
-                <div class="form-group">
-                    <label>Estimated Cost (PKR)</label>
-                    <input type="number" id="task-cost" class="form-control" min="0" step="0.01">
                 </div>
                 <div class="form-group">
                     <label>Start Date</label>
@@ -796,6 +820,7 @@
         const phaseTypes = @Html.Raw(Json.Serialize(ViewBag.PhaseTypes));
         const taskStatuses = @Html.Raw(Json.Serialize(ViewBag.TaskStatuses));
         let currentPhases = [];
+        let currentProperties = [];
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -860,6 +885,7 @@
             const res = await fetch('/Construction/GetProgressData', { cache: 'no-store' });
             const data = await res.json();
             currentPhases = data.phases || [];
+            currentProperties = data.properties || [];
 
             const overallProgress = Math.max(0, Math.min(100, Number(data.overallProgress || 0)));
             document.getElementById('overall-progress-text').textContent = `${overallProgress.toFixed(0)}%`;
@@ -868,19 +894,40 @@
             const allTasks = currentPhases.flatMap(p => p.tasks.map(t => ({ ...t, phaseName: p.phaseName })));
             const completed = allTasks.filter(isCompletedTask).length;
             const inProgress = allTasks.filter(t => String(t.status).toLowerCase() === 'in progress').length;
+            const pending = allTasks.filter(t => String(t.status).toLowerCase() === 'pending').length;
             const overdue = allTasks.filter(t => t.isOverdue).length;
-            const estimatedCost = allTasks.reduce((sum, t) => sum + Number(t.estimatedCost || 0), 0);
 
             document.getElementById('stat-phases').textContent = currentPhases.length;
             document.getElementById('stat-tasks').textContent = allTasks.length;
             document.getElementById('stat-progress').textContent = inProgress;
             document.getElementById('stat-completed').textContent = completed;
-            document.getElementById('stat-overdue').textContent = overdue;
-            document.getElementById('stat-cost').textContent = formatMoney(estimatedCost);
+            document.getElementById('stat-pending').textContent = pending;
             document.getElementById('hero-health').textContent = overdue > 0 ? `${overdue} overdue` : `${Math.max(0, allTasks.length - completed)} open tasks`;
 
             renderPhases(currentPhases);
+            renderPropertyProgress(currentProperties);
             renderTimeline(currentPhases);
+        }
+
+        function renderPropertyProgress(properties) {
+            const container = document.getElementById('property-progress-container');
+            if (!properties.length) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = properties.map(p => `
+                <div class="property-progress-card">
+                    <div class="property-progress-top">
+                        <strong>${escapeHtml(p.propertyName)}</strong>
+                        <span>${Number(p.progress || 0).toFixed(0)}%</span>
+                    </div>
+                    <div class="construction-progress-track" style="margin-top:10px;">
+                        <div class="construction-progress-fill" style="width:${Math.min(100, Number(p.progress || 0))}%"></div>
+                    </div>
+                    <span style="display:block; margin-top:8px;">${escapeHtml(p.status || 'Open')} | ${p.phaseCount} phase${p.phaseCount === 1 ? '' : 's'}</span>
+                </div>
+            `).join('');
         }
 
         function renderPhases(phases) {
@@ -896,18 +943,30 @@
                 return;
             }
 
-            container.innerHTML = phases.map((p, index) => `
+            const groups = new Map();
+            phases.forEach(phase => {
+                const key = `${phase.propertyId || 0}`;
+                if (!groups.has(key)) {
+                    groups.set(key, {
+                        name: phase.propertyName || 'Unassigned',
+                        phases: []
+                    });
+                }
+                groups.get(key).phases.push(phase);
+            });
+
+            container.innerHTML = Array.from(groups.values()).map(group => `
+                <div class="property-phase-group">
+                    <div class="property-phase-head">
+                        <strong>${escapeHtml(group.name)}</strong>
+                        <span>${group.phases.length} phase${group.phases.length === 1 ? '' : 's'}</span>
+                    </div>
+                    <div class="property-phase-list">
+                    ${group.phases.map((p, index) => `
                 <section class="phase-panel js-phase-panel" data-phase-id="${p.phaseId}">
                     <div class="phase-panel-header">
                         <div>
                             <div class="phase-title-row">
-                                <button type="button" class="phase-drag-handle" draggable="true" title="Drag to reorder priority" aria-label="Drag ${escapeHtml(p.phaseName)} to reorder priority">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                                        <circle cx="9" cy="6" r="1"></circle><circle cx="15" cy="6" r="1"></circle>
-                                        <circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle>
-                                        <circle cx="9" cy="18" r="1"></circle><circle cx="15" cy="18" r="1"></circle>
-                                    </svg>
-                                </button>
                                 <span class="phase-priority" title="Priority ${index + 1}">${index + 1}</span>
                                 <div class="phase-title">${escapeHtml(p.phaseName)}</div>
                                 <span class="badge ${p.isCompleted ? 'badge-success' : 'badge-info'}">${p.isCompleted ? 'Complete' : 'Open'}</span>
@@ -928,7 +987,10 @@
                             </div>
                         </div>
                         <div class="phase-panel-actions">
-                            <button class="mini-action primary" onclick="openAddTask(${p.phaseId})">Add Task</button>
+                            <a class="btn-primary btn-compact" href="/Construction/AddTask?phaseId=${p.phaseId}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                                Add Task
+                            </a>
                             <button type="button" class="btn-icon btn-edit" onclick="openEditPhase(${p.phaseId})" title="Edit phase" aria-label="Edit ${escapeHtml(p.phaseName)}">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
@@ -939,8 +1001,10 @@
                     </div>
                     ${renderTaskTable(p)}
                 </section>
+                    `).join('')}
+                    </div>
+                </div>
             `).join('');
-            bindPhaseReorder();
         }
 
         function renderTaskTable(phase) {
@@ -948,7 +1012,10 @@
                 return `<div class="construction-empty" style="border:0; box-shadow:none; border-radius:0;">
                     <h2>No tasks in this phase</h2>
                     <p>Add the work items that make this phase measurable.</p>
-                    <button type="button" class="btn-primary" onclick="openAddTask(${phase.phaseId})">Add Task</button>
+                    <a class="btn-primary" href="/Construction/AddTask?phaseId=${phase.phaseId}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                        Add Task
+                    </a>
                 </div>`;
             }
 
@@ -960,7 +1027,6 @@
                                 <th>Task</th>
                                 <th>Status</th>
                                 <th>Dates</th>
-                                <th>Cost</th>
                                 <th style="text-align:right;">Actions</th>
                             </tr>
                         </thead>
@@ -982,7 +1048,6 @@
                     </td>
                     <td><span class="badge ${statusBadge(task)}">${task.isOverdue ? 'Overdue' : escapeHtml(task.status)}</span></td>
                     <td>${formatShortDate(task.startDate)} - ${formatShortDate(task.endDate)}</td>
-                    <td>${formatMoney(task.estimatedCost)}</td>
                     <td>
                         <div class="task-actions-row">
                             ${canStart ? `<button class="mini-action primary" onclick="setTaskStatus(${task.taskId}, 'In Progress')">Start</button>` : ''}
@@ -996,209 +1061,6 @@
                         </div>
                     </td>
                 </tr>`;
-        }
-
-        let draggedPhaseId = null;
-        let lastSavedOrder = '';
-        let phaseOrderBeforeDrag = [];
-        let pointerPhaseId = null;
-        let pointerDragActive = false;
-
-        function getPhaseOrderFromDom() {
-            return Array.from(document.querySelectorAll('.js-phase-panel'))
-                .map(panel => Number(panel.dataset.phaseId))
-                .filter(Boolean);
-        }
-
-        function clearPhaseDragState() {
-            document.querySelectorAll('.js-phase-panel').forEach(panel => {
-                panel.classList.remove('is-dragging', 'is-drag-over', 'is-order-saving');
-            });
-        }
-
-        function updatePhasePriorityLabels() {
-            document.querySelectorAll('.js-phase-panel').forEach((panel, index) => {
-                const priority = panel.querySelector('.phase-priority');
-                if (!priority) return;
-
-                priority.textContent = index + 1;
-                priority.title = `Priority ${index + 1}`;
-            });
-        }
-
-        function syncCurrentPhaseOrder(orderedIds) {
-            const phaseMap = new Map(currentPhases.map(phase => [phase.phaseId, phase]));
-            currentPhases = orderedIds
-                .map((id, index) => {
-                    const phase = phaseMap.get(id);
-                    return phase ? { ...phase, sequence: index + 1 } : null;
-                })
-                .filter(Boolean);
-        }
-
-        function restoreSavedPhaseOrder() {
-            renderPhases(currentPhases);
-            renderTimeline(currentPhases);
-            phaseOrderBeforeDrag = [];
-        }
-
-        async function persistPhaseOrder(orderedIds) {
-            const orderKey = orderedIds.join(',');
-            if (!orderedIds.length || orderKey === lastSavedOrder) return;
-
-            const previous = [...currentPhases];
-            const movedPanels = Array.from(document.querySelectorAll('.js-phase-panel'));
-            syncCurrentPhaseOrder(orderedIds);
-            updatePhasePriorityLabels();
-            renderTimeline(currentPhases);
-            movedPanels.forEach(panel => panel.classList.add('is-order-saving'));
-
-            let result;
-            try {
-                result = await postJson('/Construction/ReorderPhases', { phaseIds: orderedIds });
-            } catch {
-                result = { success: false, message: 'Unable to save phase priority.' };
-            }
-            movedPanels.forEach(panel => panel.classList.remove('is-order-saving'));
-            if (!result.success) {
-                currentPhases = previous;
-                renderPhases(currentPhases);
-                renderTimeline(currentPhases);
-                alert(result.message || 'Unable to save phase priority.');
-                return;
-            }
-
-            lastSavedOrder = orderKey;
-            phaseOrderBeforeDrag = [];
-        }
-
-        function bindPhaseReorder() {
-            const container = document.getElementById('phases-container');
-            lastSavedOrder = currentPhases.map(phase => phase.phaseId).join(',');
-
-            container.ondragover = event => {
-                if (draggedPhaseId) event.preventDefault();
-            };
-
-            container.ondrop = event => {
-                if (!draggedPhaseId) return;
-
-                event.preventDefault();
-                const orderedIds = getPhaseOrderFromDom();
-                draggedPhaseId = null;
-                clearPhaseDragState();
-                persistPhaseOrder(orderedIds);
-            };
-
-            document.querySelectorAll('.js-phase-panel').forEach(panel => {
-                const handle = panel.querySelector('.phase-drag-handle');
-                handle?.addEventListener('pointerdown', event => {
-                    if (event.pointerType === 'mouse') return;
-
-                    pointerPhaseId = Number(panel.dataset.phaseId);
-                    phaseOrderBeforeDrag = getPhaseOrderFromDom();
-                    pointerDragActive = false;
-                    handle.setPointerCapture?.(event.pointerId);
-                    event.preventDefault();
-                });
-
-                handle?.addEventListener('pointermove', event => {
-                    if (!pointerPhaseId || event.pointerType === 'mouse') return;
-
-                    const dragging = document.querySelector(`.js-phase-panel[data-phase-id="${pointerPhaseId}"]`);
-                    if (!dragging) return;
-
-                    pointerDragActive = true;
-                    dragging.classList.add('is-dragging');
-
-                    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.js-phase-panel');
-                    if (!target || target === dragging || !container.contains(target)) return;
-
-                    document.querySelectorAll('.js-phase-panel.is-drag-over').forEach(item => item.classList.remove('is-drag-over'));
-                    target.classList.add('is-drag-over');
-                    const rect = target.getBoundingClientRect();
-                    const insertAfter = event.clientY > rect.top + rect.height / 2;
-                    container.insertBefore(dragging, insertAfter ? target.nextSibling : target);
-                    updatePhasePriorityLabels();
-                });
-
-                handle?.addEventListener('pointerup', event => {
-                    if (!pointerPhaseId || event.pointerType === 'mouse') return;
-
-                    const orderedIds = getPhaseOrderFromDom();
-                    pointerPhaseId = null;
-                    handle.releasePointerCapture?.(event.pointerId);
-                    clearPhaseDragState();
-
-                    if (pointerDragActive) {
-                        pointerDragActive = false;
-                        persistPhaseOrder(orderedIds);
-                    } else {
-                        phaseOrderBeforeDrag = [];
-                    }
-                });
-
-                handle?.addEventListener('pointercancel', event => {
-                    if (!pointerPhaseId || event.pointerType === 'mouse') return;
-                    pointerPhaseId = null;
-                    handle.releasePointerCapture?.(event.pointerId);
-                    if (pointerDragActive) restoreSavedPhaseOrder();
-                    pointerDragActive = false;
-                    clearPhaseDragState();
-                });
-
-                panel.addEventListener('dragstart', event => {
-                    if (!event.target.closest('.phase-drag-handle')) {
-                        event.preventDefault();
-                        return;
-                    }
-
-                    draggedPhaseId = Number(panel.dataset.phaseId);
-                    phaseOrderBeforeDrag = getPhaseOrderFromDom();
-                    panel.classList.add('is-dragging');
-                    event.dataTransfer.effectAllowed = 'move';
-                    event.dataTransfer.setData('text/plain', String(draggedPhaseId));
-                });
-
-                panel.addEventListener('dragend', () => {
-                    if (draggedPhaseId && phaseOrderBeforeDrag.length && getPhaseOrderFromDom().join(',') !== phaseOrderBeforeDrag.join(',')) {
-                        restoreSavedPhaseOrder();
-                    }
-                    draggedPhaseId = null;
-                    clearPhaseDragState();
-                    phaseOrderBeforeDrag = [];
-                });
-
-                panel.addEventListener('dragover', event => {
-                    if (!draggedPhaseId) return;
-
-                    const dragging = document.querySelector(`.js-phase-panel[data-phase-id="${draggedPhaseId}"]`);
-                    if (!dragging || dragging === panel) return;
-
-                    event.preventDefault();
-                    document.querySelectorAll('.js-phase-panel.is-drag-over').forEach(item => item.classList.remove('is-drag-over'));
-                    panel.classList.add('is-drag-over');
-
-                    const rect = panel.getBoundingClientRect();
-                    const insertAfter = event.clientY > rect.top + rect.height / 2;
-                    panel.parentElement.insertBefore(dragging, insertAfter ? panel.nextSibling : panel);
-                    updatePhasePriorityLabels();
-                });
-
-                panel.addEventListener('dragleave', () => {
-                    panel.classList.remove('is-drag-over');
-                });
-
-                panel.addEventListener('drop', event => {
-                    if (!draggedPhaseId) return;
-
-                    event.preventDefault();
-                    const orderedIds = getPhaseOrderFromDom();
-                    draggedPhaseId = null;
-                    clearPhaseDragState();
-                    persistPhaseOrder(orderedIds);
-                });
-            });
         }
 
         function statusBadge(task) {
@@ -1301,6 +1163,7 @@
             if (!phase) return;
             document.getElementById('phase-id').value = phase.phaseId;
             document.getElementById('phase-type-id').value = phase.phaseTypeId;
+            document.getElementById('phase-property-id').value = phase.propertyId || '';
             document.getElementById('phase-custom-name').value = phase.phaseName;
             document.getElementById('phase-start').value = phase.startDate || '';
             document.getElementById('phase-notes').value = phase.notes || '';
@@ -1325,6 +1188,7 @@
 
             const payload = {
                 phaseId,
+                propertyId: document.getElementById('phase-property-id').value ? Number(document.getElementById('phase-property-id').value) : null,
                 phaseTypeId: Number(document.getElementById('phase-type-id').value),
                 customPhaseName: document.getElementById('phase-custom-name').value,
                 sequence: 0,
@@ -1344,15 +1208,6 @@
             loadConstructionData();
         });
 
-        function openAddTask(phaseId) {
-            document.getElementById('task-form').reset();
-            document.getElementById('task-id').value = 0;
-            document.getElementById('task-phase-id').value = phaseId;
-            document.getElementById('task-modal-title').textContent = 'Add Task';
-            setError('task-error', '');
-            document.getElementById('taskModal').classList.add('is-open');
-        }
-
         function openEditTask(taskId) {
             const task = currentPhases.flatMap(p => p.tasks).find(t => t.taskId === taskId);
             if (!task) return;
@@ -1360,7 +1215,6 @@
             document.getElementById('task-phase-id').value = task.phaseId;
             document.getElementById('task-name').value = task.taskName;
             document.getElementById('task-status-id').value = task.statusId;
-            document.getElementById('task-cost').value = task.estimatedCost || 0;
             document.getElementById('task-start').value = task.startDate || '';
             document.getElementById('task-end').value = task.endDate || '';
             document.getElementById('task-description').value = task.description || '';
@@ -1384,7 +1238,7 @@
                 statusId: Number(document.getElementById('task-status-id').value),
                 startDate: document.getElementById('task-start').value || null,
                 endDate: document.getElementById('task-end').value || null,
-                estimatedCost: Number(document.getElementById('task-cost').value || 0)
+                estimatedCost: null
             };
 
             const result = await postJson(taskId > 0 ? '/Construction/UpdateTask' : '/Construction/AddTask', payload);
@@ -1410,7 +1264,7 @@
                 statusId: newStatusId,
                 startDate: task.startDate,
                 endDate: task.endDate,
-                estimatedCost: Number(task.estimatedCost || 0)
+                estimatedCost: null
             });
 
             if (!result.success) {

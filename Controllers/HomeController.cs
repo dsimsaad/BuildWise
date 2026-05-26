@@ -15,12 +15,14 @@ public class HomeController : Controller
     private readonly BuildWiseDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly WorkerProjectSchemaService _workerProjectSchema;
+    private readonly PropertyPhaseSchemaService _propertyPhaseSchema;
 
-    public HomeController(BuildWiseDbContext context, IConfiguration configuration, WorkerProjectSchemaService workerProjectSchema)
+    public HomeController(BuildWiseDbContext context, IConfiguration configuration, WorkerProjectSchemaService workerProjectSchema, PropertyPhaseSchemaService propertyPhaseSchema)
     {
         _context = context;
         _configuration = configuration;
         _workerProjectSchema = workerProjectSchema;
+        _propertyPhaseSchema = propertyPhaseSchema;
     }
 
     public IActionResult Index()
@@ -90,6 +92,8 @@ public class HomeController : Controller
     public async Task<IActionResult> Dashboard(bool overall = false)
     {
         await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+        await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
+        await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
 
         // 1. Get current User ID from claims
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
@@ -175,10 +179,11 @@ public class HomeController : Controller
             ViewBag.TasksInProgress = await scopedTaskQuery.CountAsync(t => t.StatusId == 2);
             ViewBag.TasksCompleted  = activeStats?.CompletedTasks ?? 0;
             ViewBag.TasksOverdue    = await scopedTaskQuery.CountAsync(t => t.StatusId == 1 && t.CreatedAt < DateTime.Now.AddDays(-7));
+            ViewBag.ProjectProgress = await GetProjectProgressPercentAsync(selectedProjectId.Value);
             
             ViewBag.Phases = await _context.Phases
                 .AsNoTracking()
-                .Include(p => p.PhaseType).Include(p => p.Tasks)
+                .Include(p => p.PhaseType).Include(p => p.Property).Include(p => p.Tasks)
                 .Where(p => p.ProjectId == selectedProjectId)
                 .OrderBy(p => p.Sequence).ToListAsync();
         }
@@ -234,9 +239,9 @@ public class HomeController : Controller
             ViewBag.ProjectsInProgress = allStats.Count(s => (s.PhaseProgressPct ?? 0) > 0 && !s.IsCompleted);
             ViewBag.ProjectsCompleted  = allStats.Count(s => s.IsCompleted);
 
-            ViewBag.OverallConstructionProgress = overallProjects.Sum(p => p.TotalTasks) > 0
-                ? Math.Round(overallProjects.Sum(p => p.CompletedTasks) * 100m / overallProjects.Sum(p => p.TotalTasks), 0)
-                : overallProjects.Count > 0 ? Math.Round(overallProjects.Average(p => p.ProgressPercent), 0) : 0m;
+            ViewBag.OverallConstructionProgress = overallProjects.Count > 0
+                ? Math.Round(overallProjects.Average(p => p.ProgressPercent), 0)
+                : 0m;
             ViewBag.OverallProjects = overallProjects;
             ViewBag.Projects = allStats;
         }
@@ -262,6 +267,8 @@ public class HomeController : Controller
             .AsNoTracking()
             .Include(t => t.Phase)
                 .ThenInclude(p => p.PhaseType)
+            .Include(t => t.Phase)
+                .ThenInclude(p => p.Property)
             .Where(t => t.StatusId == 1)
             .OrderBy(t => t.CreatedAt)
             .Take(6)
@@ -278,6 +285,7 @@ public class HomeController : Controller
     public async Task<IActionResult> DashboardData(bool overall = false)
     {
         await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
+        await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
 
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
         if (userIdClaim == null) return Unauthorized();
@@ -452,10 +460,18 @@ public class HomeController : Controller
                            select v)
             .ToListAsync();
 
+        var progressByProject = new Dictionary<int, decimal>();
+        foreach (var projectId in stats.Select(s => s.ProjectId).Distinct())
+        {
+            progressByProject[projectId] = await GetProjectProgressPercentAsync(projectId);
+        }
+
         return stats
             .Select(s =>
             {
-                var progress = (decimal)(s.TaskProgressPct ?? s.PhaseProgressPct ?? (s.IsCompleted ? 100d : 0d));
+                var progress = progressByProject.TryGetValue(s.ProjectId, out var calculatedProgress)
+                    ? calculatedProgress
+                    : (decimal)(s.TaskProgressPct ?? s.PhaseProgressPct ?? (s.IsCompleted ? 100d : 0d));
                 var totalSpent = s.TotalSpent ?? s.TotalExpenses;
                 return new ProjectDashboardSummary(
                     s.ProjectId,
@@ -722,6 +738,14 @@ public class HomeController : Controller
 
     private async Task<decimal> GetProjectProgressPercentAsync(int projectId)
     {
+        var propertyStatuses = await _context.Properties
+            .AsNoTracking()
+            .Where(p => p.ProjectId == projectId)
+            .Select(p => p.Status.StatusName)
+            .ToListAsync();
+        if (propertyStatuses.Any() && propertyStatuses.All(s => string.Equals(s, "Completed", StringComparison.OrdinalIgnoreCase)))
+            return 100m;
+
         var phases = await _context.Phases
             .AsNoTracking()
             .Include(p => p.Tasks)
@@ -729,7 +753,13 @@ public class HomeController : Controller
             .ToListAsync();
 
         if (!phases.Any())
-            return 0m;
+        {
+            if (!propertyStatuses.Any())
+                return 0m;
+
+            var completedProperties = propertyStatuses.Count(s => string.Equals(s, "Completed", StringComparison.OrdinalIgnoreCase));
+            return Math.Round(completedProperties * 100m / propertyStatuses.Count, 0);
+        }
 
         return Math.Round(phases.Average(p =>
         {
