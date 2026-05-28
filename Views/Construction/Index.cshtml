@@ -318,6 +318,7 @@
 
         .task-table {
             width: 100%;
+            min-width: 720px;
             border-collapse: collapse;
         }
 
@@ -431,11 +432,12 @@
         .construction-modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 2700;
             inset: 0;
             background: rgba(15, 23, 42, 0.46);
             backdrop-filter: blur(3px);
             padding: 18px;
+            overflow-y: auto;
         }
 
         .construction-modal.is-open {
@@ -496,6 +498,53 @@
             .phase-panel-actions,
             .task-actions-row {
                 justify-content: flex-start;
+            }
+
+            .construction-title {
+                font-size: 1.35rem;
+            }
+
+            .phase-progress {
+                min-width: 0;
+                width: 100%;
+            }
+
+            .construction-modal {
+                padding: 12px;
+            }
+
+            .construction-modal-body {
+                margin: 0 auto;
+                width: 100%;
+                max-height: calc(100svh - 24px);
+                padding: 18px;
+            }
+        }
+
+        @@media (max-width: 420px) {
+            .construction-hero {
+                padding: 16px;
+            }
+
+            .overall-progress-number {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .phase-title-row,
+            .property-progress-top,
+            .property-phase-head {
+                align-items: flex-start;
+            }
+
+            .phase-title {
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+
+            .task-table {
+                min-width: 640px;
             }
         }
     </style>
@@ -908,6 +957,7 @@
         function openEditPhase(phaseId) {
             const phase = currentPhases.find(p => p.phaseId === phaseId);
             if (!phase) return;
+            // The modal edits existing phases only. New phases use the dedicated create page.
             document.getElementById('phase-id').value = phase.phaseId;
             document.getElementById('phase-type-id').value = phase.phaseTypeId;
             document.getElementById('phase-property-id').value = phase.propertyId || '';
@@ -1003,6 +1053,7 @@
             const newStatusId = statusId(statusName);
             if (!task || !newStatusId) return;
 
+            // Status quick actions reuse the full update endpoint so the task keeps its other fields.
             const result = await postJson('/Construction/UpdateTask', {
                 taskId: task.taskId,
                 phaseId: task.phaseId,
@@ -1052,6 +1103,7 @@
         }
 
         async function postJson(url, payload) {
+            // Construction actions return a small success object instead of a full page refresh.
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

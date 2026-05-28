@@ -6,6 +6,7 @@ namespace BuildWise.Services;
 
 public sealed class WorkerProjectSchemaService
 {
+    // This guard prevents multiple startup requests from trying to alter the same tables at once.
     private static readonly SemaphoreSlim Gate = new(1, 1);
     private static bool _ensured;
     private readonly BuildWiseDbContext _context;
@@ -30,6 +31,7 @@ public sealed class WorkerProjectSchemaService
                 await connection.OpenAsync(cancellationToken);
             }
 
+            // These statements keep older databases compatible with the current worker project model.
             await ExecuteQuietlyAsync(connection, @"
 IF COL_LENGTH('Workers', 'ProjectID') IS NULL
 BEGIN

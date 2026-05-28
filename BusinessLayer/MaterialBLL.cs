@@ -95,6 +95,7 @@ namespace BuildWise.BusinessLayer
             if (updatedPurchase.Quantity < usedQuantity)
                 throw new ArgumentException($"Purchase quantity cannot be less than the used quantity ({usedQuantity:0.###}).");
 
+            // Existing usage records stay linked to the purchase, so only editable purchase fields are changed.
             purchase.MaterialId = updatedPurchase.MaterialId;
             purchase.Quantity = updatedPurchase.Quantity;
             purchase.UnitId = updatedPurchase.UnitId;
@@ -124,6 +125,7 @@ namespace BuildWise.BusinessLayer
             if (returnQuantity > availableQuantity)
                 throw new ArgumentException($"Return quantity cannot exceed the available quantity ({availableQuantity:0.###}).");
 
+            // A return is modeled by lowering purchased quantity instead of adding a separate negative row.
             purchase.Quantity -= returnQuantity;
             await _materialDal.UpdatePurchaseAsync(purchase);
             return purchase;
@@ -147,6 +149,7 @@ namespace BuildWise.BusinessLayer
             if (quantityUsed > availableQuantity)
                 throw new ArgumentException($"Used quantity cannot exceed the stored quantity ({availableQuantity:0.###}).");
 
+            // Usage is kept as its own record so inventory history remains auditable by phase and date.
             await _materialDal.AddUsageAsync(new MaterialUsage
             {
                 PurchaseId = purchaseId,

@@ -22,6 +22,7 @@ namespace BuildWise.Controllers
 
         private async Task<Project> EnsureDefaultProjectAsync(User user)
         {
+            // Every signed in user needs one active project so dashboard pages have a project context.
             var existingProject = await _context.Projects
                 .Where(p => p.UserId == user.UserId)
                 .OrderBy(p => p.ProjectId)
@@ -49,6 +50,7 @@ namespace BuildWise.Controllers
 
             if (!propertyId.HasValue)
             {
+                // New users may not have a property yet, so create the minimum record needed for the main project.
                 var defaultTypeId = await _context.PropertyTypes
                     .OrderBy(t => t.TypeId)
                     .Select(t => (byte?)t.TypeId)
@@ -132,6 +134,7 @@ namespace BuildWise.Controllers
                 
                 string name = request.Name ?? request.FullName ?? "";
                 
+                // Firebase can return an email as the display name, so fall back to better claims before saving.
                 if (string.IsNullOrWhiteSpace(name) || name.Contains("@"))
                 {
                     if (decodedToken.Claims.ContainsKey("name") && !decodedToken.Claims["name"].ToString()!.Contains("@"))
@@ -154,6 +157,7 @@ namespace BuildWise.Controllers
 
                 if (user == null)
                 {
+                    // The password hash is a marker because Firebase owns the real password check.
                     user = new User
                     {
                         Email = email,

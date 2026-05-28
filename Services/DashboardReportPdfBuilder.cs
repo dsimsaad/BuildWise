@@ -33,6 +33,7 @@ public sealed class DashboardReportPdfBuilder
         DrawCover();
         DrawSummary();
 
+        // The modal sends section flags, so the PDF only includes the parts the user selected.
         if (_options.IncludeProperty) DrawProperty();
         if (_options.IncludeWorkforce) DrawWorkforce();
         if (_options.IncludeBudget) DrawBudget();
@@ -229,6 +230,7 @@ public sealed class DashboardReportPdfBuilder
 
     private void DrawExpensePie()
     {
+        // The chart is limited to the largest categories so the printed legend stays readable.
         var slices = _data.ExpenseCategories
             .Where(c => c.Amount > 0)
             .OrderByDescending(c => c.Amount)
@@ -324,6 +326,7 @@ public sealed record MaterialReportRow(string Name, string Unit, decimal Purchas
 
 internal sealed class PdfCanvas
 {
+    // This is a small PDF writer for simple reports, so it avoids a third party runtime dependency.
     public const float PageWidth = 612;
     public const float PageHeight = 792;
     private const float Margin = 42;
@@ -446,6 +449,7 @@ internal sealed class PdfCanvas
         if (sweepDeg <= 0)
             return;
 
+        // PDF paths use cubic curves, so each pie slice is split into quarter circle segments.
         var start = DegreesToRadians(startAngleDeg);
         var sweepRemaining = DegreesToRadians(Math.Min(sweepDeg, 360));
         var x0 = centerX + radius * Math.Cos(start);
@@ -548,6 +552,7 @@ internal sealed class PdfCanvas
         var output = new MemoryStream();
         Write(output, "%PDF-1.4\n");
         var offsets = new List<long> { 0 };
+        // Offsets are collected while writing so the final xref table points to each object correctly.
         for (var i = 0; i < objects.Count; i++)
         {
             offsets.Add(output.Position);

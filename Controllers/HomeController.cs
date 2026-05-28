@@ -395,6 +395,7 @@ public class HomeController : BaseController
             .Select(g => new MonthlyExpensePoint(g.Key.Year, g.Key.Month, g.Sum(e => e.Amount)))
             .ToList();
 
+        // Some material purchases already exist as expense rows, so skip those to avoid double counting.
         var mirroredMaterialExpenseDescriptions = expenseBll.GetAllExpenses(projectId, userId)
             .Where(e => string.Equals(e.Category, "Material", StringComparison.OrdinalIgnoreCase)
                 && e.Description.StartsWith("Material purchase #", StringComparison.OrdinalIgnoreCase))
@@ -418,6 +419,7 @@ public class HomeController : BaseController
             .ToList();
         monthly.AddRange(materialPurchases);
 
+        // Wages affect project cash flow but are stored separately from normal expense items.
         var wagePayments = await _context.WagePayments
             .AsNoTracking()
             .Where(w => w.Project.UserId == userId && (!projectId.HasValue || w.ProjectId == projectId.Value))

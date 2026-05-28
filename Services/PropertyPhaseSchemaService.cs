@@ -19,6 +19,7 @@ public sealed class PropertyPhaseSchemaService
         if (string.IsNullOrWhiteSpace(connectionString))
             return;
 
+        // This keeps phase records compatible with databases created before phases belonged to properties.
         const string sql = @"
 IF COL_LENGTH('Phases', 'PropertyID') IS NULL
 BEGIN
@@ -45,6 +46,7 @@ END;";
         }
         catch (Exception ex)
         {
+            // Startup should not fail only because a local or old database cannot be upgraded yet.
             _logger.LogDebug(ex, "Property phase schema check skipped.");
         }
     }

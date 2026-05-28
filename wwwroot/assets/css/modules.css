@@ -20,6 +20,86 @@
     --radius-lg: 8px;
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+img,
+svg,
+canvas,
+video {
+    max-width: 100%;
+}
+
+.module-header,
+.module-card,
+.card-header,
+.card-body,
+.summary-grid,
+.sum-card,
+.content-grid,
+.entity-grid,
+.entity-card,
+.form-grid,
+.detail-grid,
+.filter-bar,
+.table-responsive,
+.scaffold-page,
+.scaffold-form-card,
+.scaffold-detail-card {
+    /* Allow nested grid and flex children to shrink instead of forcing page overflow. */
+    min-width: 0;
+}
+
+.sum-info,
+.entity-card-header > div,
+.entity-card-title,
+.entity-card-subtitle,
+.detail-row,
+.form-group {
+    min-width: 0;
+}
+
+.sum-info p,
+.entity-card-title,
+.entity-card-subtitle,
+.detail-row span,
+.detail-row strong,
+.modern-table td,
+.scaffold-table td {
+    overflow-wrap: anywhere;
+}
+
+.table-responsive {
+    max-width: 100%;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.modern-table,
+.scaffold-table {
+    max-width: 100%;
+}
+
+.form-control,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-create,
+.btn-outline,
+.back-link,
+.btn-soft {
+    max-width: 100%;
+}
+
 
 .module-header {
     display: flex;
@@ -613,6 +693,123 @@ select.form-control {
     .form-actions .btn-secondary,
     .form-actions .btn-danger {
         justify-content: center;
+    }
+}
+
+@media (max-width: 1100px) {
+    .split-grid,
+    .expense-distribution-grid {
+        /* Form and chart pages need vertical flow before tablet widths get cramped. */
+        grid-template-columns: 1fr !important;
+    }
+
+    .split-grid .scaffold-form-card {
+        position: static !important;
+        top: auto !important;
+        max-width: none;
+        width: 100%;
+    }
+}
+
+@media (max-width: 760px) {
+    .chart-wrapper,
+    .chart-container,
+    .chart-container-large,
+    .pie-stage {
+        min-width: 0;
+        height: clamp(220px, 72vw, 300px) !important;
+    }
+
+    .filter-bar,
+    .workers-toolbar,
+    .workers-filter,
+    .workers-actions,
+    .budget-limit-inner,
+    .budget-limit-control {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .workers-toolbar,
+    .workers-filter,
+    .workers-actions {
+        align-items: stretch !important;
+    }
+
+    .workers-actions > *,
+    .workers-filter > *,
+    .worker-detail-actions > *,
+    .budget-limit-control > *,
+    .return-dialog-actions > * {
+        min-width: 0;
+    }
+
+    .workers-actions {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px !important;
+    }
+
+    .workers-actions form,
+    .workers-actions .btn-soft {
+        width: 100%;
+    }
+
+    .btn-soft-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .worker-detail-panel {
+        margin-inline: 14px !important;
+        padding: 14px !important;
+    }
+
+    .worker-detail-header,
+    .worker-detail-actions,
+    .budget-limit-title {
+        align-items: stretch !important;
+        flex-direction: column;
+    }
+
+    .worker-detail-actions .btn-primary,
+    .worker-detail-actions .btn-secondary,
+    .worker-detail-actions .btn-danger {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 520px) {
+    .summary-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .sum-card {
+        align-items: flex-start;
+    }
+
+    .card-header .badge,
+    .module-header .badge {
+        align-self: flex-start;
+        white-space: normal;
+    }
+
+    .modern-table,
+    .scaffold-table {
+        min-width: 560px;
+    }
+}
+
+@media (max-width: 380px) {
+    .workers-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .modern-table,
+    .scaffold-table {
+        min-width: 520px;
     }
 }
 

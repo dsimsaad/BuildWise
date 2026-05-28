@@ -92,6 +92,88 @@
     --dash-radius-lg: 4px;
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body.dashboard-body {
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+img,
+svg,
+canvas,
+video {
+    max-width: 100%;
+}
+
+.dash-container,
+.dash-wrapper,
+.dash-main,
+.dash-content,
+.dash-topbar,
+.topbar-right,
+.stats-grid,
+.stat-card,
+.main-grid,
+.dashboard-row,
+.dash-card,
+.db-page-header,
+.db-header-actions,
+.db-kpi-row,
+.db-kpi-card,
+.db-kpi-inner,
+.db-card,
+.db-mid-row,
+.db-bottom-row,
+.db-dist-body,
+.db-cat-grid,
+.db-table,
+.db-chart-area {
+    /* Dashboard cards contain long values and charts, so let them shrink inside the main layout. */
+    min-width: 0;
+}
+
+.db-page-title-block,
+.db-kpi-body,
+.db-card-title,
+.db-feat-body,
+.db-advisor-trigger-content,
+.db-upcoming-item > div,
+.project-name,
+.name-info {
+    min-width: 0;
+}
+
+.db-subtitle,
+.db-kpi-label,
+.db-kpi-value,
+.db-card-title,
+.db-feat-body p,
+.db-advisor-trigger small,
+.db-upcoming-item strong,
+.db-table td,
+.stat-value,
+.project-name,
+.name-info strong,
+.name-info span {
+    overflow-wrap: anywhere;
+}
+
+.dash-card canvas,
+.db-card canvas,
+.chart-container canvas,
+.chart-container-large canvas,
+.chart-container-relative canvas,
+.db-chart-area canvas,
+.db-donut-wrap canvas {
+    max-width: 100% !important;
+}
+
 
 body.dashboard-body {
     background-color: var(--dash-bg);
@@ -1022,6 +1104,32 @@ body.dashboard-body {
     }
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .dash-topbar {
+        padding-inline: 18px;
+    }
+
+    .dash-content {
+        padding: 22px;
+    }
+
+    .db-dist-body,
+    .expense-content {
+        /* Chart and legend pairs read better stacked once the dashboard leaves desktop width. */
+        grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-expense-content {
+        min-height: 0;
+    }
+
+    .dashboard-category-boxes,
+    .db-cat-grid {
+        max-height: none;
+        overflow: visible;
     }
 }
 
@@ -2049,6 +2157,14 @@ body.dashboard-body {
         flex-wrap: wrap;
     }
 
+    .db-card-header > * {
+        min-width: 0;
+    }
+
+    .db-card-title {
+        line-height: 1.25;
+    }
+
     .db-construction-body,
     .db-advisor-body,
     .db-dist-body {
@@ -2086,6 +2202,29 @@ body.dashboard-body {
 
     .db-donut-center {
         width: 128px;
+    }
+
+    .chart-side,
+    .chart-container,
+    .chart-container-large,
+    .chart-container-relative,
+    .db-chart-area {
+        min-width: 0;
+        height: clamp(190px, 62vw, 250px);
+    }
+
+    .expense-content,
+    .dashboard-expense-content {
+        min-height: 0;
+    }
+
+    .dashboard-expense-card {
+        padding: 16px;
+    }
+
+    .dashboard-pie-center,
+    .db-donut-center {
+        width: min(128px, 58%);
     }
 
     .db-table {
@@ -2153,5 +2292,29 @@ body.dashboard-body {
 
     .db-kpi-badge-pair {
         flex-wrap: wrap;
+    }
+
+    .db-kpi-inner {
+        align-items: flex-start;
+    }
+
+    .db-kpi-value-row,
+    .db-header-actions {
+        width: 100%;
+    }
+
+    .db-report-btn,
+    .db-overall-btn,
+    .db-card-link,
+    .db-report-btn.db-slide-btn,
+    .db-overall-btn.db-slide-btn,
+    .db-card-link.db-slide-btn {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+    }
+
+    .db-table {
+        min-width: 340px;
     }
 }

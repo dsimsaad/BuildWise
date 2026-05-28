@@ -64,6 +64,7 @@ const googleBtn = document.querySelector('.glass-btn-google');
 
 async function sendTokenToBackend(idToken, fullName = null) {
     try {
+        // The backend creates or finds the local user after Firebase proves the identity.
         const response = await fetch('/Account/FirebaseLogin', {
             method: 'POST',
             headers: {

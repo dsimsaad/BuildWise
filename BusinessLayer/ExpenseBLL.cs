@@ -93,6 +93,7 @@ namespace BuildWise.BusinessLayer
                 return false;
             }
 
+            // Material purchases are mirrored as expenses, so a return must reduce or remove that expense.
             var adjustedExpense = true;
             var mirroredExpense = expenseDal.GetMaterialPurchaseExpense(purchase.ProjectId, purchase.PurchaseId);
             if (mirroredExpense != null)
@@ -112,6 +113,7 @@ namespace BuildWise.BusinessLayer
             decimal effect = 0;
             if (totalBudget > 0)
             {
+                // Budget effect stores how much of the active project budget this entry changed.
                 effect = (item.Amount / totalBudget) * 100;
             }
 
@@ -133,6 +135,7 @@ namespace BuildWise.BusinessLayer
             decimal effect = 0;
             if (totalBudget > 0)
             {
+                // Returns lower spending, so their budget effect is stored as a negative percentage.
                 effect = -((returnAmount / totalBudget) * 100);
             }
 

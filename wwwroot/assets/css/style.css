@@ -24,6 +24,36 @@ body {
   color: #0F172A;
   background: #FFFFFF;
   -webkit-font-smoothing: antialiased;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+
+.hero-inner,
+.features-inner,
+.feat-section-inner,
+.footer-inner,
+.nav-inner,
+.dashboard-wrap,
+.db-content-right,
+.db-main,
+.db-card,
+.feature-card,
+.feat-card,
+.contact-wrapper,
+.contact-info,
+.contact-form-card,
+.details-card,
+.login-container,
+.glass-card,
+.forgot-modal-card {
+  min-width: 0;
 }
 
 
@@ -507,10 +537,12 @@ footer {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100svh;
   margin: 0;
   padding: 20px;
   font-family: 'Inter', sans-serif;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
@@ -696,6 +728,50 @@ footer {
   }
 }
 
+@media (max-width: 420px) {
+  .hero h1 {
+    font-size: 30px;
+  }
+
+  .dashboard-wrap {
+    transform: scale(0.41);
+    margin-bottom: -320px;
+  }
+
+  .glass-card {
+    padding: 24px 18px;
+  }
+
+  .forgot-modal-overlay {
+    padding: 12px;
+  }
+
+  .forgot-modal-card {
+    max-height: calc(100svh - 24px);
+    overflow-y: auto;
+    padding: 32px 20px 22px;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-inner {
+    padding-inline: 12px;
+  }
+
+  .hero {
+    padding-inline: 14px;
+  }
+
+  .dashboard-wrap {
+    transform: scale(0.36);
+    margin-bottom: -360px;
+  }
+
+  .login-body {
+    padding-inline: 10px;
+  }
+}
+
 
 .error-message-box {
     display: none;
@@ -838,3 +914,21 @@ footer {
 }
 .forgot-send-btn:hover  { background: #1d4ed8; transform: translateY(-1px); }
 .forgot-send-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+@media (max-width: 420px) {
+    .forgot-modal-overlay {
+        padding: 12px;
+    }
+
+    .forgot-modal-card {
+        max-height: calc(100svh - 24px);
+        overflow-y: auto;
+        padding: 32px 20px 22px;
+    }
+}
+
+@media (max-width: 360px) {
+    .login-body {
+        padding-inline: 10px;
+    }
+}

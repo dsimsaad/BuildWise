@@ -68,6 +68,7 @@ const googleBtn = document.querySelector('.glass-btn-google');
 
 async function sendTokenToBackend(idToken, displayName = null) {
     try {
+        // Firebase signs in on the client, then the server exchanges the token for our app cookie.
         const response = await fetch('/Account/FirebaseLogin', {
             method: 'POST',
             headers: {
@@ -159,6 +160,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeForgo
 if (forgotSubmitBtn) {
     forgotSubmitBtn.addEventListener('click', async () => {
         const email = forgotEmailInput.value.trim();
+        // Password reset stays in Firebase, so this app never handles the raw password reset flow.
         if (!email) {
             forgotMessage.textContent = 'Please enter your email address.';
             forgotMessage.className = 'forgot-msg error';

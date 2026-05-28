@@ -609,6 +609,7 @@
                 return rows.get(key);
             };
 
+            // Budget and expense rows come from different endpoints, so merge them by category first.
             (budgets || []).forEach(item => {
                 ensureRow(item.category ?? item.Category).budgeted += Number(item.amount ?? item.Amount ?? 0);
             });
@@ -641,6 +642,7 @@
             );
             const editingKey = normalizeCategoryName(editingCategory).toLowerCase();
 
+            // A category should only have one allocation, except while editing that same allocation.
             Array.from(categorySelect.options).forEach(option => {
                 if (option.value === 'custom') return;
                 const shouldHide = allocatedCategories.has(option.value.toLowerCase()) && option.value.toLowerCase() !== editingKey;
@@ -732,6 +734,7 @@
 
             if (!data.selectedProjectId) {
                 document.getElementById('no-project-warning').style.display = 'block';
+                // Without an active project the API cannot attach budgets or expenses safely.
                 document.querySelectorAll('button[type="submit"], .btn-primary').forEach(b => b.disabled = true);
             } else {
                 document.getElementById('no-project-warning').style.display = 'none';
@@ -811,6 +814,7 @@
             const labels = budgetActualRows.map(row => row.category);
             const budgetData = budgetActualRows.map(row => row.budgeted);
             const expenseData = budgetActualRows.map(row => row.actual);
+            // Rebuild charts after every load so edited data cannot leave stale Chart.js datasets behind.
             const budgetActualEmpty = document.getElementById('budgetActualEmpty');
             if (budgetActualEmpty) {
                 budgetActualEmpty.style.display = budgetActualRows.length ? 'none' : 'flex';

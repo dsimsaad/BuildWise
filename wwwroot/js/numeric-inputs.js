@@ -21,6 +21,7 @@
         if (mode === 'decimal') return true;
         if (input.getAttribute('inputmode') === 'numeric' && input.type !== 'number') return false;
 
+        // Step values other than one mean the field can accept decimal quantities.
         const step = input.getAttribute('step');
         return step === 'any' || (step && step !== '1');
     }
@@ -82,6 +83,7 @@
         const input = getNumericInput(event.target);
         if (!input || event.inputType !== 'insertText' || !event.data) return;
 
+        // Block invalid characters before the browser inserts them into the input.
         if (!isAllowedText(input, event.data)) {
             event.preventDefault();
         }
@@ -104,6 +106,7 @@
         const cleaned = cleanNumber(pastedText, allowsDecimal(input));
 
         if (cleaned !== pastedText) {
+            // Paste can include spaces or currency text, so replace it with only the numeric part.
             event.preventDefault();
             replaceSelection(input, cleaned);
         }

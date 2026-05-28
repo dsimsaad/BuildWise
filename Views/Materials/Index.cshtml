@@ -129,6 +129,8 @@
 
         .return-dialog {
             width: min(440px, 100%);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
             background: #FFFFFF;
             border: 1px solid #DCE8F7;
             border-radius: var(--radius-lg);
@@ -201,6 +203,35 @@
             display: block;
             color: var(--text-main);
             font-size: 0.86rem;
+            overflow-wrap: anywhere;
+        }
+
+        @@media (max-width: 760px) {
+            .return-modal {
+                align-items: flex-end;
+                padding: 12px;
+            }
+
+            .return-dialog {
+                width: 100%;
+                max-height: calc(100svh - 24px);
+                border-radius: 10px 10px 8px 8px;
+            }
+
+            .return-dialog-header,
+            .return-dialog-body {
+                padding: 16px;
+            }
+
+            .return-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .material-table-card .card-header {
+                align-items: flex-start;
+                gap: 10px;
+                flex-direction: column;
+            }
         }
     </style>
 }
@@ -595,6 +626,7 @@
                 const available = Number(button.dataset.available || 0);
                 const unit = button.dataset.unit || '';
 
+                // Prefill with the full available amount because most site usage consumes a known stored quantity.
                 usePurchaseId.value = button.dataset.purchaseId;
                 useMaterialName.textContent = button.dataset.material || 'Record material use';
                 useAvailable.textContent = `${formatQty(available)} ${unit}`;
@@ -619,6 +651,7 @@
 
         function refreshReturnAmount() {
             const quantity = Number(returnQuantity.value || 0);
+            // The refund preview mirrors the expense reduction that will be recorded on submit.
             returnAmount.textContent = formatPKR(quantity * activeUnitPrice);
         }
 
@@ -628,6 +661,7 @@
                 activeUnitPrice = Number(button.dataset.unitPrice || 0);
                 activeUnit = button.dataset.unit || '';
 
+                // Returns are capped to unused inventory so already consumed material cannot be refunded.
                 returnPurchaseId.value = button.dataset.purchaseId;
                 returnMaterialName.textContent = button.dataset.material || 'Return material';
                 returnAvailable.textContent = `${formatQty(available)} ${activeUnit}`;

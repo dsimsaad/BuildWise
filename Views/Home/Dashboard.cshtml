@@ -644,6 +644,7 @@ else if (isOverallDashboard)
                      '#06B6D4','#84CC16','#F97316','#EC4899','#64748B',
                      '#22C55E','#A855F7','#3B82F6','#10B981'];
     function normalizeCategoryData(items) {
+        // API and server rendered data can use different casing, so normalize both shapes here.
         return (items || [])
             .map(i => ({ category: i.category ?? i.Category, total: Number(i.total ?? i.Total ?? i.amount ?? i.Amount ?? 0) }))
             .filter(i => i.category && i.total > 0);
@@ -784,6 +785,7 @@ else if (isOverallDashboard)
     let rawMonthly = @Html.Raw(Json.Serialize(ViewBag.MonthlyExpenses));
 
     function buildMonthlyDataset(raw, periods) {
+        // Fill missing months with zero so the trend chart has a stable timeline.
         const normalized = (raw || [])
             .map(m => ({
                 year: Number(m.year ?? m.Year ?? new Date().getFullYear()),
@@ -915,6 +917,7 @@ else if (isOverallDashboard)
     }
 
     function updateExpenseChart(items) {
+        // Keep the chart, center text, and side category buttons in sync after live refreshes.
         catData = normalizeCategoryData(items);
         totalCatExp = sumCategories(catData);
         activePieIdx = null;
@@ -947,6 +950,7 @@ else if (isOverallDashboard)
     }
     async function refreshDashboard() {
         try {
+            // The dashboard refreshes quietly so totals stay current after changes in other modules.
             const overall = new URLSearchParams(window.location.search).get('overall') === 'true';
             const res = await fetch(`/Home/DashboardData${overall ? '?overall=true' : ''}`, { cache: 'no-store' });
             if (!res.ok) return;
@@ -967,6 +971,7 @@ else if (isOverallDashboard)
             const menuId = this.dataset.menu;
             const menu   = document.getElementById(menuId);
             const isOpen = menu.classList.contains('is-open');
+            // Only one KPI action menu should be open at a time to avoid stacked overlays.
             document.querySelectorAll('.db-kpi-dropdown').forEach(m => m.classList.remove('is-open'));
             document.querySelectorAll('.db-kpi-more').forEach(b => b.classList.remove('is-active'));
             document.querySelectorAll('.db-kpi-card').forEach(c => c.classList.remove('is-menu-open'));

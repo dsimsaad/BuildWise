@@ -282,6 +282,7 @@
 
 @section Scripts {
     <script>
+        // Custom dates only apply after the user chooses the custom range or opens a shared report link.
         let customDateFilterActive = false;
 
         async function loadTransactions() {
@@ -347,6 +348,7 @@
 
             if (category) {
                 const categorySelect = document.getElementById('filter-category');
+                // Report links can contain categories that are not in the static dropdown options.
                 if (![...categorySelect.options].some(option => option.value === category)) {
                     categorySelect.add(new Option(category, category));
                 }
@@ -396,6 +398,7 @@
             });
             const from = document.getElementById('filter-from').value;
             const to = document.getElementById('filter-to').value;
+            // Keep the PDF download using the same filters currently shown on screen.
             if (customDateFilterActive && from) params.set('fromDate', from);
             if (customDateFilterActive && to) params.set('toDate', to);
             document.getElementById('download-transaction-report').href = `/Transaction/DownloadReport?${params.toString()}`;
