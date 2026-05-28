@@ -65,6 +65,7 @@ secrets.json
 publish/
 
 ## Local runtime artifacts
+.localappdata/
 App_Data/DataProtection-Keys/
 run.out.log
 run.err.log
