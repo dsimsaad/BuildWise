@@ -3,7 +3,6 @@ using BuildWise.DataLayer;
 
 namespace BuildWise.BusinessLayer
 {
-    // Handles construction rules.
     public class ConstructionBLL
     {
         private PhaseDAL phaseDal;
@@ -38,7 +37,6 @@ namespace BuildWise.BusinessLayer
                 totalWeight += phase.Weight;
             }
 
-            // Keep the weighted progress simple.
             return Math.Round(overall, 2);
         }
 
@@ -57,13 +55,11 @@ namespace BuildWise.BusinessLayer
             return Math.Round(progress, 2);
         }
 
-        // Phase actions.
         public bool AddPhase(ConstructionPhase phase) => phaseDal.Add(phase);
         public bool UpdatePhase(ConstructionPhase phase) => phaseDal.Update(phase);
         public bool DeletePhase(int id) => phaseDal.Delete(id);
         public bool PhaseBelongsToUser(int phaseId, int userId) => phaseDal.BelongsToUser(phaseId, userId);
 
-        // Task actions.
         public bool AddTask(PhaseTask task) => taskDal.Add(task);
         public bool UpdateTask(PhaseTask task) => taskDal.Update(task);
         public bool DeleteTask(int id) => taskDal.Delete(id);

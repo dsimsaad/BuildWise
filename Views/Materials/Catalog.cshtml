@@ -3,10 +3,22 @@
 @{
     ViewData["Title"] = "Material Catalog";
     Layout = "_ModuleLayout";
+    var currentUserId = ViewBag.CurrentUserId as int? ?? 0;
+    var customCount = Model.Count(m => m.UserId == currentUserId);
+    var defaultCount = Model.Count(m => m.UserId != currentUserId);
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/modules.css" asp-append-version="true">
+}
+
+@if (TempData["MaterialMessage"] != null)
+{
+    <div class="badge badge-success" style="margin-bottom:18px;">@TempData["MaterialMessage"]</div>
+}
+@if (TempData["MaterialError"] != null)
+{
+    <div class="badge badge-danger" style="margin-bottom:18px;">@TempData["MaterialError"]</div>
 }
 
 <div class="module-header">
@@ -42,6 +54,24 @@
             <p>@Model.Count(m => m.IsActive)</p>
         </div>
     </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#EFF6FF; color:#1D4ED8;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Custom</h3>
+            <p>@customCount</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#FEF3C7; color:#F59E0B;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7l8 4 8-4Z"></path><path d="M4 7v10l8 4 8-4V7"></path></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Default</h3>
+            <p>@defaultCount</p>
+        </div>
+    </div>
 </div>
 
 @if (!Model.Any())
@@ -58,17 +88,33 @@ else
     <div class="entity-grid">
         @foreach (var item in Model)
         {
+            var isCustom = item.UserId == currentUserId;
             <article class="entity-card">
                 <div class="entity-card-header">
                     <div>
                         <h2 class="entity-card-title">@item.MaterialName</h2>
                         <div class="entity-card-subtitle">Default unit: @item.DefaultUnit?.UnitName</div>
                     </div>
-                    <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span>
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+                        <span class="badge @(isCustom ? "badge-info" : "badge-warning")">@(isCustom ? "Custom" : "Default")</span>
+                        <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span>
+                    </div>
                 </div>
                 <p style="margin:0; color:var(--text-muted); font-size:0.875rem;">
                     @(string.IsNullOrWhiteSpace(item.Description) ? "No description added." : item.Description)
                 </p>
+                @if (isCustom)
+                {
+                    <div class="entity-actions" style="margin-top:16px;">
+                        <a asp-action="EditMaterial" asp-route-id="@item.MaterialId" class="btn-secondary">Edit</a>
+                        <form asp-action="ToggleMaterialActive" method="post" style="margin:0;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.MaterialId" />
+                            <input type="hidden" name="isActive" value="@(!item.IsActive)" />
+                            <button type="submit" class="@(item.IsActive ? "btn-danger" : "btn-primary")">@(item.IsActive ? "Deactivate" : "Activate")</button>
+                        </form>
+                    </div>
+                }
             </article>
         }
     </div>

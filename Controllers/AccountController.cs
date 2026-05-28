@@ -127,14 +127,11 @@ namespace BuildWise.Controllers
                     return BadRequest(new { success = false, message = "Firebase authentication is not configured on the server. Add firebase-admin-sdk.json to the project root or set Firebase:ServiceAccountPath." });
                 }
 
-                // Verify the token.
                 var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(request.IdToken);
                 string email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString()! : "";
                 
-                // Pick the display name.
                 string name = request.Name ?? request.FullName ?? "";
                 
-                // Use claims when the request name is missing.
                 if (string.IsNullOrWhiteSpace(name) || name.Contains("@"))
                 {
                     if (decodedToken.Claims.ContainsKey("name") && !decodedToken.Claims["name"].ToString()!.Contains("@"))
@@ -143,7 +140,6 @@ namespace BuildWise.Controllers
                     }
                 }
 
-                // Fall back to the email prefix.
                 if (string.IsNullOrWhiteSpace(name) || name.Contains("@"))
                 {
                     name = email.Contains("@") ? email.Split('@')[0] : "User";
@@ -154,17 +150,15 @@ namespace BuildWise.Controllers
                     return BadRequest(new { success = false, message = "Email not found in token or claims." });
                 }
 
-                // Check the local user.
                 var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
 
                 if (user == null)
                 {
-                    // Create the user if needed.
                     user = new User
                     {
                         Email = email,
                         FullName = name,
-                        PasswordHash = "FIREBASE_AUTH", // Handled by Firebase
+                        PasswordHash = "FIREBASE_AUTH",
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
@@ -176,7 +170,6 @@ namespace BuildWise.Controllers
                 var activeProject = await EnsureDefaultProjectAsync(user);
                 HttpContext.Session.SetInt32("SelectedProjectId", activeProject.ProjectId);
 
-                // Create the local session.
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.FullName),
@@ -293,7 +286,6 @@ namespace BuildWise.Controllers
             [JsonPropertyName("name")]
             public string? Name { get; set; }
             
-            // Add a fallback property name.
             [JsonPropertyName("fullName")]
             public string? FullName { get; set; }
         }

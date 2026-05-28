@@ -3,7 +3,6 @@ using BuildWise.DataLayer;
 
 namespace BuildWise.BusinessLayer
 {
-    // Handles expense rules.
     public class ExpenseBLL
     {
         private ExpenseDAL expenseDal;
@@ -29,7 +28,6 @@ namespace BuildWise.BusinessLayer
 
         public bool AddExpense(ExpenseItem item)
         {
-            // Check required values.
             if (string.IsNullOrWhiteSpace(item.Category) || item.Amount <= 0)
             {
                 return false;
@@ -38,7 +36,6 @@ namespace BuildWise.BusinessLayer
             bool success = expenseDal.Add(item);
             if (success)
             {
-                // Log the transaction.
                 LogTransaction("Added", item);
             }
             return success;

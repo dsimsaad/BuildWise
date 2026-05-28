@@ -1,4 +1,3 @@
-// Login page toggle.
 const container = document.getElementById("container");
 const signUpBtn = document.getElementById("signUp");
 const signInBtn = document.getElementById("signIn");
@@ -12,8 +11,6 @@ if (container && signUpBtn && signInBtn) {
         container.classList.remove("right-panel-active");
     });
 }
-
-// Mobile menu.
 const mobileToggle = document.getElementById("mobile-toggle");
 const mobileMenu = document.getElementById("mobile-menu");
 
@@ -22,8 +19,6 @@ if (mobileToggle && mobileMenu) {
         mobileMenu.classList.toggle("active");
         mobileToggle.classList.toggle("active");
     });
-
-    // Close menu after a link click.
     const mobileLinks = mobileMenu.querySelectorAll("a");
     mobileLinks.forEach(link => {
         link.addEventListener("click", () => {
@@ -32,8 +27,6 @@ if (mobileToggle && mobileMenu) {
         });
     });
 }
-
-// Scroll reveal.
 const revealElements = document.querySelectorAll(".reveal");
 if (revealElements.length && "IntersectionObserver" in window) {
     const revealObserver = new IntersectionObserver((entries) => {
@@ -52,8 +45,6 @@ if (revealElements.length && "IntersectionObserver" in window) {
 } else {
     revealElements.forEach(el => el.classList.add("active"));
 }
-
-// Load animated icons.
 const lordIcons = document.querySelectorAll("lord-icon");
 if (lordIcons.length) {
     const loadLordIconRuntime = () => {
@@ -83,8 +74,6 @@ if (lordIcons.length) {
         }
     }
 }
-
-// Back to top button.
 const backToTopBtn = document.getElementById("backToTop");
 
 if (backToTopBtn) {
@@ -104,8 +93,6 @@ if (backToTopBtn) {
         });
     });
 }
-
-// Dashboard scroll animation.
 const scrollContainer = document.getElementById('scroll-container');
 const scrollWrapper = document.getElementById('scroll-wrapper');
 const heroHeader = document.getElementById('hero-header');
@@ -155,8 +142,6 @@ if (scrollContainer && scrollWrapper) {
     window.addEventListener('resize', scheduleScrollAnimation, { passive: true });
     updateScrollAnimation();
 }
-
-// Highlight active nav link.
 const navLinks = document.querySelectorAll(".nav-links a, .mobile-nav-overlay a");
 const currentPath = window.location.pathname.split("/").pop() || "index.html";
 

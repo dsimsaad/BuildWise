@@ -1,9 +1,6 @@
--- ============================================
--- BuildWise Module Tables
--- Run this script on BuildWiseDB
--- ============================================
+-- This script creates older module tables for BuildWiseDB.
 
--- Module 1: Budget Items
+-- This table stores simple budget category amounts.
 CREATE TABLE BudgetItems (
     BudgetId INT IDENTITY(1,1) PRIMARY KEY,
     Category NVARCHAR(100) NOT NULL,
@@ -12,7 +9,7 @@ CREATE TABLE BudgetItems (
     UpdatedAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
--- Module 1: Expense Items
+-- This table stores simple expense records.
 CREATE TABLE ExpenseItems (
     ExpenseId INT IDENTITY(1,1) PRIMARY KEY,
     Category NVARCHAR(100) NOT NULL,
@@ -23,7 +20,7 @@ CREATE TABLE ExpenseItems (
     UpdatedAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
--- Module 2: Transaction Log (auto-generated ledger)
+-- This table stores automatic ledger records for budget and expense changes.
 CREATE TABLE TransactionLogs (
     TransactionId INT IDENTITY(1,1) PRIMARY KEY,
     ProjectId INT NULL,
@@ -35,7 +32,7 @@ CREATE TABLE TransactionLogs (
     BudgetEffect DECIMAL(5,2) NULL
 );
 
--- Module 4&5: Construction Phases
+-- This table stores construction phases with display order and weight.
 CREATE TABLE ConstructionPhases (
     PhaseId INT IDENTITY(1,1) PRIMARY KEY,
     PhaseName NVARCHAR(100) NOT NULL,
@@ -44,7 +41,7 @@ CREATE TABLE ConstructionPhases (
     CreatedAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
--- Module 4&5: Phase Tasks
+-- This table stores tasks that belong to each construction phase.
 CREATE TABLE PhaseTasks (
     TaskId INT IDENTITY(1,1) PRIMARY KEY,
     PhaseId INT NOT NULL,
@@ -58,7 +55,7 @@ CREATE TABLE PhaseTasks (
         REFERENCES ConstructionPhases(PhaseId) ON DELETE CASCADE
 );
 
--- Default construction phases
+-- These rows add the default construction phases used by the app.
 INSERT INTO ConstructionPhases (PhaseName, Weight, SortOrder) VALUES
 ('Foundation', 30, 1),
 ('Structure', 25, 2),

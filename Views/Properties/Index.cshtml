@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "Properties";
     Layout = "_ModuleLayout";
+    var completedProperties = Model.Count(p => string.Equals(p.Status?.StatusName, "Completed", StringComparison.OrdinalIgnoreCase));
+    var openProperties = Model.Count() - completedProperties;
 
     string StatusBadgeClass(string? statusName)
     {
@@ -54,11 +56,20 @@
     </div>
     <div class="sum-card">
         <div class="sum-icon" style="background:#FEF3C7; color:#F59E0B;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="sum-info">
+            <h3>Completed</h3>
+            <p>@completedProperties</p>
+        </div>
+    </div>
+    <div class="sum-card">
+        <div class="sum-icon" style="background:#EFF6FF; color:#1D4ED8;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 2"></path></svg>
         </div>
         <div class="sum-info">
-            <h3>Latest Added</h3>
-            <p>@(Model.Any() ? Model.Max(p => p.CreatedAt).ToString("MMM dd") : "-")</p>
+            <h3>Open / Pending</h3>
+            <p>@openProperties</p>
         </div>
     </div>
 </div>

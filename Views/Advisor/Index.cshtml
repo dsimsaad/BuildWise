@@ -69,6 +69,36 @@
             font-weight: 800;
             flex-shrink: 0;
         }
+        .advisor-guide {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .advisor-guide-item {
+            background: #FFFFFF;
+            border: 1px solid #D6E3F5;
+            border-radius: 6px;
+            padding: 15px 16px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+        .advisor-guide-item strong {
+            display: block;
+            color: #0F172A;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+        .advisor-guide-item p {
+            margin: 0;
+            color: #64748B;
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+        @@media (max-width: 820px) {
+            .advisor-guide {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 }
 
@@ -94,6 +124,21 @@
                 <h3>Triggered</h3>
                 <p id="stat-triggered">0</p>
             </div>
+        </div>
+    </div>
+
+    <div class="advisor-guide">
+        <div class="advisor-guide-item">
+            <strong>Budget Buffer</strong>
+            <p>Keep a contingency reserve before increasing category allocations.</p>
+        </div>
+        <div class="advisor-guide-item">
+            <strong>Cost Drift</strong>
+            <p>Review categories where actual spending is moving faster than progress.</p>
+        </div>
+        <div class="advisor-guide-item">
+            <strong>Clean Records</strong>
+            <p>Log material returns and usage separately so remaining budget stays accurate.</p>
         </div>
     </div>
 

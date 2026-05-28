@@ -51,8 +51,6 @@
         const dd = document.getElementById('projectDropdown');
         dd.classList.toggle('show');
     }
-
-    // Close when clicking outside
     window.addEventListener('click', function(e) {
         if (!document.querySelector('.project-selector-wrapper').contains(e.target)) {
             document.getElementById('projectDropdown').classList.remove('show');

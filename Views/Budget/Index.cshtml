@@ -234,6 +234,7 @@
         .budget-limit-card {
             background: #FFFFFF;
             border: 1px solid #E2E8F0;
+            border-left: 4px solid #1D4ED8;
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
             margin-bottom: 24px;
@@ -341,7 +342,6 @@
     <strong>No Project Selected!</strong> Please select a project from the top navigation dropdown to manage budgets and expenses.
 </div>
 
-<!-- Summary cards -->
 <div class="summary-grid" style="margin-bottom: 32px;">
     <div class="sum-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;">
         <div class="sum-icon" style="background: #EFF6FF; color: #1D4ED8;">
@@ -381,28 +381,7 @@
     </div>
 </div>
 
-<!-- Overview tab -->
 <div id="tab-overview" class="tab-section active">
-
-    <div class="budget-limit-card">
-        <div class="budget-limit-inner">
-            <div class="budget-limit-title">
-                <div class="budget-limit-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path><path d="M8 15h.01"></path><path d="M12 15h4"></path></svg>
-                </div>
-                <div>
-                    <h2>Total Project Budget</h2>
-                    <p>Set the maximum amount planned for this project.</p>
-                </div>
-            </div>
-            <div class="budget-limit-control">
-                <span class="budget-currency">PKR</span>
-                <input type="number" id="input-total-project-budget" class="form-control" placeholder="0">
-                <button class="btn-primary" onclick="saveTotalProjectBudget()">Update Budget</button>
-            </div>
-        </div>
-    </div>
-
     <div class="content-grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
         <div class="module-card budget-chart-card">
             <div class="card-header" style="border-bottom: 1px solid #F1F5F9; padding: 20px 24px;">
@@ -435,8 +414,26 @@
     </div>
 </div>
 
-<!-- Budgets tab -->
 <div id="tab-budgets" class="tab-section">
+    <div class="budget-limit-card">
+        <div class="budget-limit-inner">
+            <div class="budget-limit-title">
+                <div class="budget-limit-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path><path d="M8 15h.01"></path><path d="M12 15h4"></path></svg>
+                </div>
+                <div>
+                    <h2>Total Project Budget</h2>
+                    <p>Set the ceiling for all category allocations and spending checks.</p>
+                </div>
+            </div>
+            <div class="budget-limit-control">
+                <span class="budget-currency">PKR</span>
+                <input type="number" id="input-total-project-budget" class="form-control" placeholder="0">
+                <button class="btn-primary" onclick="saveTotalProjectBudget(event)">Update Budget</button>
+            </div>
+        </div>
+    </div>
+
     <div class="split-grid">
         <div class="scaffold-form-card" style="margin: 0; position: sticky; top: 24px;">
             <h2 id="budget-form-title" style="font-size: 1.125rem; font-weight: 600; color: #0F172A; margin-bottom: 20px;">Allocate Budget</h2>
@@ -482,7 +479,6 @@
                             </tr>
                         </thead>
                         <tbody id="budget-list">
-                            <!-- Filled by JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -491,7 +487,6 @@
     </div>
 </div>
 
-<!-- Expenses tab -->
 <div id="tab-expenses" class="tab-section">
     <div class="split-grid">
         <div class="scaffold-form-card" style="margin: 0; position: sticky; top: 24px;">
@@ -548,7 +543,6 @@
                             </tr>
                         </thead>
                         <tbody id="expense-list">
-                            <!-- Filled by JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -744,7 +738,6 @@
                 document.querySelectorAll('button[type="submit"], .btn-primary').forEach(b => b.disabled = false);
             }
 
-            // Update stats.
             const displayTotalBudget = data.projectTotalBudget > 0 ? data.projectTotalBudget : data.totalBudget;
 
             document.getElementById('input-total-project-budget').value = data.projectTotalBudget;
@@ -757,7 +750,6 @@
             const percent = displayTotalBudget > 0 ? (data.totalSpent / displayTotalBudget * 100).toFixed(1) : 0;
             document.getElementById('stat-percent').innerText = `${percent}%`;
 
-            // Fill the budget table.
             const budgetList = document.getElementById('budget-list');
             if (data.budgets.length === 0) {
                 budgetList.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #94A3B8; padding: 32px;">No budgets allocated yet.</td></tr>';
@@ -780,7 +772,6 @@
                 `).join('');
             }
 
-            // Fill the expense table.
             const expenseList = document.getElementById('expense-list');
             if (data.expenses.length === 0) {
                 expenseList.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94A3B8; padding: 32px;">No expenses recorded yet.</td></tr>';
@@ -1053,7 +1044,7 @@
             }
         }
 
-        async function saveTotalProjectBudget() {
+        async function saveTotalProjectBudget(event) {
             const amount = parseFloat(document.getElementById('input-total-project-budget').value);
             if (isNaN(amount)) return;
 

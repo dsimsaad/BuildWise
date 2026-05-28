@@ -10,14 +10,8 @@ const firebaseConfig = {
     appId: "1:393818029564:web:d662443d5a34e0a0ff4679",
     measurementId: "G-WVLL6PJNSG"
 };
-
-// Start Firebase.
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-
-// Keep the card still.
-
-// Input focus states.
 const inputs = document.querySelectorAll('.glass-input-wrapper input');
 inputs.forEach(input => {
     input.addEventListener('focus', () => {
@@ -27,8 +21,6 @@ inputs.forEach(input => {
         input.parentElement.classList.remove('focused');
     });
 });
-
-// Password toggle.
 const togglePassword = document.getElementById('togglePassword');
 const passwordInput = document.getElementById('password');
 const eyeIcon = document.getElementById('eyeIcon');
@@ -51,8 +43,6 @@ if (togglePassword && passwordInput) {
         }
     });
 }
-
-// Error handling.
 const errorBox = document.getElementById('errorBox');
 function showError(message, type = 'error') {
     if (errorBox) {
@@ -72,8 +62,6 @@ function hideError() {
         errorBox.style.display = 'none';
     }
 }
-
-// Login form.
 const loginForm = document.getElementById('loginForm');
 const submitBtn = document.getElementById('submitBtn');
 const googleBtn = document.querySelector('.glass-btn-google');
@@ -116,13 +104,8 @@ if (loginForm && submitBtn) {
         submitBtn.innerHTML = '<div class="loading-spinner"></div>';
 
         try {
-            // Sign in with Firebase.
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-            // Get the token.
             const idToken = await userCredential.user.getIdToken();
-
-            // Send the token to the backend.
             await sendTokenToBackend(idToken, userCredential.user.displayName);
 
         } catch (error) {
@@ -142,8 +125,6 @@ if (loginForm && submitBtn) {
         }
     });
 }
-
-// Forgot password modal.
 const forgotPassLink = document.querySelector('.forgot-pass');
 const forgotModal      = document.getElementById('forgotModal');
 const forgotClose      = document.getElementById('forgotClose');
@@ -205,8 +186,6 @@ if (forgotSubmitBtn) {
         }
     });
 }
-
-// Google sign in.
 if (googleBtn) {
     googleBtn.addEventListener('click', async () => {
         hideError();

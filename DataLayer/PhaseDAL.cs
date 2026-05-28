@@ -3,7 +3,6 @@ using BuildWise.Models;
 
 namespace BuildWise.DataLayer
 {
-    // Reads and writes phases.
     public class PhaseDAL
     {
         private string connectionString;
@@ -97,7 +96,6 @@ ORDER BY cp.SortOrder";
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                // Related tasks are deleted with the phase.
                 string query = "DELETE FROM ConstructionPhases WHERE PhaseId = @Id";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@Id", id);

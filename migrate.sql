@@ -7,6 +7,10 @@ GO
 USE BuildWiseDB;
 GO
 
+-- This migration updates older BuildWise databases without deleting data.
+-- Each block checks if the object already exists before changing it.
+-- Lookup tables keep names like status type and unit in one place.
+
 IF OBJECT_ID('Users', 'U') IS NULL
 BEGIN
     THROW 50001, 'Users table is missing. Run BuildWiseDB/BuildWiseDB.sql first, then run migrate.sql.', 1;
@@ -25,7 +29,7 @@ BEGIN
 END
 GO
 
--- User profile fields
+
 IF COL_LENGTH('Users', 'City') IS NULL
 BEGIN
     ALTER TABLE Users ADD City nvarchar(100) NULL;
@@ -38,7 +42,7 @@ BEGIN
 END
 GO
 
--- Project ownership
+
 IF COL_LENGTH('Projects', 'UserID') IS NULL
 BEGIN
     ALTER TABLE Projects ADD UserID int NULL;
@@ -57,9 +61,10 @@ BEGIN
 END
 GO
 
--- Property module lookup tables
+
 IF OBJECT_ID('AreaUnit', 'U') IS NULL
 BEGIN
+    -- Property lookup tables normalize property type status and area unit values.
     CREATE TABLE AreaUnit (
         UnitID tinyint NOT NULL PRIMARY KEY,
         UnitName varchar(20) NOT NULL UNIQUE
@@ -106,7 +111,7 @@ WHERE NOT EXISTS (SELECT 1 FROM PropertyStatus s WHERE s.StatusName = v.StatusNa
   AND NOT EXISTS (SELECT 1 FROM PropertyStatus s WHERE s.StatusID = v.StatusID);
 GO
 
--- Property module table
+
 IF OBJECT_ID('Properties', 'U') IS NULL
 BEGIN
     CREATE TABLE Properties (
@@ -187,8 +192,8 @@ BEGIN
 END
 GO
 
--- Make sure every existing user has a main project.
--- New users already get this from AccountController, but old users need it too.
+
+
 INSERT INTO Properties (UserID, PropertyName, TypeID, StatusID, Location, City, AreaSize, AreaUnitID, Notes, CreatedAt, UpdatedAt)
 SELECT
     u.UserID,
@@ -247,7 +252,7 @@ CROSS APPLY (
 WHERE p.ProjectID IS NULL;
 GO
 
--- Material module lookup and main tables
+
 IF OBJECT_ID('MaterialUnit', 'U') IS NULL
 BEGIN
     CREATE TABLE MaterialUnit (
@@ -422,9 +427,10 @@ BEGIN
 END
 GO
 
--- Older module tables used by some pages
+
 IF OBJECT_ID('TransactionLogs', 'U') IS NULL
 BEGIN
+    -- Transaction logs are used by the automatic ledger and PDF reports.
     CREATE TABLE TransactionLogs (
         TransactionId int IDENTITY(1,1) NOT NULL PRIMARY KEY,
         ProjectId int NULL,
@@ -435,6 +441,18 @@ BEGIN
         Amount decimal(18,2) NOT NULL,
         BudgetEffect decimal(5,2) NULL
     );
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_TransactionLogs_Projects')
+   AND NOT EXISTS (
+        SELECT 1
+        FROM TransactionLogs t
+        WHERE t.ProjectId IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM Projects p WHERE p.ProjectID = t.ProjectId)
+   )
+BEGIN
+    ALTER TABLE TransactionLogs ADD CONSTRAINT FK_TransactionLogs_Projects FOREIGN KEY (ProjectId) REFERENCES Projects(ProjectID);
 END
 GO
 
@@ -471,5 +489,53 @@ GO
 IF OBJECT_ID('Contractors', 'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Contractors_Users')
 BEGIN
     ALTER TABLE Contractors ADD CONSTRAINT FK_Contractors_Users FOREIGN KEY (UserID) REFERENCES Users(UserID);
+END
+GO
+
+IF OBJECT_ID('dbo.fn_ProjectBudgetUsedPercent', 'FN') IS NOT NULL
+BEGIN
+    DROP FUNCTION dbo.fn_ProjectBudgetUsedPercent;
+END
+GO
+
+-- This function returns the ledger based budget used percent for one project.
+CREATE FUNCTION dbo.fn_ProjectBudgetUsedPercent (@ProjectId int)
+RETURNS decimal(6,2)
+AS
+BEGIN
+    DECLARE @BudgetUsedPercent decimal(18,2);
+
+    SELECT @BudgetUsedPercent = ISNULL(SUM(BudgetEffect), 0)
+    FROM TransactionLogs
+    WHERE ProjectId = @ProjectId
+      AND ISNULL(TransactionType, '') IN ('Added', 'Updated', 'Returned')
+      AND ISNULL(BudgetEffect, 0) <> 0;
+
+    RETURN CAST(ISNULL(@BudgetUsedPercent, 0) AS decimal(6,2));
+END
+GO
+
+IF OBJECT_ID('dbo.trg_TransactionLogs_TouchProject', 'TR') IS NOT NULL
+BEGIN
+    DROP TRIGGER dbo.trg_TransactionLogs_TouchProject;
+END
+GO
+
+-- This trigger refreshes a project timestamp when its ledger changes.
+CREATE TRIGGER dbo.trg_TransactionLogs_TouchProject
+ON dbo.TransactionLogs
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE p
+    SET UpdatedAt = GETDATE()
+    FROM Projects p
+    INNER JOIN (
+        SELECT ProjectId FROM inserted WHERE ProjectId IS NOT NULL
+        UNION
+        SELECT ProjectId FROM deleted WHERE ProjectId IS NOT NULL
+    ) changed ON changed.ProjectId = p.ProjectID;
 END
 GO

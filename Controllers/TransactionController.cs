@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using BuildWise.BusinessLayer;
 using Microsoft.AspNetCore.Authorization;
-using System.Text;
+using BuildWise.Services;
 
 namespace BuildWise.Controllers
 {
@@ -45,24 +45,10 @@ namespace BuildWise.Controllers
             var selectedProjectId = GetSelectedProjectId();
             ApplyDefaultRange(range, ref fromDate, ref toDate);
             var transactions = _bll.GetFilteredTransactions(category, type, fromDate, toDate, selectedProjectId, userId);
-
-            var csv = new StringBuilder();
-            csv.AppendLine("Date,Type,Category,Amount,Budget Effect,Description");
-            foreach (var transaction in transactions)
-            {
-                csv.AppendLine(string.Join(",", new[]
-                {
-                    EscapeCsv(transaction.TransactionDate.ToString("yyyy-MM-dd HH:mm")),
-                    EscapeCsv(transaction.TransactionType),
-                    EscapeCsv(transaction.Category),
-                    transaction.Amount.ToString("0.##"),
-                    transaction.BudgetEffect.ToString("0.##"),
-                    EscapeCsv(transaction.Description)
-                }));
-            }
-
-            var fileName = $"transaction-report-{DateTime.Now:yyyyMMdd-HHmm}.csv";
-            return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
+            var rangeLabel = BuildRangeLabel(range, fromDate, toDate);
+            var pdf = new TransactionReportPdfBuilder(transactions, rangeLabel).Build();
+            var fileName = $"transaction-report-{DateTime.Now:yyyyMMdd-HHmm}.pdf";
+            return File(pdf, "application/pdf", fileName);
         }
 
         private static void ApplyDefaultRange(string? range, ref DateTime? fromDate, ref DateTime? toDate)
@@ -86,13 +72,18 @@ namespace BuildWise.Controllers
             }
         }
 
-        private static string EscapeCsv(string? value)
+        private static string BuildRangeLabel(string? range, DateTime? fromDate, DateTime? toDate)
         {
-            var text = value ?? "";
-            if (!text.Contains(',') && !text.Contains('"') && !text.Contains('\n') && !text.Contains('\r'))
-                return text;
+            if (fromDate.HasValue || toDate.HasValue)
+            {
+                var from = fromDate?.ToString("MMM dd, yyyy") ?? "Start";
+                var to = toDate?.ToString("MMM dd, yyyy") ?? "Today";
+                return $"{from} to {to}";
+            }
 
-            return $"\"{text.Replace("\"", "\"\"")}\"";
+            return string.Equals(range, "all", StringComparison.OrdinalIgnoreCase)
+                ? "All time"
+                : "Filtered ledger report";
         }
     }
 }

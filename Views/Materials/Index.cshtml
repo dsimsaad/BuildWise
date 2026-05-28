@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "Material Purchases";
     Layout = "_ModuleLayout";
+    var phaseOptions = ViewBag.ProjectPhases as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
     var totalCost = Model.Sum(m => m.TotalCost ?? 0);
     var materialTypeCount = Model.Select(m => m.MaterialId).Distinct().Count();
     var avgUnitPrice = Model.Any() ? Model.Average(m => m.UnitPrice) : 0;
@@ -16,6 +17,7 @@
         })
         .Select(g => new
         {
+            g.Key.MaterialId,
             g.Key.MaterialName,
             g.Key.UnitName,
             Purchased = g.Sum(x => x.Quantity),
@@ -26,6 +28,7 @@
         })
         .Select(x => new
         {
+            x.MaterialId,
             x.MaterialName,
             x.UnitName,
             x.Purchased,
@@ -33,9 +36,27 @@
             Available = Math.Max(0, x.Purchased - x.Used),
             x.AverageUnitPrice,
             x.Cost,
-            x.Purchases
+            x.Purchases,
+            PrimaryPurchase = Model
+                .Where(p => p.MaterialId == x.MaterialId && p.Quantity - p.MaterialUsages.Sum(u => u.QuantityUsed) > 0)
+                .OrderBy(p => p.PurchaseDate)
+                .FirstOrDefault()
         })
         .OrderBy(x => x.MaterialName)
+        .ToList();
+    var usageHistory = Model
+        .SelectMany(p => p.MaterialUsages.Select(u => new
+        {
+            u.UsageId,
+            MaterialName = p.Material?.MaterialName ?? "Unknown Material",
+            UnitName = p.Unit?.UnitName ?? "",
+            u.QuantityUsed,
+            u.UsageDate,
+            PhaseName = string.IsNullOrWhiteSpace(u.Phase?.CustomPhaseName) ? u.Phase?.PhaseType?.PhaseName : u.Phase.CustomPhaseName,
+            PropertyName = u.Phase?.Property?.PropertyName,
+            u.Notes
+        }))
+        .OrderByDescending(u => u.UsageDate)
         .ToList();
     var pkrCulture = new CultureInfo("en-IN");
     string FormatPkr(decimal value)
@@ -79,7 +100,13 @@
             color: #047857;
         }
 
-        .btn-return:disabled {
+        .btn-use {
+            background: #EFF6FF;
+            color: #1D4ED8;
+        }
+
+        .btn-return:disabled,
+        .btn-use:disabled {
             opacity: 0.45;
             cursor: not-allowed;
             transform: none;
@@ -261,22 +288,38 @@
                         <tr>
                             <th>Material</th>
                             <th>Purchased</th>
+                            <th>Used</th>
                             <th>Available</th>
                             <th>Avg Unit Price</th>
-                            <th>Total Cost</th>
-                            <th>Purchases</th>
+                            <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in inventory)
                         {
+                            var primaryAvailable = item.PrimaryPurchase == null ? 0 : item.PrimaryPurchase.Quantity - item.PrimaryPurchase.MaterialUsages.Sum(u => u.QuantityUsed);
+                            var hasStoredQuantity = item.Available > 0 && item.PrimaryPurchase != null;
                             <tr>
                                 <td><strong>@item.MaterialName</strong></td>
                                 <td>@item.Purchased.ToString("N2") @item.UnitName</td>
+                                <td>@item.Used.ToString("N2") @item.UnitName</td>
                                 <td><strong>@item.Available.ToString("N2") @item.UnitName</strong></td>
                                 <td>@FormatPkr(item.AverageUnitPrice)</td>
-                                <td><strong>@FormatPkr(item.Cost)</strong></td>
-                                <td>@item.Purchases</td>
+                                <td><span class="badge @(hasStoredQuantity ? "badge-info" : "badge-success")">@(hasStoredQuantity ? "Stored" : "Used")</span></td>
+                                <td>
+                                    <button type="button"
+                                            class="btn-icon btn-use js-use-purchase"
+                                            title="Record usage"
+                                            data-purchase-id="@item.PrimaryPurchase?.PurchaseId"
+                                            data-material="@item.MaterialName"
+                                            data-unit="@item.UnitName"
+                                            data-available="@primaryAvailable"
+                                            aria-label="Record usage for @item.MaterialName"
+                                            @(hasStoredQuantity && phaseOptions.Any() ? "" : "disabled")>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </button>
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -323,6 +366,7 @@
                             var usedQuantity = item.MaterialUsages.Sum(u => u.QuantityUsed);
                             var availableQuantity = Math.Max(0, item.Quantity - usedQuantity);
                             var canReturn = availableQuantity > 0;
+                            var canUse = availableQuantity > 0 && phaseOptions.Any();
                             <tr>
                                 <td>@item.PurchaseDate.ToString("MMM dd, yyyy")</td>
                                 <td><strong>@item.Material?.MaterialName</strong></td>
@@ -333,6 +377,17 @@
                                 <td>@(string.IsNullOrWhiteSpace(item.Notes) ? "-" : item.Notes)</td>
                                 <td>
                                     <div class="action-btns">
+                                        <button type="button"
+                                                class="btn-icon btn-use js-use-purchase"
+                                                title="Record usage"
+                                                data-purchase-id="@item.PurchaseId"
+                                                data-material="@item.Material?.MaterialName"
+                                                data-unit="@item.Unit?.UnitName"
+                                                data-available="@availableQuantity"
+                                                aria-label="Record usage for @item.Material?.MaterialName"
+                                                @(canUse ? "" : "disabled")>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        </button>
                                         <button type="button"
                                                 class="btn-icon btn-return js-return-purchase"
                                                 title="Return unused material"
@@ -345,6 +400,9 @@
                                                 @(canReturn ? "" : "disabled")>
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14 4 9l5-5"></path><path d="M4 9h11a5 5 0 0 1 0 10h-4"></path></svg>
                                         </button>
+                                        <a asp-action="EditPurchase" asp-route-id="@item.PurchaseId" class="btn-icon btn-edit" title="Edit" aria-label="Edit @item.Material?.MaterialName purchase">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+                                        </a>
                                         <form asp-action="DeletePurchase" method="post" class="inline-delete-form" onsubmit="return confirm('Delete this purchase? This affects project costs.');">
                                             <input type="hidden" name="id" value="@item.PurchaseId" />
                                             <button type="submit" class="btn-icon btn-delete" title="Delete" aria-label="Delete @item.Material?.MaterialName purchase">
@@ -359,6 +417,109 @@
                 </table>
             </div>
         }
+    </div>
+</div>
+
+<div class="module-card material-table-card" style="margin-top:24px;">
+    <div class="card-header">
+        <h2>Usage History</h2>
+        <span class="badge badge-info">@usageHistory.Count used records</span>
+    </div>
+    <div class="card-body" style="padding:0;">
+        @if (!usageHistory.Any())
+        {
+            <div class="empty-state" style="border:none; box-shadow:none; border-radius:0;">
+                <h2>No material usage recorded</h2>
+                <p>Consumed material records will appear here after site usage is recorded.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Material</th>
+                            <th>Quantity Used</th>
+                            <th>Phase</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in usageHistory)
+                        {
+                            <tr>
+                                <td>@item.UsageDate.ToString("MMM dd, yyyy")</td>
+                                <td><strong>@item.MaterialName</strong></td>
+                                <td>@item.QuantityUsed.ToString("N2") @item.UnitName</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.PropertyName) ? "" : item.PropertyName + " - ")@(item.PhaseName ?? "-")</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Notes) ? "-" : item.Notes)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="return-modal" id="useModal" aria-hidden="true">
+    <div class="return-dialog">
+        <div class="return-dialog-header">
+            <div>
+                <h2>Record Material Use</h2>
+                <p id="useMaterialName">Select quantity used on site.</p>
+            </div>
+            <button type="button" class="return-close" data-use-close aria-label="Close">&times;</button>
+        </div>
+        <form asp-action="RecordUsage" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="usePurchaseId" />
+            <div class="return-dialog-body">
+                <div class="return-meta">
+                    <div class="return-meta-item">
+                        <span>Stored</span>
+                        <strong id="useAvailable">0</strong>
+                    </div>
+                    <div class="return-meta-item">
+                        <span>Date</span>
+                        <strong>@DateTime.Today.ToString("MMM dd, yyyy")</strong>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="usagePhaseId">Phase</label>
+                    <select id="usagePhaseId" name="phaseId" class="form-control" required>
+                        <option value="">Select phase</option>
+                        @foreach (var phase in phaseOptions)
+                        {
+                            <option value="@phase.Value">@phase.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="quantityUsed">Quantity Used</label>
+                    <input id="quantityUsed" name="quantityUsed" class="form-control" type="number" min="0.001" step="0.001" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="usageDate">Usage Date</label>
+                    <input id="usageDate" name="usageDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="usageNotes">Notes</label>
+                    <textarea id="usageNotes" name="usageNotes" class="form-control" rows="3" placeholder="Optional location or work detail"></textarea>
+                </div>
+
+                <div class="form-actions" style="margin-top:18px;">
+                    <button type="button" class="btn-secondary" data-use-close>Cancel</button>
+                    <button type="submit" class="btn-primary">Record Use</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -408,6 +569,14 @@
 @section Scripts {
     <script>
         const returnModal = document.getElementById('returnModal');
+        const useModal = document.getElementById('useModal');
+        const usePurchaseId = document.getElementById('usePurchaseId');
+        const useMaterialName = document.getElementById('useMaterialName');
+        const useAvailable = document.getElementById('useAvailable');
+        const quantityUsed = document.getElementById('quantityUsed');
+        const usagePhaseId = document.getElementById('usagePhaseId');
+        const usageDate = document.getElementById('usageDate');
+        const usageNotes = document.getElementById('usageNotes');
         const returnPurchaseId = document.getElementById('returnPurchaseId');
         const returnMaterialName = document.getElementById('returnMaterialName');
         const returnAvailable = document.getElementById('returnAvailable');
@@ -420,6 +589,33 @@
         function formatQty(value) {
             return Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 3 });
         }
+
+        document.querySelectorAll('.js-use-purchase').forEach(button => {
+            button.addEventListener('click', () => {
+                const available = Number(button.dataset.available || 0);
+                const unit = button.dataset.unit || '';
+
+                usePurchaseId.value = button.dataset.purchaseId;
+                useMaterialName.textContent = button.dataset.material || 'Record material use';
+                useAvailable.textContent = `${formatQty(available)} ${unit}`;
+                quantityUsed.max = available;
+                quantityUsed.value = available;
+                usagePhaseId.value = '';
+                usageDate.value = new Date().toISOString().split('T')[0];
+                usageNotes.value = '';
+
+                useModal.classList.add('is-open');
+                useModal.setAttribute('aria-hidden', 'false');
+                usagePhaseId.focus();
+            });
+        });
+
+        document.querySelectorAll('[data-use-close]').forEach(button => {
+            button.addEventListener('click', () => {
+                useModal.classList.remove('is-open');
+                useModal.setAttribute('aria-hidden', 'true');
+            });
+        });
 
         function refreshReturnAmount() {
             const quantity = Number(returnQuantity.value || 0);
@@ -462,10 +658,21 @@
             }
         });
 
+        useModal?.addEventListener('click', event => {
+            if (event.target === useModal) {
+                useModal.classList.remove('is-open');
+                useModal.setAttribute('aria-hidden', 'true');
+            }
+        });
+
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape' && returnModal.classList.contains('is-open')) {
                 returnModal.classList.remove('is-open');
                 returnModal.setAttribute('aria-hidden', 'true');
+            }
+            if (event.key === 'Escape' && useModal.classList.contains('is-open')) {
+                useModal.classList.remove('is-open');
+                useModal.setAttribute('aria-hidden', 'true');
             }
         });
     </script>

@@ -93,11 +93,9 @@ public class HomeController : BaseController
         await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
         await _propertyPhaseSchema.EnsureAsync(HttpContext.RequestAborted);
 
-        // Get the current user.
         int userId = GetCurrentUserId();
         if (userId == 0) return RedirectToAction("Index", "Account");
 
-        // Load the selected project.
         int? selectedProjectId = overall ? null : HttpContext.Session.GetInt32("SelectedProjectId");
         if (overall)
         {
@@ -130,7 +128,6 @@ public class HomeController : BaseController
         }
         ViewBag.SelectedProjectId = selectedProjectId;
 
-        // Build user-scoped queries.
         var projectQuery = _context.Projects.AsNoTracking().Where(p => p.UserId == userId);
         var taskQuery    = _context.Tasks.AsNoTracking().Where(t => t.Phase.Project.UserId == userId);
         var vwDashQuery  = from v in _context.VwProjectDashboards.AsNoTracking()
@@ -150,7 +147,6 @@ public class HomeController : BaseController
         var transactionBll = new TransactionBLL(connectionString);
         var advisorBll = new AdvisorBLL(connectionString);
 
-        // Fill dashboard stats.
         if (selectedProjectId.HasValue)
         {
             var activeStats = await vwDashQuery.FirstOrDefaultAsync(v => v.ProjectId == selectedProjectId);
@@ -243,7 +239,6 @@ public class HomeController : BaseController
             ViewBag.Projects = allStats;
         }
 
-        // Fill shared dashboard data.
         ViewBag.RecentExpensesList = transactionBll
             .GetFilteredTransactions("", "", null, null, selectedProjectId, userId)
             .Where(t => !string.Equals(t.Category, "Project Budget", StringComparison.OrdinalIgnoreCase))

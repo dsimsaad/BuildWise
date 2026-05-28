@@ -25,7 +25,6 @@ namespace BuildWise.Controllers
             _workerProjectSchema = workerProjectSchema;
         }
 
-        // GET: Workers
         public async Task<IActionResult> Index(string? skill)
         {
             await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
@@ -65,7 +64,6 @@ namespace BuildWise.Controllers
             return View(workers);
         }
 
-        // GET: Workers/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
@@ -82,7 +80,6 @@ namespace BuildWise.Controllers
             return View(worker);
         }
 
-        // GET: Workers/Create
         public async Task<IActionResult> Create()
         {
             await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
@@ -96,7 +93,6 @@ namespace BuildWise.Controllers
             return View();
         }
 
-        // POST: Workers/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("WorkerId,ProjectId,FullName,Phone,Cnic,DailyWage")] Worker worker, string? SkillChoice, string? CustomSkill)
@@ -205,7 +201,6 @@ namespace BuildWise.Controllers
             return RedirectToAction(nameof(Index), new { skill });
         }
 
-        // POST: Workers/ToggleStatus/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(int id, string? skill)
@@ -223,7 +218,6 @@ namespace BuildWise.Controllers
             return RedirectToAction(nameof(Index), new { skill });
         }
 
-        // POST: Workers/SetAllStatus
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetAllStatus(bool active, string? skill)
@@ -245,7 +239,6 @@ namespace BuildWise.Controllers
             return RedirectToAction(nameof(Index), new { skill });
         }
 
-        // POST: Workers/RecordDailyWages
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RecordDailyWages(IFormCollection form, string? skill)
@@ -333,7 +326,6 @@ namespace BuildWise.Controllers
             return RedirectToAction(nameof(Index), new { skill });
         }
 
-        // POST: Workers/UndoDailyWages
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UndoDailyWages(string? skill)
@@ -385,7 +377,6 @@ namespace BuildWise.Controllers
             return RedirectToAction(nameof(Index), new { skill });
         }
 
-        // GET: Workers/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
@@ -400,7 +391,6 @@ namespace BuildWise.Controllers
             return View(worker);
         }
 
-        // POST: Workers/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("WorkerId,ProjectId,FullName,Phone,Cnic,DailyWage,SkillType,IsActive")] Worker worker)
@@ -462,7 +452,6 @@ namespace BuildWise.Controllers
             return View(worker);
         }
 
-        // GET: Workers/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             await _workerProjectSchema.EnsureAsync(HttpContext.RequestAborted);
@@ -478,7 +467,6 @@ namespace BuildWise.Controllers
             return View(worker);
         }
 
-        // POST: Workers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

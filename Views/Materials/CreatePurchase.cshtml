@@ -1,7 +1,11 @@
 @model BuildWise.Models.MaterialPurchase
 
 @{
-    ViewData["Title"] = "Log Material Purchase";
+    var isEdit = Model?.PurchaseId > 0;
+    var pageTitle = isEdit ? "Edit Material Purchase" : "Log Material Purchase";
+    var formAction = isEdit ? "EditPurchase" : "CreatePurchase";
+    var purchaseDate = Model?.PurchaseDate == default ? DateTime.Today.ToString("yyyy-MM-dd") : Model!.PurchaseDate.ToString("yyyy-MM-dd");
+    ViewData["Title"] = pageTitle;
     Layout = "_ModuleLayout";
 }
 
@@ -11,8 +15,8 @@
 
 <div class="module-header">
     <div class="module-title">
-        <h1>Log Material Purchase</h1>
-        <p>Record material quantity, date, and cost for the active project.</p>
+        <h1>@pageTitle</h1>
+        <p>@(isEdit ? "Update quantity, date, and cost for this purchase." : "Record material quantity, date, and cost for the active project.")</p>
     </div>
     <a asp-action="Index" class="btn-secondary">Back to Purchases</a>
 </div>
@@ -22,7 +26,11 @@
         <h2>Purchase Details</h2>
     </div>
     <div class="card-body">
-        <form asp-action="CreatePurchase">
+        <form asp-action="@formAction" asp-route-id="@(isEdit ? (int?)Model!.PurchaseId : null)" method="post">
+            @if (isEdit)
+            {
+                <input asp-for="PurchaseId" type="hidden" />
+            }
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="form-grid">
@@ -54,7 +62,7 @@
 
                 <div class="form-group">
                     <label asp-for="PurchaseDate">Purchase Date</label>
-                    <input asp-for="PurchaseDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <input asp-for="PurchaseDate" class="form-control" type="date" value="@purchaseDate" />
                     <span asp-validation-for="PurchaseDate" class="text-danger"></span>
                 </div>
 
@@ -67,7 +75,7 @@
 
             <div class="form-actions">
                 <a asp-action="Index" class="btn-secondary">Cancel</a>
-                <button type="submit" class="btn-primary">Log Purchase</button>
+                <button type="submit" class="btn-primary">@(isEdit ? "Save Changes" : "Log Purchase")</button>
             </div>
         </form>
     </div>

@@ -21,7 +21,6 @@ public class ProjectContextController : BaseController
         int userId = GetCurrentUserId();
         if (userId == 0) return Unauthorized();
 
-        // Check project ownership.
         bool ownsProject = await _context.Projects.AnyAsync(p => p.ProjectId == projectId && p.UserId == userId);
         
         if (ownsProject)
@@ -30,11 +29,9 @@ public class ProjectContextController : BaseController
         }
         else
         {
-            // Clear an invalid project selection.
             HttpContext.Session.Remove("SelectedProjectId");
         }
         
-        // Go back to the previous page.
         var returnUrl = Request.Headers["Referer"].ToString();
         if (string.IsNullOrEmpty(returnUrl))
         {

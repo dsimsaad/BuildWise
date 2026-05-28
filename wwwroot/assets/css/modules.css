@@ -1,4 +1,4 @@
-/* Module styles */
+
 
 :root {
     --card-bg: #FFFFFF;
@@ -20,7 +20,7 @@
     --radius-lg: 8px;
 }
 
-/* Module header */
+
 .module-header {
     display: flex;
     justify-content: space-between;
@@ -42,7 +42,7 @@
     font-size: 0.875rem;
 }
 
-/* Summary cards */
+
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -120,7 +120,7 @@
     letter-spacing: -0.3px;
 }
 
-/* Content grid */
+
 .content-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -134,7 +134,7 @@
     }
 }
 
-/* Module cards */
+
 .module-card {
     background: var(--card-bg);
     border: var(--card-border);
@@ -172,7 +172,7 @@
     flex: 0 1 auto;
 }
 
-/* Forms */
+
 .form-group {
     margin-bottom: 16px;
 }
@@ -220,7 +220,7 @@ select.form-control {
     padding-right: 36px;
 }
 
-/* Buttons */
+
 .btn-primary {
     background: linear-gradient(135deg, #2563EB 0%, var(--accent) 100%);
     color: #FFFFFF;
@@ -309,7 +309,7 @@ select.form-control {
     text-decoration: none;
 }
 
-/* Tables */
+
 .table-responsive {
     overflow-x: auto;
 }
@@ -395,7 +395,7 @@ select.form-control {
     box-shadow: none;
 }
 
-/* Badges */
+
 .badge {
     padding: 4px 10px;
     border-radius: 3px;
@@ -411,7 +411,7 @@ select.form-control {
 .badge-danger { background: #FEE2E2; color: #991B1B; }
 .badge-info { background: #DBEAFE; color: #1E40AF; }
 
-/* Property and material cards */
+
 .entity-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -616,7 +616,7 @@ select.form-control {
     }
 }
 
-/* Progress bar */
+
 .progress-container {
     height: 8px;
     background: #F1F5F9;
@@ -632,7 +632,7 @@ select.form-control {
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Cost advisor alerts */
+
 .advisor-card {
     padding: 16px 20px;
     border-radius: 3px;
@@ -655,7 +655,7 @@ select.form-control {
 .advisor-card.info { background: #EFF6FF; border-left-color: #3B82F6; color: #1E40AF; }
 .advisor-card.success { background: #F0FDF4; border-left-color: #22C55E; color: #166534; }
 
-/* Buttons */
+
 .tab-buttons {
     display: flex;
     gap: 8px;
@@ -689,7 +689,7 @@ select.form-control {
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* Filter bar */
+
 .filter-bar {
     background: var(--card-bg);
     border: var(--card-border);
@@ -734,14 +734,14 @@ select.form-control {
     letter-spacing: 0.04em;
 }
 
-/* Chart area */
+
 .chart-container {
     position: relative;
     height: 300px;
     width: 100%;
 }
 
-/* Scaffold pages */
+
 .scaffold-page {
     max-width: 1200px;
     margin: 0 auto;
@@ -768,7 +768,7 @@ select.form-control {
     margin: 0 0 24px 0;
 }
 
-/* Scaffold table */
+
 .scaffold-table {
     width: 100%;
     border-collapse: collapse;
@@ -825,7 +825,7 @@ select.form-control {
 .scaffold-table .action-links a:last-child { color: var(--danger); }
 .scaffold-table .action-links a:last-child:hover { color: #DC2626; }
 
-/* Scaffold form card */
+
 .scaffold-form-card {
     background: var(--card-bg);
     border: var(--card-border);
@@ -902,7 +902,7 @@ select.form-control {
     transform: translateY(-1px);
 }
 
-/* Scaffold detail card */
+
 .scaffold-detail-card {
     background: var(--card-bg);
     border: var(--card-border);
@@ -934,7 +934,7 @@ select.form-control {
     margin: 0;
 }
 
-/* Create button */
+
 .btn-create {
     display: inline-flex;
     align-items: center;
@@ -969,7 +969,7 @@ select.form-control {
     text-decoration: none;
 }
 
-/* Mobile module layout */
+
 @media (max-width: 760px) {
     .module-header {
         align-items: stretch;
@@ -1262,7 +1262,7 @@ select.form-control {
     }
 }
 
-/* Back link */
+
 .back-link {
     display: inline-flex;
     align-items: center;
@@ -1288,7 +1288,7 @@ select.form-control {
     text-decoration: none;
 }
 
-/* Animations */
+
 @keyframes fadeInDown {
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
@@ -1308,7 +1308,7 @@ select.form-control {
     to { transform: rotate(360deg); }
 }
 
-/* Form polish */
+
 .module-card,
 .scaffold-form-card,
 .scaffold-detail-card,

@@ -10,14 +10,8 @@ const firebaseConfig = {
     appId: "1:393818029564:web:d662443d5a34e0a0ff4679",
     measurementId: "G-WVLL6PJNSG"
 };
-
-// Start Firebase.
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-
-// Keep the card still.
-
-// Input focus states.
 const inputs = document.querySelectorAll('.glass-input-wrapper input');
 inputs.forEach(input => {
     input.addEventListener('focus', () => {
@@ -27,8 +21,6 @@ inputs.forEach(input => {
         input.parentElement.classList.remove('focused');
     });
 });
-
-// Password toggle.
 const togglePassword = document.getElementById('togglePassword');
 const passwordInput = document.getElementById('password');
 const eyeIcon = document.getElementById('eyeIcon');
@@ -51,8 +43,6 @@ if (togglePassword && passwordInput) {
         }
     });
 }
-
-// Error handling.
 const errorBox = document.getElementById('errorBox');
 function showError(message) {
     if (errorBox) {
@@ -68,8 +58,6 @@ function hideError() {
         errorBox.style.display = 'none';
     }
 }
-
-// Sign up form.
 const signupForm = document.getElementById('signupForm');
 const submitBtn = document.getElementById('submitBtn');
 const googleBtn = document.querySelector('.glass-btn-google');
@@ -84,7 +72,7 @@ async function sendTokenToBackend(idToken, fullName = null) {
             body: JSON.stringify({
                 idToken: idToken,
                 name: fullName,
-                fullName: fullName // Secondary property for safety
+                fullName: fullName
             })
         });
 
@@ -117,18 +105,11 @@ if (signupForm && submitBtn) {
         submitBtn.innerHTML = '<div class="loading-spinner"></div>';
 
         try {
-            // Create the Firebase user.
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-            // Save the display name.
             await updateProfile(userCredential.user, {
                 displayName: fullname
             });
-
-            // Get a fresh token.
             const idToken = await userCredential.user.getIdToken(true);
-
-            // Send the user to the backend.
             await sendTokenToBackend(idToken, fullname);
 
         } catch (error) {
@@ -148,8 +129,6 @@ if (signupForm && submitBtn) {
         }
     });
 }
-
-// Google sign up.
 if (googleBtn) {
     googleBtn.addEventListener('click', async () => {
         hideError();

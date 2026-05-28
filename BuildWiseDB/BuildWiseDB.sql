@@ -1,5 +1,8 @@
 USE [master]
 GO
+-- This script creates the main BuildWise database objects.
+-- Lookup tables keep repeated values separate from main records.
+-- Foreign keys connect the tables so project data stays consistent.
 CREATE DATABASE [BuildWiseDB]
 GO
 ALTER DATABASE [BuildWiseDB] SET COMPATIBILITY_LEVEL = 170
@@ -78,7 +81,6 @@ GO
 
 USE [BuildWiseDB]
 GO
-/****** Object:  Table [dbo].[Phases]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -99,7 +101,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Tasks]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -122,7 +123,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[MaterialPurchases]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -146,7 +146,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Expenses]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -168,7 +167,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ClientPayments]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -187,7 +185,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[WagePayments]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -209,7 +206,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Users]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -232,7 +228,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Properties]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -257,7 +252,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Projects]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -281,14 +275,14 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  View [dbo].[vw_ProjectDashboard]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ── VIEW 1: Project Dashboard Overview ───────────────────────
--- Used by: Dashboard Page — main summary card
+
+
+-- This view prepares dashboard totals for each project.
 CREATE   VIEW [dbo].[vw_ProjectDashboard] AS
 SELECT
     p.ProjectID,
@@ -299,7 +293,7 @@ SELECT
     p.ExpectedEndDate,
     p.TotalBudget,
 
-    -- Total spent (expenses + material purchases + wages paid)
+
     ISNULL(exp.TotalExpenses,   0)                         AS TotalExpenses,
     ISNULL(mat.TotalMaterials,  0)                         AS TotalMaterials,
     ISNULL(wage.TotalWages,     0)                         AS TotalWagesPaid,
@@ -313,23 +307,23 @@ SELECT
            + ISNULL(mat.TotalMaterials,0)
            + ISNULL(wage.TotalWages,0))                    AS RemainingBudget,
 
-    -- Client payments received
+
     ISNULL(cp.TotalReceived,    0)                         AS TotalClientPayments,
 
-    -- Profit/Loss = Received - Spent
+
     ISNULL(cp.TotalReceived,0)
         - (ISNULL(exp.TotalExpenses,0)
            + ISNULL(mat.TotalMaterials,0)
            + ISNULL(wage.TotalWages,0))                    AS ProfitLoss,
 
-    -- Phase progress
+
     ph.TotalPhases,
     ph.CompletedPhases,
     CASE WHEN ph.TotalPhases > 0
          THEN CAST(ph.CompletedPhases AS FLOAT) / ph.TotalPhases * 100
          ELSE 0 END                                        AS PhaseProgress_Pct,
 
-    -- Task progress
+
     tk.TotalTasks,
     tk.CompletedTasks,
     CASE WHEN tk.TotalTasks > 0
@@ -383,7 +377,6 @@ LEFT JOIN (
     GROUP BY ph2.ProjectID
 ) tk   ON tk.ProjectID   = p.ProjectID;
 GO
-/****** Object:  Table [dbo].[Attendance]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -402,7 +395,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Workers]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -423,14 +415,14 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  View [dbo].[vw_WorkerWageSummary]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ── VIEW 2: Worker Attendance & Wages Summary ─────────────────
--- Used by: Reports Page — labor cost per worker
+
+
+-- This view groups attendance and wage totals by worker.
 CREATE   VIEW [dbo].[vw_WorkerWageSummary] AS
 SELECT
     w.WorkerID,
@@ -456,7 +448,6 @@ LEFT JOIN (
 GROUP BY w.WorkerID, w.FullName, w.SkillType, w.DailyWage,
          att.ProjectID, p.ProjectName, wp.TotalPaid;
 GO
-/****** Object:  Table [dbo].[Materials]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -474,7 +465,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[MaterialUnit]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -488,7 +478,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Suppliers]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -508,14 +497,14 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  View [dbo].[vw_MaterialCostByProject]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ── VIEW 3: Material Cost Per Project ────────────────────────
--- Used by: Materials Page, Reports
+
+
+-- This view summarizes material purchase and usage cost by project.
 CREATE   VIEW [dbo].[vw_MaterialCostByProject] AS
 SELECT
     mp.ProjectID,
@@ -533,7 +522,6 @@ LEFT JOIN Suppliers s ON mp.SupplierID = s.SupplierID
 GROUP BY mp.ProjectID, p.ProjectName, m.MaterialName,
          mu.UnitName, s.SupplierName;
 GO
-/****** Object:  Table [dbo].[MaterialUsages]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -551,7 +539,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PhaseType]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -565,14 +552,14 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  View [dbo].[vw_PhaseWiseCost]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ── VIEW 4: Phase-Wise Cost Breakdown ────────────────────────
--- Used by: Reports Page — phase-wise cost chart
+
+
+-- This view shows phase progress with linked material and expense costs.
 CREATE   VIEW [dbo].[vw_PhaseWiseCost] AS
 SELECT
     ph.PhaseID,
@@ -587,7 +574,7 @@ SELECT
     ISNULL(mat.MatCost,    0) AS MaterialCost,
     ISNULL(exp.PhaseCost,0) + ISNULL(mat.MatCost,0) AS TotalPhaseCost,
 
-    -- Task count
+
     tk.TotalTasks,
     tk.CompletedTasks,
     tk.PendingTasks
@@ -619,7 +606,6 @@ LEFT JOIN (
     GROUP BY PhaseID
 ) tk ON tk.PhaseID = ph.PhaseID;
 GO
-/****** Object:  Table [dbo].[Contractors]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -639,14 +625,14 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  View [dbo].[vw_ContractorSummary]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ── VIEW 5: Contractor Task & Cost Summary ────────────────────
--- Used by: Contractors Page
+
+
+-- This view shows contractor task counts and related workers.
 CREATE   VIEW [dbo].[vw_ContractorSummary] AS
 SELECT
     c.ContractorID,
@@ -663,7 +649,6 @@ LEFT JOIN Tasks   t ON c.ContractorID = t.ContractorID
 LEFT JOIN Workers w ON c.ContractorID = w.ContractorID
 GROUP BY c.ContractorID, c.FullName, c.Phone, c.ContractCost;
 GO
-/****** Object:  Table [dbo].[ExpenseCategory]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -677,7 +662,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PaymentMethod]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -691,13 +675,13 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  View [dbo].[vw_ExpenseHistory]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ── VIEW 6: Expense History (full join for expense page) ──────
+
+-- This view joins expenses with their project phase category and payment data.
 CREATE   VIEW [dbo].[vw_ExpenseHistory] AS
 SELECT
     e.ExpenseID,
@@ -719,7 +703,6 @@ LEFT JOIN Phases     ph ON e.PhaseID    = ph.PhaseID
 LEFT JOIN PhaseType  pt ON ph.PhaseTypeID = pt.PhaseTypeID
 LEFT JOIN PaymentMethod pm ON e.PaymentMethodID = pm.MethodID;
 GO
-/****** Object:  Table [dbo].[AttendanceStatus]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -733,14 +716,14 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  View [dbo].[vw_DailyAttendance]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ── VIEW 7: Daily Attendance Sheet ───────────────────────────
--- Used by: Attendance / Workers Page — day-by-day sheet
+
+
+-- This view gives a readable daily attendance sheet.
 CREATE   VIEW [dbo].[vw_DailyAttendance] AS
 SELECT
     a.AttendanceDate,
@@ -757,7 +740,6 @@ JOIN Workers          w   ON a.WorkerID = w.WorkerID
 JOIN Projects         p   ON a.ProjectID = p.ProjectID
 JOIN AttendanceStatus ast ON a.StatusID  = ast.StatusID;
 GO
-/****** Object:  Table [dbo].[AreaUnit]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -771,7 +753,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BudgetAuditLog]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -790,7 +771,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Budgets]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -810,7 +790,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ProjectAlerts]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -828,7 +807,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PropertyStatus]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -842,7 +820,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PropertyType]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -856,7 +833,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[TaskStatus]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -870,7 +846,6 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[TaskWorkers]    Script Date: 02/05/2026 12:33:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -885,6 +860,10 @@ PRIMARY KEY CLUSTERED
 	[TaskWorkerID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 INSERT [dbo].[AreaUnit] ([UnitID], [UnitName]) VALUES (2, N'Kanal')
 INSERT [dbo].[AreaUnit] ([UnitID], [UnitName]) VALUES (1, N'Marla')
@@ -958,13 +937,11 @@ INSERT [dbo].[TaskStatus] ([StatusID], [StatusName]) VALUES (1, N'Pending')
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__AreaUnit__B5EE667824F8D709]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[AreaUnit] ADD UNIQUE NONCLUSTERED 
 (
 	[UnitName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [UQ_Attendance]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[Attendance] ADD  CONSTRAINT [UQ_Attendance] UNIQUE NONCLUSTERED 
 (
 	[WorkerID] ASC,
@@ -972,14 +949,12 @@ ALTER TABLE [dbo].[Attendance] ADD  CONSTRAINT [UQ_Attendance] UNIQUE NONCLUSTER
 	[AttendanceDate] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Attendance_ProjectDate]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Attendance_ProjectDate] ON [dbo].[Attendance]
 (
 	[ProjectID] ASC,
 	[AttendanceDate] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Attendance_WorkerDate]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Attendance_WorkerDate] ON [dbo].[Attendance]
 (
 	[WorkerID] ASC,
@@ -988,13 +963,11 @@ CREATE NONCLUSTERED INDEX [IX_Attendance_WorkerDate] ON [dbo].[Attendance]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Attendan__05E7698A52FCB386]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[AttendanceStatus] ADD UNIQUE NONCLUSTERED 
 (
 	[StatusName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [UQ__Budgets__761ABED17412DCF4]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[Budgets] ADD UNIQUE NONCLUSTERED 
 (
 	[ProjectID] ASC
@@ -1002,31 +975,26 @@ ALTER TABLE [dbo].[Budgets] ADD UNIQUE NONCLUSTERED
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__ExpenseC__8517B2E0D1B789A1]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[ExpenseCategory] ADD UNIQUE NONCLUSTERED 
 (
 	[CategoryName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Expenses_Date]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Expenses_Date] ON [dbo].[Expenses]
 (
 	[ExpenseDate] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Expenses_PhaseID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Expenses_PhaseID] ON [dbo].[Expenses]
 (
 	[PhaseID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Expenses_ProjectID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Expenses_ProjectID] ON [dbo].[Expenses]
 (
 	[ProjectID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_MatPurchase_ProjectID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_MatPurchase_ProjectID] ON [dbo].[MaterialPurchases]
 (
 	[ProjectID] ASC
@@ -1034,7 +1002,6 @@ CREATE NONCLUSTERED INDEX [IX_MatPurchase_ProjectID] ON [dbo].[MaterialPurchases
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Material__9C87053C39999378]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[Materials] ADD UNIQUE NONCLUSTERED 
 (
 	[MaterialName] ASC
@@ -1042,7 +1009,6 @@ ALTER TABLE [dbo].[Materials] ADD UNIQUE NONCLUSTERED
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Material__B5EE66782D88D194]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[MaterialUnit] ADD UNIQUE NONCLUSTERED 
 (
 	[UnitName] ASC
@@ -1050,20 +1016,17 @@ ALTER TABLE [dbo].[MaterialUnit] ADD UNIQUE NONCLUSTERED
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__PaymentM__218CFB177207F2C1]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[PaymentMethod] ADD UNIQUE NONCLUSTERED 
 (
 	[MethodName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [UQ_Phase_Project_Seq]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[Phases] ADD  CONSTRAINT [UQ_Phase_Project_Seq] UNIQUE NONCLUSTERED 
 (
 	[ProjectID] ASC,
 	[Sequence] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Phases_ProjectID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Phases_ProjectID] ON [dbo].[Phases]
 (
 	[ProjectID] ASC
@@ -1071,31 +1034,26 @@ CREATE NONCLUSTERED INDEX [IX_Phases_ProjectID] ON [dbo].[Phases]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__PhaseTyp__DB942EE30EF9AF4D]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[PhaseType] ADD UNIQUE NONCLUSTERED 
 (
 	[PhaseName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Projects_PropertyID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Projects_PropertyID] ON [dbo].[Projects]
 (
 	[PropertyID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Projects_UserID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Projects_UserID] ON [dbo].[Projects]
 (
 	[UserID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Properties_UserID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Properties_UserID] ON [dbo].[Properties]
 (
 	[UserID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Properties_ProjectID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Properties_ProjectID] ON [dbo].[Properties]
 (
 	[ProjectID] ASC
@@ -1103,7 +1061,6 @@ CREATE NONCLUSTERED INDEX [IX_Properties_ProjectID] ON [dbo].[Properties]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Property__05E7698AAF0F992C]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[PropertyStatus] ADD UNIQUE NONCLUSTERED 
 (
 	[StatusName] ASC
@@ -1111,19 +1068,16 @@ ALTER TABLE [dbo].[PropertyStatus] ADD UNIQUE NONCLUSTERED
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Property__D4E7DFA8EE59639D]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[PropertyType] ADD UNIQUE NONCLUSTERED 
 (
 	[TypeName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Tasks_ContractorID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Tasks_ContractorID] ON [dbo].[Tasks]
 (
 	[ContractorID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Tasks_PhaseID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Tasks_PhaseID] ON [dbo].[Tasks]
 (
 	[PhaseID] ASC
@@ -1131,13 +1085,11 @@ CREATE NONCLUSTERED INDEX [IX_Tasks_PhaseID] ON [dbo].[Tasks]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__TaskStat__05E7698AD6EAA427]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[TaskStatus] ADD UNIQUE NONCLUSTERED 
 (
 	[StatusName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [UQ_TaskWorker]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[TaskWorkers] ADD  CONSTRAINT [UQ_TaskWorker] UNIQUE NONCLUSTERED 
 (
 	[TaskID] ASC,
@@ -1146,13 +1098,11 @@ ALTER TABLE [dbo].[TaskWorkers] ADD  CONSTRAINT [UQ_TaskWorker] UNIQUE NONCLUSTE
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Users__A9D10534C0CC46CD]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[Users] ADD UNIQUE NONCLUSTERED 
 (
 	[Email] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_WagePay_WorkerID]    Script Date: 02/05/2026 12:33:05 AM ******/
 CREATE NONCLUSTERED INDEX [IX_WagePay_WorkerID] ON [dbo].[WagePayments]
 (
 	[WorkerID] ASC,
@@ -1161,7 +1111,6 @@ CREATE NONCLUSTERED INDEX [IX_WagePay_WorkerID] ON [dbo].[WagePayments]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Workers__AA570FD4566FD91A]    Script Date: 02/05/2026 12:33:05 AM ******/
 ALTER TABLE [dbo].[Workers] ADD UNIQUE NONCLUSTERED 
 (
 	[CNIC] ASC
@@ -1371,15 +1320,15 @@ GO
 ALTER TABLE [dbo].[Workers]  WITH CHECK ADD FOREIGN KEY([ContractorID])
 REFERENCES [dbo].[Contractors] ([ContractorID])
 GO
-/****** Object:  StoredProcedure [dbo].[AddColDesc]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- Helper: adds description to a column
--- Usage: EXEC AddColDesc 'TableName', 'ColumnName', 'Description'
 
+
+
+-- This procedure stores plain descriptions on table columns.
 CREATE   PROCEDURE [dbo].[AddColDesc]
     @table NVARCHAR(128),
     @col   NVARCHAR(128),
@@ -1401,15 +1350,15 @@ BEGIN
         'SCHEMA', 'dbo', 'TABLE', @table, 'COLUMN', @col;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[usp_AddExpense]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 7: usp_AddExpense  (CRUD helper)
--- ══════════════════════════════════════════════════════════════
+
+
+
+-- This procedure inserts one expense and returns its new id.
 CREATE   PROCEDURE [dbo].[usp_AddExpense]
     @ProjectID      INT,
     @PhaseID        INT           = NULL,
@@ -1433,15 +1382,15 @@ BEGIN
     SET @NewExpenseID = SCOPE_IDENTITY();
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_AddMaterialPurchase]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 8: usp_AddMaterialPurchase
--- ══════════════════════════════════════════════════════════════
+
+
+
+-- This procedure inserts one material purchase and returns its new id.
 CREATE   PROCEDURE [dbo].[usp_AddMaterialPurchase]
     @ProjectID      INT,
     @MaterialID     INT,
@@ -1467,16 +1416,16 @@ BEGIN
     SET @NewPurchaseID = SCOPE_IDENTITY();
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_CalculateProgress]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 5: usp_CalculateProgress
---  Returns % completion based on tasks
--- ══════════════════════════════════════════════════════════════
+
+
+
+
+-- This procedure calculates phase progress from task status values.
 CREATE   PROCEDURE [dbo].[usp_CalculateProgress]
     @ProjectID INT
 AS
@@ -1507,16 +1456,16 @@ BEGIN
     ORDER BY ph.Sequence;
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_CalculateTotalExpenses]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 3: usp_CalculateTotalExpenses
---  Returns all cost components for a project
--- ══════════════════════════════════════════════════════════════
+
+
+
+
+-- This procedure totals expense material and wage cost for one project.
 CREATE   PROCEDURE [dbo].[usp_CalculateTotalExpenses]
     @ProjectID INT
 AS
@@ -1569,16 +1518,16 @@ BEGIN
     WHERE b.ProjectID = @ProjectID;
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_CheckBudgetStatus]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 4: usp_CheckBudgetStatus
---  Returns budget alert level for a project
--- ══════════════════════════════════════════════════════════════
+
+
+
+
+-- This procedure returns the budget warning level for one project.
 CREATE   PROCEDURE [dbo].[usp_CheckBudgetStatus]
     @ProjectID INT
 AS
@@ -1614,16 +1563,16 @@ BEGIN
         END          AS BudgetStatus;
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_CreateProject]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 1: usp_CreateProject
---  Creates a project + its default budget in one transaction
--- ══════════════════════════════════════════════════════════════
+
+
+
+
+-- This procedure creates a project and its first budget inside one transaction.
 CREATE   PROCEDURE [dbo].[usp_CreateProject]
     @PropertyID      INT,
     @UserID          INT,
@@ -1662,21 +1611,21 @@ BEGIN
     END CATCH
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_DailyHealthCheck]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
+-- This procedure creates alerts for overdue and high budget projects.
 CREATE   PROCEDURE [dbo].[usp_DailyHealthCheck]
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Clear old unread alerts older than 7 days
+
     DELETE FROM ProjectAlerts WHERE CreatedAt < DATEADD(DAY, -7, GETDATE());
 
-    -- Flag overdue projects
+
     INSERT INTO ProjectAlerts (ProjectID, AlertType, AlertMessage)
     SELECT ProjectID,
            'OVERDUE',
@@ -1689,7 +1638,7 @@ BEGIN
           WHERE AlertType = 'OVERDUE'
             AND CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE));
 
-    -- Flag budget-critical projects (>90% spent)
+
     INSERT INTO ProjectAlerts (ProjectID, AlertType, AlertMessage)
     SELECT
         p.ProjectID,
@@ -1712,45 +1661,45 @@ BEGIN
     PRINT 'Daily health check complete.';
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_GetProjectReport]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 9: usp_GetProjectReport  (full summary for Reports Page)
--- ══════════════════════════════════════════════════════════════
+
+
+
+-- This procedure returns the main report sections for one project.
 CREATE   PROCEDURE [dbo].[usp_GetProjectReport]
     @ProjectID INT
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Overall summary
+
     SELECT * FROM vw_ProjectDashboard WHERE ProjectID = @ProjectID;
 
-    -- Phase breakdown
+
     SELECT * FROM vw_PhaseWiseCost    WHERE ProjectID = @ProjectID
     ORDER BY Sequence;
 
-    -- Worker summary
+
     SELECT * FROM vw_WorkerWageSummary WHERE ProjectID = @ProjectID;
 
-    -- Material cost
+
     SELECT * FROM vw_MaterialCostByProject WHERE ProjectID = @ProjectID;
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_GetWeeklyAttendanceReport]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 6: usp_GetWeeklyAttendanceReport
---  Used by backend to build weekly payroll report
--- ══════════════════════════════════════════════════════════════
+
+
+
+
+-- This procedure builds a weekly wage summary from attendance records.
 CREATE   PROCEDURE [dbo].[usp_GetWeeklyAttendanceReport]
     @ProjectID  INT,
     @WeekStart  DATE,
@@ -1785,21 +1734,21 @@ BEGIN
     ORDER BY w.FullName;
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_MarkAttendance]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 2: usp_MarkAttendance
---  Marks attendance for a worker and auto-calculates wage
--- ══════════════════════════════════════════════════════════════
+
+
+
+
+-- This procedure saves attendance and calculates the wage for that day.
 CREATE   PROCEDURE [dbo].[usp_MarkAttendance]
     @WorkerID       INT,
     @ProjectID      INT,
     @AttendanceDate DATE,
-    @StatusID       TINYINT,   -- 1=Present, 2=Absent, 3=Half Day, 4=Leave
+    @StatusID       TINYINT,
     @Notes          NVARCHAR(200) = NULL
 AS
 BEGIN
@@ -1811,12 +1760,12 @@ BEGIN
     SELECT @DailyWage = DailyWage FROM Workers WHERE WorkerID = @WorkerID;
 
     SET @WageForDay = CASE @StatusID
-        WHEN 1 THEN @DailyWage            -- Present: full wage
-        WHEN 3 THEN @DailyWage * 0.5      -- Half Day: 50%
-        ELSE 0                             -- Absent/Leave: 0
+        WHEN 1 THEN @DailyWage
+        WHEN 3 THEN @DailyWage * 0.5
+        ELSE 0
     END;
 
-    -- UPSERT pattern (update if already marked, insert otherwise)
+
     IF EXISTS (
         SELECT 1 FROM Attendance
         WHERE WorkerID = @WorkerID AND ProjectID = @ProjectID
@@ -1836,20 +1785,20 @@ BEGIN
     END;
 END;
 GO
-/****** Object:  StoredProcedure [dbo].[usp_PayWorkerWage]    Script Date: 02/05/2026 12:33:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--- ══════════════════════════════════════════════════════════════
---  SP 10: usp_PayWorkerWage
--- ══════════════════════════════════════════════════════════════
+
+
+
+-- This procedure records a wage payment for one worker.
 CREATE   PROCEDURE [dbo].[usp_PayWorkerWage]
     @WorkerID       INT,
     @ProjectID      INT,
     @AmountPaid     DECIMAL(12,2),
-    @PaymentMethod  TINYINT       = 1,   -- default: Cash
+    @PaymentMethod  TINYINT       = 1,
     @PeriodFrom     DATE          = NULL,
     @PeriodTo       DATE          = NULL,
     @Notes          NVARCHAR(200) = NULL,
@@ -1870,13 +1819,13 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Auto-increment
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Workers' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Attendance', @level2type=N'COLUMN',@level2name=N'WorkerID'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Projects — which site they attended' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Attendance', @level2type=N'COLUMN',@level2name=N'ProjectID'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Projects for the attended site' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Attendance', @level2type=N'COLUMN',@level2name=N'ProjectID'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to AttendanceStatus: Present/Absent/Half Day/Leave' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Attendance', @level2type=N'COLUMN',@level2name=N'StatusID'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Actual wage paid for this day (0 if absent, 50% if half day)' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Attendance', @level2type=N'COLUMN',@level2name=N'WageForDay'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Auto-increment PK — one budget record per project' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Budgets', @level2type=N'COLUMN',@level2name=N'BudgetID'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Auto-increment PK for one budget record per project' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Budgets', @level2type=N'COLUMN',@level2name=N'BudgetID'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Portion of budget allocated to labor costs' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Budgets', @level2type=N'COLUMN',@level2name=N'LaborBudget'
 GO
@@ -1896,13 +1845,13 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Path/URL to up
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Auto-increment PK' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'MaterialPurchases', @level2type=N'COLUMN',@level2name=N'PurchaseID'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Computed column: Quantity × UnitPrice, persisted' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'MaterialPurchases', @level2type=N'COLUMN',@level2name=N'TotalCost'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Computed column using Quantity times UnitPrice and stored' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'MaterialPurchases', @level2type=N'COLUMN',@level2name=N'TotalCost'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supplier invoice reference for audit trail' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'MaterialPurchases', @level2type=N'COLUMN',@level2name=N'InvoiceNumber'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Auto-increment PK' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Phases', @level2type=N'COLUMN',@level2name=N'PhaseID'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to PhaseType — Foundation, Grey Structure, Finishing etc' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Phases', @level2type=N'COLUMN',@level2name=N'PhaseTypeID'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to PhaseType for Foundation Grey Structure Finishing etc' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Phases', @level2type=N'COLUMN',@level2name=N'PhaseTypeID'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Used only when PhaseTypeID = 8 (Custom)' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Phases', @level2type=N'COLUMN',@level2name=N'CustomPhaseName'
 GO
@@ -1910,7 +1859,7 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Ordering of ph
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Auto-increment PK' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Projects', @level2type=N'COLUMN',@level2name=N'ProjectID'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Properties — which property this project is on' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Projects', @level2type=N'COLUMN',@level2name=N'PropertyID'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Properties for the project property' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Projects', @level2type=N'COLUMN',@level2name=N'PropertyID'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Filled when project is marked complete' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Projects', @level2type=N'COLUMN',@level2name=N'ActualEndDate'
 GO
@@ -1920,7 +1869,7 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'1 = project cl
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Auto-increment PK' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Properties', @level2type=N'COLUMN',@level2name=N'PropertyID'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Users — owner of this property' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Properties', @level2type=N'COLUMN',@level2name=N'UserID'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Users for the property owner' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Properties', @level2type=N'COLUMN',@level2name=N'UserID'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to PropertyType: Plot/House/Apartment/Commercial' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Properties', @level2type=N'COLUMN',@level2name=N'TypeID'
 GO
@@ -1932,9 +1881,9 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to AreaUnit
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Auto-increment PK' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Tasks', @level2type=N'COLUMN',@level2name=N'TaskID'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Phases — task belongs to this phase' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Tasks', @level2type=N'COLUMN',@level2name=N'PhaseID'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Phases for the task phase' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Tasks', @level2type=N'COLUMN',@level2name=N'PhaseID'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Contractors — nullable, who is responsible' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Tasks', @level2type=N'COLUMN',@level2name=N'ContractorID'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Contractors for the responsible contractor when available' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Tasks', @level2type=N'COLUMN',@level2name=N'ContractorID'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to TaskStatus: Pending/In Progress/Completed/Hold/Cancelled' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Tasks', @level2type=N'COLUMN',@level2name=N'StatusID'
 GO
@@ -1946,7 +1895,7 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Full display n
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Unique login email; used as username' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Users', @level2type=N'COLUMN',@level2name=N'Email'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'BCrypt hashed password — never store plain text' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Users', @level2type=N'COLUMN',@level2name=N'PasswordHash'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'BCrypt hashed password so plain text is never stored' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Users', @level2type=N'COLUMN',@level2name=N'PasswordHash'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Optional contact number' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Users', @level2type=N'COLUMN',@level2name=N'PhoneNumber'
 GO
@@ -1960,7 +1909,7 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'End date of th
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Auto-increment PK' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Workers', @level2type=N'COLUMN',@level2name=N'WorkerID'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Contractors — null if independent worker' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Workers', @level2type=N'COLUMN',@level2name=N'ContractorID'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'FK to Contractors and null if the worker is independent' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Workers', @level2type=N'COLUMN',@level2name=N'ContractorID'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pakistani CNIC number (13 digits + dashes), unique identifier' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Workers', @level2type=N'COLUMN',@level2name=N'CNIC'
 GO

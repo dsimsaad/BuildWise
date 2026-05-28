@@ -14,7 +14,7 @@
 </head>
 <body class="dashboard-body">
     <div class="dash-container">
-        <!-- Sidebar -->
+        
         <aside class="dash-sidebar">
             <div class="sidebar-header">
                 <a href="/Home/Dashboard" class="sidebar-brand-link">
@@ -85,9 +85,9 @@
             </nav>
         </aside>
 
-        <!-- Main area -->
+        
         <main class="dash-main">
-            <!-- Topbar -->
+            
             <header class="dash-topbar">
                 <div style="flex: 1;">
                     @await Component.InvokeAsync("ProjectSelector")
@@ -105,7 +105,7 @@
                             <p>Project Manager</p>
                         </div>
 
-                        <!-- Dropdown menu -->
+                        
                         <div class="profile-menu">
                             <a asp-controller="Account" asp-action="Profile" class="profile-menu-item">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -122,7 +122,7 @@
                 </div>
             </header>
 
-            <!-- Content area -->
+            
             <div class="dash-content @ViewData["DashboardContentClass"]">
                 @RenderBody()
             </div>

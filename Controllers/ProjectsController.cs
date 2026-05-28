@@ -25,7 +25,6 @@ namespace BuildWise.Controllers
             _cache.Remove(ProjectCacheKeys.SelectorProjects(userId));
         }
 
-        // GET: Projects
         public async Task<IActionResult> Index()
         {
             int userId = GetUserId();
@@ -35,7 +34,6 @@ namespace BuildWise.Controllers
             return View(projects);
         }
 
-        // GET: Projects/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -60,13 +58,11 @@ namespace BuildWise.Controllers
             return View(project);
         }
 
-        // GET: Projects/Create
         public IActionResult Create()
         {
             return View(new ProjectCreateViewModel());
         }
 
-        // POST: Projects/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProjectCreateViewModel model)
@@ -141,7 +137,6 @@ namespace BuildWise.Controllers
             return View(model);
         }
 
-        // GET: Projects/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -153,7 +148,6 @@ namespace BuildWise.Controllers
             return View(project);
         }
 
-        // POST: Projects/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("ProjectId,ProjectName,Description,IsCompleted")] Project project)
@@ -204,7 +198,6 @@ namespace BuildWise.Controllers
             return View(project);
         }
 
-        // GET: Projects/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -219,7 +212,6 @@ namespace BuildWise.Controllers
             return View(project);
         }
 
-        // POST: Projects/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

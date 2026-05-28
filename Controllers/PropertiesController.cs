@@ -14,7 +14,7 @@ namespace BuildWise.Controllers
     public class PropertiesController : BaseController
     {
         private readonly PropertyBLL _propertyBll;
-        private readonly BuildWiseDbContext _context; // For dropdowns
+        private readonly BuildWiseDbContext _context;
         private readonly PropertyPhaseSchemaService _propertyPhaseSchema;
 
         public PropertiesController(PropertyBLL propertyBll, BuildWiseDbContext context, PropertyPhaseSchemaService propertyPhaseSchema)

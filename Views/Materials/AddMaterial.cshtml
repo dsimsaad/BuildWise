@@ -1,7 +1,10 @@
 @model BuildWise.Models.Material
 
 @{
-    ViewData["Title"] = "Add Material";
+    var isEdit = Model?.MaterialId > 0;
+    var pageTitle = isEdit ? "Edit Material" : "Add Material";
+    var formAction = isEdit ? "EditMaterial" : "AddMaterial";
+    ViewData["Title"] = pageTitle;
     Layout = "_ModuleLayout";
 }
 
@@ -11,8 +14,8 @@
 
 <div class="module-header">
     <div class="module-title">
-        <h1>Add Material</h1>
-        <p>Create a reusable material type for purchase entries.</p>
+        <h1>@pageTitle</h1>
+        <p>@(isEdit ? "Update this custom catalog material." : "Create a reusable material type for purchase entries.")</p>
     </div>
     <a asp-action="Catalog" class="btn-secondary">Back to Catalog</a>
 </div>
@@ -22,7 +25,11 @@
         <h2>Material Details</h2>
     </div>
     <div class="card-body">
-        <form asp-action="AddMaterial">
+        <form asp-action="@formAction" asp-route-id="@(isEdit ? (int?)Model!.MaterialId : null)" method="post">
+            @if (isEdit)
+            {
+                <input asp-for="MaterialId" type="hidden" />
+            }
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="form-grid">
@@ -49,7 +56,7 @@
 
             <div class="form-actions">
                 <a asp-action="Catalog" class="btn-secondary">Cancel</a>
-                <button type="submit" class="btn-primary">Add Material</button>
+                <button type="submit" class="btn-primary">@(isEdit ? "Save Changes" : "Add Material")</button>
             </div>
         </form>
     </div>
