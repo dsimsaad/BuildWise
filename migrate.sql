@@ -539,3 +539,112 @@ BEGIN
     ) changed ON changed.ProjectId = p.ProjectID;
 END
 GO
+
+IF OBJECT_ID('dbo.fn_ProjectRemainingBudget', 'FN') IS NOT NULL
+BEGIN
+    DROP FUNCTION dbo.fn_ProjectRemainingBudget;
+END
+GO
+
+-- This function calculates remaining budget after expenses materials and wages.
+CREATE FUNCTION dbo.fn_ProjectRemainingBudget (@ProjectId int)
+RETURNS decimal(18,2)
+AS
+BEGIN
+    DECLARE @TotalBudget decimal(18,2);
+    DECLARE @TotalSpent decimal(18,2);
+
+    SELECT @TotalBudget = ISNULL(TotalBudget, 0)
+    FROM Projects
+    WHERE ProjectID = @ProjectId;
+
+    SELECT @TotalSpent =
+        ISNULL((SELECT SUM(Amount) FROM Expenses WHERE ProjectID = @ProjectId), 0)
+      + ISNULL((SELECT SUM(TotalCost) FROM MaterialPurchases WHERE ProjectID = @ProjectId), 0)
+      + ISNULL((SELECT SUM(AmountPaid) FROM WagePayments WHERE ProjectID = @ProjectId), 0);
+
+    RETURN ISNULL(@TotalBudget, 0) - ISNULL(@TotalSpent, 0);
+END
+GO
+
+IF OBJECT_ID('dbo.fn_ProjectTaskProgressPercent', 'FN') IS NOT NULL
+BEGIN
+    DROP FUNCTION dbo.fn_ProjectTaskProgressPercent;
+END
+GO
+
+-- This function returns task completion percentage for one project.
+CREATE FUNCTION dbo.fn_ProjectTaskProgressPercent (@ProjectId int)
+RETURNS decimal(6,2)
+AS
+BEGIN
+    DECLARE @TotalTasks int;
+    DECLARE @CompletedTasks int;
+
+    SELECT
+        @TotalTasks = COUNT(*),
+        @CompletedTasks = SUM(CASE WHEN t.StatusID = 3 THEN 1 ELSE 0 END)
+    FROM Tasks t
+    INNER JOIN Phases p ON p.PhaseID = t.PhaseID
+    WHERE p.ProjectID = @ProjectId;
+
+    IF ISNULL(@TotalTasks, 0) = 0
+    BEGIN
+        RETURN 0;
+    END
+
+    RETURN CAST((CAST(ISNULL(@CompletedTasks, 0) AS decimal(18,2)) / @TotalTasks) * 100 AS decimal(6,2));
+END
+GO
+
+IF OBJECT_ID('dbo.trg_Projects_SetUpdatedAt', 'TR') IS NOT NULL
+BEGIN
+    DROP TRIGGER dbo.trg_Projects_SetUpdatedAt;
+END
+GO
+
+-- This trigger keeps project UpdatedAt fresh when project fields are edited.
+CREATE TRIGGER dbo.trg_Projects_SetUpdatedAt
+ON dbo.Projects
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF UPDATE(UpdatedAt)
+    BEGIN
+        RETURN;
+    END
+
+    UPDATE p
+    SET UpdatedAt = GETDATE()
+    FROM Projects p
+    INNER JOIN inserted i ON i.ProjectID = p.ProjectID;
+END
+GO
+
+IF OBJECT_ID('dbo.trg_MaterialPurchases_ValidateAmount', 'TR') IS NOT NULL
+BEGIN
+    DROP TRIGGER dbo.trg_MaterialPurchases_ValidateAmount;
+END
+GO
+
+-- This trigger blocks invalid material purchases before they affect reports.
+CREATE TRIGGER dbo.trg_MaterialPurchases_ValidateAmount
+ON dbo.MaterialPurchases
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1
+        FROM inserted
+        WHERE Quantity <= 0
+           OR UnitPrice < 0
+    )
+    BEGIN
+        THROW 50010, 'Material purchase quantity must be greater than zero and unit price cannot be negative.', 1;
+    END
+END
+GO

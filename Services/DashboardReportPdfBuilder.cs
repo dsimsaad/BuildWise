@@ -4,7 +4,7 @@ using BuildWise.Models;
 
 namespace BuildWise.Services;
 
-public sealed class DashboardReportPdfBuilder
+public sealed class DashboardReportPdfBuilder : IReportPdfBuilder
 {
     private readonly PdfCanvas _pdf = new();
     private readonly DashboardReportData _data;

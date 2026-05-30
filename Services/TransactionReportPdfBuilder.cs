@@ -3,7 +3,7 @@ using BuildWise.Models;
 
 namespace BuildWise.Services;
 
-public sealed class TransactionReportPdfBuilder
+public sealed class TransactionReportPdfBuilder : IReportPdfBuilder
 {
     private readonly PdfCanvas _pdf = new();
     private readonly IReadOnlyList<TransactionLog> _transactions;
