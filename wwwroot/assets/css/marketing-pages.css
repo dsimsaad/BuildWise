@@ -128,22 +128,83 @@ body {
 }
 .simple-info-card {
   background: #fff;
-  border: 1px solid #e2e8f0;
+  border: none;
+  border-top: 3px solid #1E3A8A;
   border-radius: 8px;
-  padding: 28px;
-  box-shadow: 0 8px 24px rgba(15,37,87,0.05);
+  padding: 36px 28px;
+  box-shadow: 0 4px 24px rgba(30, 58, 138, 0.08);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow: hidden;
+  position: relative;
+  transition: transform var(--transition-soft), box-shadow var(--transition-soft), background var(--transition-soft), border-color var(--transition-soft);
+}
+.simple-info-card:hover {
+  background: #F8FAFF;
+  border-top-color: #1D4ED8;
+  box-shadow: 0 12px 30px rgba(30, 58, 138, 0.10);
+  transform: translateY(-3px);
+}
+.simple-info-card::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  right: -15px;
+  width: 70px;
+  height: 70px;
+  background: #1E3A8A;
+  opacity: 0.04;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.simple-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: #EFF6FF;
+  color: #1E40AF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  transition: background var(--transition-soft);
+}
+.simple-info-card:hover .simple-card-icon {
+  background: linear-gradient(135deg, #DBEAFE, #BFDBFE);
+}
+.simple-card-icon svg {
+  width: 24px;
+  height: 24px;
 }
 .simple-info-card h2 {
-  font-size: 18px;
-  color: #0f172a;
-  margin: 0 0 10px;
-  font-weight: 800;
+  font-size: 20px;
+  color: #0F172A;
+  margin: 0 0 12px;
+  font-weight: 700;
+  line-height: 1.25;
 }
 .simple-info-card p {
-  font-size: 14px;
-  color: #64748b;
-  line-height: 1.75;
-  margin: 0;
+  font-size: 14.5px;
+  color: #4B5563;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+.simple-info-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  position: relative;
+  z-index: 1;
+}
+.simple-info-tags span {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .dash-content.marketing-page-content .details-card { border-radius: 8px !important; }
@@ -252,6 +313,12 @@ body {
 
   .simple-info-card {
     padding: 22px;
+  }
+
+  .simple-card-icon {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 16px;
   }
 
   .contact-wrapper {
