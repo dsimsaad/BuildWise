@@ -1,7 +1,41 @@
 @{
     ViewData["Title"] = "Privacy Policy";
+    ViewData["DashboardContentClass"] = "marketing-page-content";
+    Layout = User.Identity?.IsAuthenticated == true ? "_ModuleLayout" : "_MarketingLayout";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+@section Styles {
+  <link rel="stylesheet" href="~/assets/css/marketing-pages.css" asp-append-version="true" />
+}
 
+<section class="simple-page-hero">
+  <div class="simple-page-inner reveal">
+    <span class="simple-page-eyebrow">Privacy Policy</span>
+    <h1>Simple privacy information for BuildWise.</h1>
+    <p>This page explains the basic privacy and usage rules for this student construction management project.</p>
+  </div>
+</section>
+
+<section class="simple-page-body">
+  <div class="simple-page-stack">
+    <article class="simple-info-card reveal">
+      <h2>Use of Data</h2>
+      <p>BuildWise is designed for project and construction management purposes. Information entered into the system should be used only for managing projects, properties, budgets, expenses, workers, materials, and progress.</p>
+    </article>
+
+    <article class="simple-info-card reveal">
+      <h2>Data Sharing</h2>
+      <p>User data should not be shared with other people or third parties without permission from the user or project owner.</p>
+    </article>
+
+    <article class="simple-info-card reveal">
+      <h2>Ownership</h2>
+      <p>All rights are reserved. The content, design, and code of BuildWise cannot be copied, redistributed, published, or used without permission.</p>
+    </article>
+
+    <article class="simple-info-card reveal">
+      <h2>Project Notice</h2>
+      <p>This privacy policy is written for a student project and is intended to provide simple, clear information about responsible use of the system.</p>
+    </article>
+  </div>
+</section>

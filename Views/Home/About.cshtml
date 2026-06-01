@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "About Us";
+    ViewData["DashboardContentClass"] = "marketing-page-content";
+    Layout = User.Identity?.IsAuthenticated == true ? "_ModuleLayout" : "_MarketingLayout";
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/assets/css/marketing-pages.css" asp-append-version="true" />
+}
+
+<section class="simple-page-hero">
+  <div class="simple-page-inner reveal">
+    <span class="simple-page-eyebrow">About BuildWise</span>
+    <h1>Construction project management made clearer.</h1>
+    <p>BuildWise is a student project built to help users manage construction projects, properties, budgets, expenses, workers, materials, and progress in one place.</p>
+  </div>
+</section>
+
+<section class="simple-page-body">
+  <div class="simple-page-grid">
+    <article class="simple-info-card reveal">
+      <h2>What BuildWise Does</h2>
+      <p>BuildWise gives construction users a structured workspace for project records. Users can create projects, connect properties, manage budgets, record expenses, track materials, maintain worker records, and follow construction phases and tasks.</p>
+    </article>
+
+    <article class="simple-info-card reveal">
+      <h2>Why It Exists</h2>
+      <p>Construction work can become difficult to manage when project details, costs, and progress are stored separately. BuildWise brings those records together so project information is easier to review and update.</p>
+    </article>
+
+    <article class="simple-info-card reveal">
+      <h2>Project Focus</h2>
+      <p>The platform focuses on practical construction tracking: dashboard summaries, budgets, expense history, materials, workers, properties, construction phases, and downloadable reports based on stored project data.</p>
+    </article>
+  </div>
+</section>
