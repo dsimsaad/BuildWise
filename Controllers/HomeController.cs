@@ -137,9 +137,11 @@ public class HomeController : BaseController
         var scopedTaskQuery = selectedProjectId.HasValue
             ? taskQuery.Where(t => t.Phase.ProjectId == selectedProjectId.Value)
             : taskQuery;
-        var scopedPropertyQuery = selectedProjectId.HasValue
-            ? _context.Properties.AsNoTracking().Where(p => p.UserId == userId && p.ProjectId == selectedProjectId.Value)
-            : _context.Properties.AsNoTracking().Where(p => p.UserId == userId && p.ProjectId != null);
+        var scopedPropertyQuery = _context.Properties.AsNoTracking().Where(p => p.UserId == userId);
+        if (selectedProjectId.HasValue)
+        {
+            scopedPropertyQuery = scopedPropertyQuery.Where(p => p.ProjectId == selectedProjectId.Value || p.Projects.Any(project => project.ProjectId == selectedProjectId.Value));
+        }
 
         var connectionString = _configuration.GetConnectionString("BuildWise") ?? "";
         var budgetBll = new BudgetBLL(connectionString);
@@ -309,9 +311,12 @@ public class HomeController : BaseController
         decimal totalExpenses = selectedProjectId.HasValue
             ? expenseBll.GetTotalSpent(selectedProjectId)
             : expenseBll.GetTotalSpentForUser(userId);
-        int totalProperties = selectedProjectId.HasValue
-            ? await _context.Properties.CountAsync(p => p.UserId == userId && p.ProjectId == selectedProjectId.Value)
-            : await _context.Properties.CountAsync(p => p.UserId == userId && p.ProjectId != null);
+        var propertyQuery = _context.Properties.AsNoTracking().Where(p => p.UserId == userId);
+        if (selectedProjectId.HasValue)
+        {
+            propertyQuery = propertyQuery.Where(p => p.ProjectId == selectedProjectId.Value || p.Projects.Any(project => project.ProjectId == selectedProjectId.Value));
+        }
+        int totalProperties = await propertyQuery.CountAsync();
         int totalProjects = selectedProjectId.HasValue
             ? 1
             : await _context.Projects.CountAsync(p => p.UserId == userId);

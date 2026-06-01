@@ -16,9 +16,9 @@ namespace BuildWise.BusinessLayer
             _propertyDal = propertyDal;
         }
 
-        public async Task<List<Property>> GetUserPropertiesAsync(int userId)
+        public async Task<List<Property>> GetUserPropertiesAsync(int userId, int? projectId = null)
         {
-            return await _propertyDal.GetPropertiesByUserIdAsync(userId);
+            return await _propertyDal.GetPropertiesByUserIdAsync(userId, projectId);
         }
 
         public async Task<Property?> GetPropertyDetailsAsync(int propertyId, int userId)

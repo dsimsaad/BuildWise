@@ -93,6 +93,54 @@ if (backToTopBtn) {
         });
     });
 }
+const demoModal = document.getElementById("demoModal");
+const openDemoModalBtn = document.getElementById("openDemoModal");
+const demoVideo = document.getElementById("demoVideo");
+
+if (demoModal && openDemoModalBtn && demoVideo) {
+    const demoLanguageBtns = demoModal.querySelectorAll("[data-demo-src]");
+    const closeDemoBtns = demoModal.querySelectorAll("[data-demo-close]");
+    const getActiveDemoSrc = () => demoModal.querySelector(".demo-language-btn.is-active")?.getAttribute("data-demo-src") || "";
+    const getAutoplaySrc = src => src.includes("?") ? `${src}&autoplay=1` : `${src}?autoplay=1`;
+
+    const openDemo = () => {
+        demoModal.classList.add("is-open");
+        demoModal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        const src = getActiveDemoSrc();
+        if (src) {
+            demoVideo.setAttribute("src", getAutoplaySrc(src));
+        }
+    };
+
+    const closeDemo = () => {
+        demoModal.classList.remove("is-open");
+        demoModal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        demoVideo.removeAttribute("src");
+    };
+
+    openDemoModalBtn.addEventListener("click", openDemo);
+    closeDemoBtns.forEach(button => button.addEventListener("click", closeDemo));
+
+    demoLanguageBtns.forEach(button => {
+        button.addEventListener("click", () => {
+            const src = button.getAttribute("data-demo-src");
+            if (!src || demoVideo.getAttribute("src")?.startsWith(src)) return;
+
+            demoLanguageBtns.forEach(item => item.classList.remove("is-active"));
+            button.classList.add("is-active");
+            demoVideo.setAttribute("title", button.getAttribute("data-demo-label") || "BuildWise demo");
+            demoVideo.setAttribute("src", getAutoplaySrc(src));
+        });
+    });
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && demoModal.classList.contains("is-open")) {
+            closeDemo();
+        }
+    });
+}
 const scrollContainer = document.getElementById('scroll-container');
 const scrollWrapper = document.getElementById('scroll-wrapper');
 const heroHeader = document.getElementById('hero-header');

@@ -1,6 +1,8 @@
 @{
     ViewData["Title"] = "Home Page";
     Layout = "_MarketingLayout";
+    var englishDemoEmbedUrl = "https://www.youtube.com/embed/jXluSkQQ_z8?rel=0";
+    var urduDemoEmbedUrl = "https://www.youtube.com/embed/az6hHRfsgq0?rel=0";
 }
 
 
@@ -24,15 +26,14 @@
 
     <div class="hero-buttons">
       <a href="/Home/Login" class="btn-primary">Start Tracking Now &nbsp;&rarr;</a>
-      <a href="/Home/Features" class="btn-outline">
+      <button type="button" class="btn-outline" id="openDemoModal">
         <div class="play-icon-simple">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 12h18"></path>
-            <path d="M13 5l7 7-7 7"></path>
+            <polygon points="8 5 19 12 8 19 8 5"></polygon>
           </svg>
         </div>
-        Explore Features
-      </a>
+        Watch Demo
+      </button>
     </div>
 
     <div class="hero-badges">
@@ -65,9 +66,29 @@
 
   
   <div class="hero-dashboard-mockup reveal">
-    <img src="~/assets/images/dashboard-mockup.png" alt="BuildWise dashboard summary screen" width="1440" height="920" loading="lazy" fetchpriority="low" decoding="async" asp-append-version="true" />
+    <img src="~/assets/images/homepage-dashboard.png" alt="BuildWise dashboard summary screen" width="1440" height="920" loading="lazy" fetchpriority="low" decoding="async" asp-append-version="true" />
   </div>
 </section>
+
+<div class="demo-modal" id="demoModal" aria-hidden="true">
+  <div class="demo-modal-backdrop" data-demo-close></div>
+  <div class="demo-dialog" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
+    <div class="demo-dialog-head">
+      <div>
+        <span class="demo-eyebrow">BuildWise Demo</span>
+        <h2 id="demoModalTitle">Choose demo language</h2>
+      </div>
+      <button type="button" class="demo-close" data-demo-close aria-label="Close demo">×</button>
+    </div>
+    <div class="demo-language-actions" role="group" aria-label="Demo language">
+      <button type="button" class="demo-language-btn is-active" data-demo-src="@englishDemoEmbedUrl" data-demo-label="English demo">English</button>
+      <button type="button" class="demo-language-btn" data-demo-src="@urduDemoEmbedUrl" data-demo-label="Urdu demo">Urdu</button>
+    </div>
+    <div class="demo-video-shell">
+      <iframe id="demoVideo" class="demo-video" title="English demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
 
 
 <section class="features-section">

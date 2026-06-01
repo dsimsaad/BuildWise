@@ -16,15 +16,22 @@ namespace BuildWise.DataLayer
             _context = context;
         }
 
-        public async Task<List<Property>> GetPropertiesByUserIdAsync(int userId)
+        public async Task<List<Property>> GetPropertiesByUserIdAsync(int userId, int? projectId = null)
         {
-            return await _context.Properties
+            var query = _context.Properties
                 .Include(p => p.Type)
                 .Include(p => p.Status)
                 .Include(p => p.AreaUnit)
                 .Include(p => p.Project)
                 .Include(p => p.Projects)
-                .Where(p => p.UserId == userId)
+                .Where(p => p.UserId == userId);
+
+            if (projectId.HasValue)
+            {
+                query = query.Where(p => p.ProjectId == projectId.Value || p.Projects.Any(project => project.ProjectId == projectId.Value));
+            }
+
+            return await query
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }

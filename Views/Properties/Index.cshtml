@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "Properties";
     Layout = "_ModuleLayout";
+    bool isProjectScoped = ViewBag.IsProjectScoped == true;
+    string? activeProjectName = ViewBag.ActiveProjectName as string;
+    int? selectedProjectId = ViewBag.SelectedProjectId is int projectId ? projectId : null;
     var completedProperties = Model.Count(p => string.Equals(p.Status?.StatusName, "Completed", StringComparison.OrdinalIgnoreCase));
     var openProperties = Model.Count() - completedProperties;
 
@@ -26,10 +29,10 @@
 
 <div class="module-header">
     <div class="module-title">
-        <h1>Properties</h1>
-        <p>Manage land, buildings, and sites linked to your projects.</p>
+        <h1>@(isProjectScoped ? $"Properties - {activeProjectName}" : "Properties")</h1>
+        <p>@(isProjectScoped ? "Showing land, buildings, and sites linked to the active project." : "Manage land, buildings, and sites linked to your projects.")</p>
     </div>
-    <a asp-action="Create" class="btn-create">
+    <a asp-action="Create" asp-route-projectId="@selectedProjectId" class="btn-create">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         Add Property
     </a>
@@ -79,15 +82,15 @@
     <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M9 21v-6h6v6"></path></svg>
         <h2>No properties yet</h2>
-        <p>Add your first property so projects can be linked to a real site.</p>
-        <a asp-action="Create" class="btn-primary">Add Property</a>
+        <p>@(isProjectScoped ? "Add a property for this project so the site record stays connected." : "Add your first property so projects can be linked to a real site.")</p>
+        <a asp-action="Create" asp-route-projectId="@selectedProjectId" class="btn-primary">Add Property</a>
     </div>
 }
 else
 {
     <div class="module-card">
         <div class="card-header">
-            <h2>All Properties</h2>
+            <h2>@(isProjectScoped ? "Project Properties" : "All Properties")</h2>
             <span class="badge badge-info">@Model.Count() records</span>
         </div>
         <div class="card-body" style="padding: 0;">

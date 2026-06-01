@@ -27,7 +27,28 @@ namespace BuildWise.Controllers
         public async Task<IActionResult> Index()
         {
             var userId = GetCurrentUserId();
-            var properties = await _propertyBll.GetUserPropertiesAsync(userId);
+            int? selectedProjectId = GetSelectedProjectId();
+            string? activeProjectName = null;
+
+            if (selectedProjectId.HasValue)
+            {
+                activeProjectName = await _context.Projects
+                    .AsNoTracking()
+                    .Where(p => p.ProjectId == selectedProjectId.Value && p.UserId == userId)
+                    .Select(p => p.ProjectName)
+                    .FirstOrDefaultAsync();
+
+                if (activeProjectName == null)
+                {
+                    HttpContext.Session.Remove("SelectedProjectId");
+                    selectedProjectId = null;
+                }
+            }
+
+            var properties = await _propertyBll.GetUserPropertiesAsync(userId, selectedProjectId);
+            ViewBag.IsProjectScoped = selectedProjectId.HasValue;
+            ViewBag.ActiveProjectName = activeProjectName;
+            ViewBag.SelectedProjectId = selectedProjectId;
             return View(properties);
         }
 
