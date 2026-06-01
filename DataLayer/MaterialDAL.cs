@@ -75,14 +75,19 @@ namespace BuildWise.DataLayer
         public async Task AddPurchaseAsync(MaterialPurchase purchase)
         {
             purchase.CreatedAt = System.DateTime.UtcNow;
-            purchase.TotalCost = purchase.Quantity * purchase.UnitPrice;
             _context.MaterialPurchases.Add(purchase);
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdatePurchaseAsync(MaterialPurchase purchase)
         {
-            purchase.TotalCost = purchase.Quantity * purchase.UnitPrice;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RemovePurchaseAsync(MaterialPurchase purchase)
+        {
+            _context.MaterialUsages.RemoveRange(purchase.MaterialUsages);
+            _context.MaterialPurchases.Remove(purchase);
             await _context.SaveChangesAsync();
         }
 

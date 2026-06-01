@@ -225,7 +225,7 @@ namespace BuildWise.Controllers
             }
             catch (Exception ex)
             {
-                TempData["MaterialError"] = ex.Message;
+                TempData["MaterialError"] = ex.GetBaseException().Message;
             }
 
             return RedirectToAction(nameof(Index));

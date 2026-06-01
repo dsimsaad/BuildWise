@@ -319,6 +319,8 @@ public partial class BuildWiseDbContext : DbContext
         {
             entity.HasKey(e => e.PurchaseId).HasName("PK__Material__6B0A6BDE9F7014BF");
 
+            entity.ToTable(tb => tb.HasTrigger("trg_MaterialPurchases_ValidateAmount"));
+
             entity.HasIndex(e => e.ProjectId, "IX_MatPurchase_ProjectID");
 
             entity.Property(e => e.PurchaseId)

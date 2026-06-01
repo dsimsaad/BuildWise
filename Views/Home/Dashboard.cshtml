@@ -114,7 +114,7 @@
                 </svg>
             </div>
             <div class="db-kpi-body">
-                <span class="db-kpi-label">Project Progress</span>
+                <span class="db-kpi-label"><span>Project</span> <span>Progress</span></span>
                 <div class="db-kpi-value-row">
                     <span class="db-kpi-value" id="statProjectProgress">@dashboardProgress.ToString("0")%</span>
                     <span class="db-kpi-badge db-kpi-badge--green">@(ViewBag.TasksCompleted ?? 0)/@(ViewBag.TotalTasks ?? 0) Tasks</span>
@@ -147,7 +147,7 @@
                 </svg>
             </div>
             <div class="db-kpi-body">
-                <span class="db-kpi-label">Total Properties</span>
+                <span class="db-kpi-label"><span>Total</span> <span>Properties</span></span>
                 <span class="db-kpi-value" id="statTotalProperties">@totalProperties</span>
             </div>
             <div class="db-kpi-more-wrap">
@@ -181,7 +181,7 @@
                 </svg>
             </div>
             <div class="db-kpi-body">
-                <span class="db-kpi-label">Workforce</span>
+                <span class="db-kpi-label"><span>Workforce</span></span>
                 <div class="db-kpi-value-row">
                     <span class="db-kpi-value" id="statTotalWorkers">@totalWorkers</span>
                     <span class="db-kpi-badge-pair">
@@ -236,7 +236,7 @@
                 }
             </div>
             <div class="db-kpi-body">
-                <span class="db-kpi-label">@(isOverallDashboard ? "Total Projects" : "Project Budget")</span>
+                <span class="db-kpi-label">@(isOverallDashboard ? Html.Raw("<span>Total</span> <span>Projects</span>") : Html.Raw("<span>Project</span> <span>Budget</span>"))</span>
                 <span class="db-kpi-value db-kpi-value--lg" id="statPortfolioMetric">@(isOverallDashboard ? Convert.ToString(ViewBag.TotalProjects ?? 0) : FormatMoney(totalBudget))</span>
             </div>
             <div class="db-kpi-more-wrap">
@@ -291,7 +291,7 @@
                 </svg>
             </div>
             <div class="db-kpi-body">
-                <span class="db-kpi-label">Total Expenses</span>
+                <span class="db-kpi-label"><span>Total</span> <span>Expenses</span></span>
                 <div class="db-kpi-value-row">
                     <span class="db-kpi-value db-kpi-value--lg" id="statTotalExpenses">@FormatMoney(totalExpenses)</span>
                     <span class="db-kpi-badge @(budgetUsedPct > 90 ? "db-kpi-badge--red" : "db-kpi-badge--green")"

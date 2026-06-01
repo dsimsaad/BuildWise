@@ -125,8 +125,20 @@ namespace BuildWise.BusinessLayer
             if (returnQuantity > availableQuantity)
                 throw new ArgumentException($"Return quantity cannot exceed the available quantity ({availableQuantity:0.###}).");
 
-            // A return is modeled by lowering purchased quantity instead of adding a separate negative row.
-            purchase.Quantity -= returnQuantity;
+            var remainingQuantity = purchase.Quantity - returnQuantity;
+
+            // If nothing has been used and the full purchase is returned, remove the purchase instead
+            // of saving it with Quantity = 0. The database trigger correctly rejects zero-quantity rows.
+            if (remainingQuantity <= 0 && usedQuantity <= 0)
+            {
+                purchase.Quantity = 0;
+                purchase.TotalCost = 0;
+                await _materialDal.RemovePurchaseAsync(purchase);
+                return purchase;
+            }
+
+            // A partial return is modeled by lowering purchased quantity.
+            purchase.Quantity = remainingQuantity;
             await _materialDal.UpdatePurchaseAsync(purchase);
             return purchase;
         }
