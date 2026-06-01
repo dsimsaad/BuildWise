@@ -476,6 +476,7 @@ footer {
 .feat-cta { background: linear-gradient(135deg, #0a1628 0%, #0F172A 60%, #1E40AF 100%); padding: 90px 24px; text-align: center; }
 .feat-cta h2 { font-size: clamp(26px, 5vw, 44px); font-weight: 800; color: #fff; letter-spacing: -1.5px; margin-bottom: 14px; }
 .feat-cta p { font-size: 16px; color: #93c5fd; margin-bottom: 36px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.65; }
+.feat-cta h2 + .cta-btns { margin-top: 30px; }
 .cta-btns { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
 .cta-primary { background: #1D4ED8; color: #fff; padding: 15px 34px; border-radius: 10px; font-size: 15px; font-weight: 700; text-decoration: none; transition: background var(--transition-soft), transform var(--transition-soft), box-shadow var(--transition-soft); }
 .cta-primary:hover { background: #1E40AF; transform: translateY(-1px); box-shadow: 0 10px 24px rgba(29,78,216,0.18); }

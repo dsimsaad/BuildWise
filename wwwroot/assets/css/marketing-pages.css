@@ -173,7 +173,8 @@ body {
 .simple-info-card:hover .simple-card-icon {
   background: linear-gradient(135deg, #DBEAFE, #BFDBFE);
 }
-.simple-card-icon svg {
+.simple-card-icon svg,
+.simple-card-icon lord-icon {
   width: 24px;
   height: 24px;
 }
