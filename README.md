@@ -201,5 +201,3 @@ This project helped us gain practical experience with:
 * Wasi Haider
 
 ---
-
-If you find this project useful, consider giving the repository a ⭐.
